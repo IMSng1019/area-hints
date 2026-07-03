@@ -114,7 +114,8 @@ public final class CommandVisualRegistry {
             areahint.signature.AddSignatureVisualController::openFromCommandUi));
         handlers.add(visual("deletesignature", "areahint deletesignature", "help.command.deletesignature",
             areahint.signature.DeleteSignatureVisualController::openFromCommandUi));
-        handlers.add(visual("serverlanguage", "areahint serverlanguage", "help.command.serverlanguage", CommandVisualController::openServerLanguage));
+        handlers.add(visual("serverlanguage", "areahint serverlanguage", "help.command.serverlanguage",
+            areahint.language.ServerLanguageVisualController::openFromCommandUi));
         return Collections.unmodifiableList(handlers);
     }
 

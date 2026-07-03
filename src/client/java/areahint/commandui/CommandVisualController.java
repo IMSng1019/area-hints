@@ -76,21 +76,6 @@ public final class CommandVisualController {
         AddCommandVisualController.open(parent);
     }
 
-    public static void openServerLanguage(Screen parent) {
-        List<WizardSelectionListScreen.SelectionItem<String>> items = new ArrayList<>();
-        for (String language : List.of("zh_cn", "zh_tw", "en_us", "en_pt", "ja_jp", "ko_kr", "fr_fr", "de_de", "es_es", "ru_ru", "zh_cn_neko")) {
-            items.add(new WizardSelectionListScreen.SelectionItem<>(language, language,
-                I18nManager.translate("commandui.serverlanguage.item.detail", language)));
-        }
-        setScreen(new WizardSelectionListScreen<>(parent, titleKey("serverlanguage"),
-            "commandui.serverlanguage.prompt",
-            items,
-            language -> openConfirmSend(parent, "serverlanguage",
-                "areahint serverlanguage " + language,
-                List.of(I18nManager.translate("commandui.serverlanguage.confirm", language))),
-            null));
-    }
-
     public static void openTeleport(Screen parent, String mode) {
         List<AreaData> areas = CommandUiData.validAreas(CommandUiData.loadCurrentDimensionAreas());
         if (areas.isEmpty()) {
@@ -295,15 +280,6 @@ public final class CommandVisualController {
                     });
             },
             () -> CommandUiActions.runCommand("areahint " + id + " cancel"));
-    }
-
-    private static void openConfirmSend(Screen parent, String id, String command, List<String> details) {
-        setScreen(new WizardConfirmScreen(parent, titleKey(id),
-            I18nManager.translate("commandui.common.confirm.prompt"),
-            details == null || details.isEmpty() ? List.of("/" + command) : details,
-            "commandui.button.execute",
-            () -> CommandUiActions.runCommand(command),
-            null));
     }
 
     private static void openConfirmAction(Screen parent, String id, String prompt, List<String> details, Runnable action) {

@@ -18,14 +18,13 @@
 
 ## 按首字母顺序执行
 
-36. `serverlanguage`
-37. `sethigh`
-38. `settp`
-39. `shrinkarea`
-40. `tcp`
-41. `titlesize`
-42. `titlestyle`
-43. `udp`
+36. `sethigh`
+37. `settp`
+38. `shrinkarea`
+39. `tcp`
+40. `titlesize`
+41. `titlestyle`
+42. `udp`
 
 ## 已完成
 
@@ -65,6 +64,7 @@
 34. `replacesubtitle`：已完成
 35. `replacesubtitlecolor`：已完成
 36. `replacesubtitlesize`：已完成
+37. `serverlanguage`：已完成
 
 ## 已排除
 

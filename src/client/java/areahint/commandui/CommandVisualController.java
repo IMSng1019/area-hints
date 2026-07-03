@@ -110,45 +110,6 @@ public final class CommandVisualController {
             cancelCommand == null ? null : () -> CommandUiActions.runCommand(cancelCommand)));
     }
 
-    public static void openRecordCommand(Screen parent, String id, String startCommand, String cancelCommand) {
-        if ("shrinkarea".equals(id)) {
-            openShrinkAreaVisual(parent);
-        } else {
-            setScreen(new WizardConfirmScreen(parent,
-                titleKey(id),
-                I18nManager.translate("commandui.record.prompt"),
-                List.of(I18nManager.translate("commandui.record.detail")),
-                "commandui.button.start",
-                () -> CommandUiActions.runCommand(startCommand),
-                () -> {
-                    if (cancelCommand != null) {
-                        CommandUiActions.runCommand(cancelCommand);
-                    }
-            }));
-        }
-    }
-
-    private static void openShrinkAreaVisual(Screen parent) {
-        areahint.shrinkarea.ShrinkAreaManager manager = areahint.shrinkarea.ShrinkAreaManager.getInstance();
-        List<AreaData> areas = manager.beginVisualSelection();
-        if (areas.isEmpty()) {
-            openInfo(parent, "shrinkarea", "commandui.common.no_areas", null);
-            return;
-        }
-        setScreen(new WizardSelectionListScreen<>(parent, titleKey("shrinkarea"),
-            "commandui.shrinkarea.prompt",
-            CommandUiData.areaItems(areas),
-            area -> {
-                closeToGame();
-                beginVisualRecordMode("shrinkarea");
-                manager.selectAreaByName(area.getName());
-            },
-            () -> {
-                manager.stop();
-                clearVisualRecordMode();
-            }));
-    }
-
     public static void openDescriptionStart(Screen parent, String id) {
         openConfirmCommand(parent, id, "areahint " + id);
     }

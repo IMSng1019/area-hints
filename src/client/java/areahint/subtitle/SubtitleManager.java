@@ -41,7 +41,8 @@ public class SubtitleManager {
         NONE,
         ADD,
         REPLACE,
-        DELETE
+        DELETE,
+        COLOR
     }
 
     private static SubtitleManager instance;
@@ -92,11 +93,15 @@ public class SubtitleManager {
     }
 
     public void startReplaceSubtitleColor(List<AreaData> areas, String dimension) {
-        if (!prepareStart(areas, dimension, VisualFlowSource.NONE)) {
+        boolean visualRequested = ReplaceSubtitleColorVisualController.consumeVisualStartRequest();
+        VisualFlowSource visualSource = visualRequested ? VisualFlowSource.COLOR : VisualFlowSource.NONE;
+        if (!prepareStart(areas, dimension, visualSource)) {
             return;
         }
+        visualFlowActive = visualRequested;
+        visualFlowSource = visualSource;
         currentState = SubtitleState.COLOR_SELECT_AREA;
-        SubtitleUI.showAreaSelectionScreen(editableAreas, SubtitleUI.AreaSelectionMode.COLOR);
+        showColorAreaSelection();
     }
 
     public void handleAddAreaSelection(String areaName) {
@@ -191,10 +196,13 @@ public class SubtitleManager {
             return;
         }
         if (!selectArea(areaName)) {
+            if (visualFlowSource == VisualFlowSource.COLOR) {
+                showColorAreaSelection();
+            }
             return;
         }
         currentState = SubtitleState.COLOR_SELECT_COLOR;
-        SubtitleUI.showColorSelectionScreen(selectedArea);
+        showColorSelection();
     }
 
     public void handleColorSelection(String colorInput) {
@@ -205,12 +213,16 @@ public class SubtitleManager {
         String normalizedColor = ColorUtil.normalizeColor(colorInput);
         if (!ColorUtil.isValidColor(normalizedColor)) {
             sendClientMessage(tr("subtitle.manager.error.invalid_color", colorInput));
+            if (visualFlowSource == VisualFlowSource.COLOR) {
+                ReplaceSubtitleColorVisualController.showCustomColorScreen(selectedArea,
+                    tr("subtitle.manager.error.invalid_color", colorInput));
+            }
             return;
         }
 
         pendingColor = normalizedColor;
         currentState = SubtitleState.COLOR_CONFIRM;
-        SubtitleUI.showColorConfirmScreen(selectedArea, pendingColor);
+        showColorConfirm();
     }
 
     public void confirmReplaceSubtitleColor() {
@@ -368,6 +380,7 @@ public class SubtitleManager {
         AddSubtitleVisualController.clear();
         ReplaceSubtitleVisualController.clear();
         DeleteSubtitleVisualController.clear();
+        ReplaceSubtitleColorVisualController.clear();
     }
 
     private boolean isValidColorInput(String colorInput) {
@@ -504,8 +517,34 @@ public class SubtitleManager {
         }
     }
 
+    private void showColorAreaSelection() {
+        if (visualFlowSource == VisualFlowSource.COLOR) {
+            ReplaceSubtitleColorVisualController.showAreaSelection(editableAreas);
+        } else {
+            SubtitleUI.showAreaSelectionScreen(editableAreas, SubtitleUI.AreaSelectionMode.COLOR);
+        }
+    }
+
+    private void showColorSelection() {
+        if (visualFlowSource == VisualFlowSource.COLOR) {
+            ReplaceSubtitleColorVisualController.showColorSelection(selectedArea);
+        } else {
+            SubtitleUI.showColorSelectionScreen(selectedArea);
+        }
+    }
+
+    private void showColorConfirm() {
+        if (visualFlowSource == VisualFlowSource.COLOR) {
+            ReplaceSubtitleColorVisualController.showConfirmScreen(selectedArea, pendingColor);
+        } else {
+            SubtitleUI.showColorConfirmScreen(selectedArea, pendingColor);
+        }
+    }
+
     private void showVisualInfo(VisualFlowSource visualSource, String messageKey) {
-        if (visualSource == VisualFlowSource.DELETE) {
+        if (visualSource == VisualFlowSource.COLOR) {
+            ReplaceSubtitleColorVisualController.showInfo(messageKey);
+        } else if (visualSource == VisualFlowSource.DELETE) {
             DeleteSubtitleVisualController.showInfo(messageKey);
         } else if (visualSource == VisualFlowSource.REPLACE) {
             ReplaceSubtitleVisualController.showInfo(messageKey);
@@ -515,7 +554,9 @@ public class SubtitleManager {
     }
 
     private void clearVisualStart(VisualFlowSource visualSource) {
-        if (visualSource == VisualFlowSource.DELETE) {
+        if (visualSource == VisualFlowSource.COLOR) {
+            ReplaceSubtitleColorVisualController.clear();
+        } else if (visualSource == VisualFlowSource.DELETE) {
             DeleteSubtitleVisualController.clear();
         } else if (visualSource == VisualFlowSource.REPLACE) {
             ReplaceSubtitleVisualController.clear();

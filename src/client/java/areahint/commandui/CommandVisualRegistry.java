@@ -70,7 +70,8 @@ public final class CommandVisualRegistry {
             areahint.recolor.RecolorVisualController::openFromCommandUi));
         handlers.add(visual("rename", "areahint rename", "help.command.rename",
             areahint.rename.RenameVisualController::openFromCommandUi));
-        handlers.add(visual("sethigh", "areahint sethigh", "help.command.sethigh", CommandVisualController::openSetHigh));
+        handlers.add(visual("sethigh", "areahint sethigh", "help.command.sethigh",
+            areahint.command.SetHighVisualController::openFromCommandUi));
         handlers.add(visual("tcp", "areahint tcp", "help.command.tcp", parent -> CommandVisualController.openTeleport(parent, "tcp")));
         handlers.add(visual("udp", "areahint udp", "help.command.udp", parent -> CommandVisualController.openTeleport(parent, "udp")));
         handlers.add(visual("settp", "areahint settp", "help.command.settp", parent -> CommandVisualController.openSetTp(parent, null)));

@@ -169,68 +169,6 @@ public final class CommandVisualController {
             }));
     }
 
-    public static void openSetHigh(Screen parent) {
-        List<AreaData> areas = CommandUiData.loadCurrentDimensionAreas();
-        if (areas.isEmpty()) {
-            openInfo(parent, "sethigh", "commandui.common.no_areas", "areahint sethigh cancel");
-            return;
-        }
-        setScreen(new WizardSelectionListScreen<>(parent, titleKey("sethigh"),
-            "commandui.sethigh.prompt",
-            CommandUiData.areaItems(areas),
-            area -> openSetHighMode(parent, area),
-            () -> CommandUiActions.runCommand("areahint sethigh cancel")));
-    }
-
-    private static void openSetHighMode(Screen parent, AreaData area) {
-        List<WizardOptionScreen.OptionSpec> options = List.of(
-            option("commandui.sethigh.unlimited", () -> openConfirmAction(parent, "sethigh",
-                I18nManager.translate("commandui.sethigh.confirm.unlimited", area.getName()),
-                List.of(),
-                () -> {
-                    closeToGame();
-                    ClientNetworking.sendSetHighRequest(area.getName(), false, null, null);
-                })),
-            option("commandui.sethigh.custom", () -> openSetHighCustom(parent, area, null))
-        );
-        setScreen(new WizardOptionScreen(parent, titleKey("sethigh"),
-            "commandui.sethigh.mode.prompt",
-            "commandui.sethigh.mode.detail",
-            options,
-            () -> CommandUiActions.runCommand("areahint sethigh cancel")));
-    }
-
-    private static void openSetHighCustom(Screen parent, AreaData area, String errorKey) {
-        setScreen(new WizardTextInputScreen(parent, titleKey("sethigh"),
-            List.of(
-                new WizardTextInputScreen.FieldSpec("commandui.sethigh.min.label", "commandui.sethigh.min.placeholder", "", 12),
-                new WizardTextInputScreen.FieldSpec("commandui.sethigh.max.label", "commandui.sethigh.max.placeholder", "", 12)
-            ),
-            "commandui.sethigh.custom.prompt",
-            "commandui.sethigh.custom.detail",
-            errorKey,
-            values -> {
-                try {
-                    double min = Double.parseDouble(values.get(0).trim());
-                    double max = Double.parseDouble(values.get(1).trim());
-                    if (max <= min) {
-                        openSetHighCustom(parent, area, "commandui.sethigh.error.order");
-                        return;
-                    }
-                    openConfirmAction(parent, "sethigh",
-                        I18nManager.translate("commandui.sethigh.confirm.custom", area.getName(), min, max),
-                        List.of(),
-                        () -> {
-                            closeToGame();
-                            ClientNetworking.sendSetHighRequest(area.getName(), true, max, min);
-                        });
-                } catch (NumberFormatException e) {
-                    openSetHighCustom(parent, area, "commandui.sethigh.error.number");
-                }
-            },
-            () -> CommandUiActions.runCommand("areahint sethigh cancel")));
-    }
-
     public static void openDescriptionStart(Screen parent, String id) {
         openConfirmCommand(parent, id, "areahint " + id);
     }

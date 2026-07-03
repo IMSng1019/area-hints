@@ -1115,9 +1115,7 @@ public class ClientNetworking {
             try {
                 // 读取域名列表数据
                 List<String> areaNames = new ArrayList<>();
-                List<Boolean> hasAltitudeList = new ArrayList<>();
-                List<Double> maxHeightList = new ArrayList<>();
-                List<Double> minHeightList = new ArrayList<>();
+                List<areahint.command.SetHighVisualController.AreaEntry> visualEntries = new ArrayList<>();
                 
                 // 读取服务端发送的数据格式
                 String commandType = buf.readString(); // "sethigh_area_list"
@@ -1133,26 +1131,28 @@ public class ClientNetworking {
                     areaNames.add(areaName);
                     
                     boolean hasAltitude = buf.readBoolean();
-                    hasAltitudeList.add(hasAltitude);
+                    Double maxHeight = null;
+                    Double minHeight = null;
                     
                     if (hasAltitude) {
                         boolean hasMax = buf.readBoolean();
-                        Double maxHeight = hasMax ? buf.readDouble() : null;
-                        maxHeightList.add(maxHeight);
+                        maxHeight = hasMax ? buf.readDouble() : null;
                         
                         boolean hasMin = buf.readBoolean();
-                        Double minHeight = hasMin ? buf.readDouble() : null;
-                        minHeightList.add(minHeight);
-                    } else {
-                        maxHeightList.add(null);
-                        minHeightList.add(null);
+                        minHeight = hasMin ? buf.readDouble() : null;
                     }
+                    visualEntries.add(new areahint.command.SetHighVisualController.AreaEntry(
+                        areaName, hasAltitude, maxHeight, minHeight));
                 }
                 
                 AreashintClient.LOGGER.info("成功解析域名列表: {}", areaNames);
                 
-                // 调用SetHighClientCommand处理
-                areahint.command.SetHighClientCommand.handleAreaList(areaNames, dimensionType);
+                // 图形入口只接管界面流程，普通 /areahint sethigh 继续使用原聊天按钮。
+                if (areahint.command.SetHighVisualController.consumeVisualStartRequest()) {
+                    areahint.command.SetHighVisualController.showAreaSelection(visualEntries);
+                } else {
+                    areahint.command.SetHighClientCommand.handleAreaList(areaNames, dimensionType);
+                }
                 
             } catch (Exception e) {
                 AreashintClient.LOGGER.error("处理SetHigh域名列表时出错: " + e.getMessage(), e);
@@ -1191,8 +1191,13 @@ public class ClientNetworking {
                 AreashintClient.LOGGER.info("接收到SetHigh域名选择: 域名={}, 有高度限制={}, 最大高度={}, 最小高度={}", 
                     areaName, hasAltitude, maxHeight, minHeight);
                 
-                // 调用SetHighClientCommand处理
-                areahint.command.SetHighClientCommand.handleAreaSelection(areaName, hasAltitude, maxHeight, minHeight);
+                // 图形流程中收到指定域名数据时直接进入 Screen 模式选择。
+                if (areahint.command.SetHighVisualController.isVisualFlowActive()) {
+                    areahint.command.SetHighVisualController.showModeSelection(
+                        new areahint.command.SetHighVisualController.AreaEntry(areaName, hasAltitude, maxHeight, minHeight));
+                } else {
+                    areahint.command.SetHighClientCommand.handleAreaSelection(areaName, hasAltitude, maxHeight, minHeight);
+                }
                 
             } catch (Exception e) {
                 AreashintClient.LOGGER.error("处理SetHigh域名选择时出错: " + e.getMessage(), e);

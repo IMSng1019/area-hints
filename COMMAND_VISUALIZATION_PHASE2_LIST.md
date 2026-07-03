@@ -18,7 +18,6 @@
 
 ## 按首字母顺序执行
 
-39. `settp`
 40. `shrinkarea`
 41. `tcp`
 42. `titlesize`
@@ -65,6 +64,7 @@
 36. `replacesubtitlesize`：已完成
 37. `serverlanguage`：已完成
 38. `sethigh`：已完成
+39. `settp`：已完成
 
 ## 已排除
 

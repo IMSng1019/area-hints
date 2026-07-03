@@ -2,7 +2,6 @@ package areahint.commandui;
 
 import areahint.config.ClientConfig;
 import areahint.data.AreaData;
-import areahint.data.ConfigData;
 import areahint.i18n.I18nManager;
 import areahint.network.ClientNetworking;
 import areahint.signature.SignatureClientNetworking;
@@ -93,25 +92,6 @@ public final class CommandVisualController {
                     ClientNetworking.sendTeleportRequest(mode, area.getName(), ClientConfig.getTeleportFormat());
                 }),
             null));
-    }
-
-    public static void openSetTp(Screen parent, String errorKey) {
-        openSingleField(parent, "settp",
-            "commandui.settp.label",
-            "commandui.settp.placeholder",
-            ClientConfig.getTeleportFormat(),
-            "commandui.settp.prompt",
-            I18nManager.translate("commandui.settp.detail", ClientConfig.getTeleportFormat()),
-            errorKey,
-            32,
-            value -> {
-                String format = value.trim();
-                if (!ConfigData.isValidTeleportFormat(format)) {
-                    openSetTp(parent, "commandui.settp.error.invalid");
-                    return;
-                }
-                runAndClose("areahint settp " + format);
-            });
     }
 
     public static void openAreaSelectThenCommand(Screen parent, String id, String command, String cancelCommand) {

@@ -246,25 +246,6 @@ public final class CommandVisualController {
             () -> CommandUiActions.runCommand("areahint sethigh cancel")));
     }
 
-    public static void openSubtitleStart(Screen parent, String id) {
-        if ("replacesubtitlesize".equals(id)) {
-            openSubtitleSize(parent);
-            return;
-        }
-        openConfirmCommand(parent, id, "areahint " + id);
-    }
-
-    private static void openSubtitleSize(Screen parent) {
-        List<WizardOptionScreen.OptionSpec> options = new ArrayList<>();
-        options.add(option("commandui.common.size.auto", () -> runAndClose("areahint replacesubtitlesize select auto")));
-        options.addAll(sizePresetOptions(size -> runAndClose("areahint replacesubtitlesize select " + size)));
-        setScreen(new WizardOptionScreen(parent, titleKey("replacesubtitlesize"),
-            "commandui.subtitle.size.prompt",
-            I18nManager.translate("commandui.subtitle.size.detail", ClientConfig.getSubtitleSize()),
-            options,
-            () -> CommandUiActions.runCommand("areahint replacesubtitlesize cancel")));
-    }
-
     public static void openDescriptionStart(Screen parent, String id) {
         openConfirmCommand(parent, id, "areahint " + id);
     }

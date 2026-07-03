@@ -60,7 +60,7 @@ public final class CommandVisualRegistry {
         handlers.add(visual("replacesubtitlecolor", "areahint replacesubtitlecolor", "help.command.replacesubtitlecolor",
             areahint.subtitle.ReplaceSubtitleColorVisualController::openFromCommandUi));
         handlers.add(visual("replacesubtitlesize", "areahint replacesubtitlesize", "help.command.replacesubtitlesize",
-            parent -> CommandVisualController.openSubtitleStart(parent, "replacesubtitlesize")));
+            areahint.subtitle.ReplaceSubtitleSizeVisualController::openFromCommandUi));
         handlers.add(visual("add", "areahint add", "help.command.add", CommandVisualController::openAddJson));
         handlers.add(visual("easyadd", "areahint easyadd", "help.command.easyadd",
             parent -> areahint.easyadd.EasyAddVisualController.openFromCommandUi(parent, "areahint easyadd")));

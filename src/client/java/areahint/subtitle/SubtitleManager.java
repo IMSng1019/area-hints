@@ -42,7 +42,8 @@ public class SubtitleManager {
         ADD,
         REPLACE,
         DELETE,
-        COLOR
+        COLOR,
+        SIZE
     }
 
     private static SubtitleManager instance;
@@ -235,12 +236,23 @@ public class SubtitleManager {
     }
 
     public void startSubtitleSizeSelection() {
+        boolean visualRequested = ReplaceSubtitleSizeVisualController.consumeVisualStartRequest();
         if (currentState != SubtitleState.IDLE) {
             sendClientMessage(tr("subtitle.manager.error.active"));
+            if (visualRequested) {
+                ReplaceSubtitleSizeVisualController.showInfo("subtitle.manager.error.active");
+                ReplaceSubtitleSizeVisualController.clear();
+            }
             return;
         }
         currentState = SubtitleState.SIZE_SELECT;
-        SubtitleUI.showSubtitleSizeSelectionScreen(ClientConfig.getSubtitleSize());
+        visualFlowActive = visualRequested;
+        visualFlowSource = visualRequested ? VisualFlowSource.SIZE : VisualFlowSource.NONE;
+        if (visualRequested) {
+            ReplaceSubtitleSizeVisualController.showSizeSelection(ClientConfig.getSubtitleSize());
+        } else {
+            SubtitleUI.showSubtitleSizeSelectionScreen(ClientConfig.getSubtitleSize());
+        }
     }
 
     public void handleSubtitleSizeSelection(String size) {
@@ -250,6 +262,9 @@ public class SubtitleManager {
 
         if (!areahint.data.ConfigData.isValidSubtitleSize(size)) {
             sendClientMessage(tr("subtitle.manager.error.invalid_size", size));
+            if (visualFlowSource == VisualFlowSource.SIZE) {
+                ReplaceSubtitleSizeVisualController.showCustomSizeScreen(tr("subtitle.manager.error.invalid_size", size));
+            }
             return;
         }
 
@@ -381,6 +396,7 @@ public class SubtitleManager {
         ReplaceSubtitleVisualController.clear();
         DeleteSubtitleVisualController.clear();
         ReplaceSubtitleColorVisualController.clear();
+        ReplaceSubtitleSizeVisualController.clear();
     }
 
     private boolean isValidColorInput(String colorInput) {
@@ -550,6 +566,8 @@ public class SubtitleManager {
             ReplaceSubtitleVisualController.showInfo(messageKey);
         } else if (visualSource == VisualFlowSource.ADD) {
             AddSubtitleVisualController.showInfo(messageKey);
+        } else if (visualSource == VisualFlowSource.SIZE) {
+            ReplaceSubtitleSizeVisualController.showInfo(messageKey);
         }
     }
 
@@ -562,6 +580,8 @@ public class SubtitleManager {
             ReplaceSubtitleVisualController.clear();
         } else if (visualSource == VisualFlowSource.ADD) {
             AddSubtitleVisualController.clear();
+        } else if (visualSource == VisualFlowSource.SIZE) {
+            ReplaceSubtitleSizeVisualController.clear();
         }
     }
 }

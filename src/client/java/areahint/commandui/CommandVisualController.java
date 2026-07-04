@@ -61,16 +61,6 @@ public final class CommandVisualController {
             () -> CommandUiActions.runCommand("areahint titlestyle cancel")));
     }
 
-    public static void openTitleSize(Screen parent) {
-        List<WizardOptionScreen.OptionSpec> options = sizePresetOptions(size ->
-            startThenRun("areahint titlesize", "areahint titlesize select " + size));
-        setScreen(new WizardOptionScreen(parent, titleKey("titlesize"),
-            "commandui.titlesize.prompt",
-            I18nManager.translate("commandui.titlesize.detail", ClientConfig.getTitleSize()),
-            options,
-            () -> CommandUiActions.runCommand("areahint titlesize cancel")));
-    }
-
     public static void openAddJson(Screen parent) {
         AddCommandVisualController.open(parent);
     }
@@ -213,18 +203,6 @@ public final class CommandVisualController {
         closeToGame();
         CommandUiActions.runCommand(startCommand);
         CommandUiActions.runCommand(actionCommand);
-    }
-
-    private static List<WizardOptionScreen.OptionSpec> sizePresetOptions(java.util.function.Consumer<String> action) {
-        return List.of(
-            option("commandui.common.size.extra_large", () -> action.accept("extra_large")),
-            option("commandui.common.size.large", () -> action.accept("large")),
-            option("commandui.common.size.medium_large", () -> action.accept("medium_large")),
-            option("commandui.common.size.medium", () -> action.accept("medium")),
-            option("commandui.common.size.medium_small", () -> action.accept("medium_small")),
-            option("commandui.common.size.small", () -> action.accept("small")),
-            option("commandui.common.size.extra_small", () -> action.accept("extra_small"))
-        );
     }
 
     private static WizardOptionScreen.OptionSpec option(String labelKey, Runnable action) {

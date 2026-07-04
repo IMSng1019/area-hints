@@ -48,19 +48,6 @@ public final class CommandVisualController {
         }
     }
 
-    public static void openTitleStyle(Screen parent) {
-        List<WizardOptionScreen.OptionSpec> options = List.of(
-            option("commandui.titlestyle.full", () -> startThenRun("areahint titlestyle", "areahint titlestyle select full")),
-            option("commandui.titlestyle.simple", () -> startThenRun("areahint titlestyle", "areahint titlestyle select simple")),
-            option("commandui.titlestyle.mixed", () -> startThenRun("areahint titlestyle", "areahint titlestyle select mixed"))
-        );
-        setScreen(new WizardOptionScreen(parent, titleKey("titlestyle"),
-            "commandui.titlestyle.prompt",
-            I18nManager.translate("commandui.titlestyle.detail", ClientConfig.getTitleStyle()),
-            options,
-            () -> CommandUiActions.runCommand("areahint titlestyle cancel")));
-    }
-
     public static void openAddJson(Screen parent) {
         AddCommandVisualController.open(parent);
     }
@@ -197,16 +184,6 @@ public final class CommandVisualController {
     private static void runAndClose(String command) {
         closeToGame();
         CommandUiActions.runCommand(command);
-    }
-
-    private static void startThenRun(String startCommand, String actionCommand) {
-        closeToGame();
-        CommandUiActions.runCommand(startCommand);
-        CommandUiActions.runCommand(actionCommand);
-    }
-
-    private static WizardOptionScreen.OptionSpec option(String labelKey, Runnable action) {
-        return new WizardOptionScreen.OptionSpec(labelKey, "", -1, action);
     }
 
     private static void setScreen(Screen screen) {

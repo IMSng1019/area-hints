@@ -49,7 +49,8 @@ public final class CommandVisualRegistry {
             areahint.frequency.FrequencyVisualController::openFromCommandUi));
         handlers.add(visual("hintrender", "areahint hintrender", "help.command.hintrender",
             areahint.render.HintRenderVisualController::openFromCommandUi));
-        handlers.add(visual("titlestyle", "areahint titlestyle", "help.command.titlestyle", CommandVisualController::openTitleStyle));
+        handlers.add(visual("titlestyle", "areahint titlestyle", "help.command.titlestyle",
+            areahint.titlestyle.TitleStyleVisualController::openFromCommandUi));
         handlers.add(visual("titlesize", "areahint titlesize", "help.command.titlesize",
             areahint.titlesize.TitleSizeVisualController::openFromCommandUi));
         handlers.add(visual("addsubtitle", "areahint addsubtitle", "help.command.addsubtitle",

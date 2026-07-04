@@ -18,10 +18,9 @@
 
 ## 按首字母顺序执行
 
-41. `tcp`
-42. `titlesize`
-43. `titlestyle`
-44. `udp`
+41. `titlesize`
+42. `titlestyle`
+43. `udp`
 
 ## 已完成
 
@@ -65,6 +64,7 @@
 38. `sethigh`：已完成
 39. `settp`：已完成
 40. `shrinkarea`：已完成
+41. `tcp`：已完成
 
 ## 已排除
 

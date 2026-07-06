@@ -170,11 +170,11 @@ public class BoundVizRenderer {
      * 更新缓存：仅在版本变化时重建几何数据
      */
     private static void updateCache(BoundVizManager manager, MinecraftClient client) {
+        List<AreaData> areas = manager.getCurrentDimensionAreasDirect();
         int ver = manager.getVersion();
         if (ver == cachedVersion) return;
         cachedVersion = ver;
 
-        List<AreaData> areas = manager.getCurrentDimensionAreasDirect();
         cachedAreas.clear();
         for (AreaData area : areas) {
             CachedArea ca = buildAreaCache(area);

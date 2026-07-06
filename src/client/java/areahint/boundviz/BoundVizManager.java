@@ -5,6 +5,7 @@ import areahint.config.ClientConfig;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 import java.nio.file.Path;
@@ -88,15 +89,19 @@ public class BoundVizManager {
                 return;
             }
 
-            String dimension = client.world.getRegistryKey().getValue().toString();
-            if (dimension.equals(currentDimension) && !currentDimensionAreas.isEmpty()) {
+            Identifier dimensionId = client.world.getRegistryKey().getValue();
+            String dimension = dimensionId.toString();
+            if (dimension.equals(currentDimension)) {
                 return; // 已加载
             }
 
             currentDimension = dimension;
-            String fileName = getFileNameForDimension(dimension);
+            currentDimensionAreas.clear();
+
+            String fileName = getFileNameForDimension(dimensionId);
             if (fileName == null) {
                 AreashintClient.LOGGER.warn("无法确定维度文件名: {}", dimension);
+                version++;
                 return;
             }
 
@@ -109,6 +114,7 @@ public class BoundVizManager {
         } catch (Exception e) {
             AreashintClient.LOGGER.error("加载域名边界数据失败", e);
             currentDimensionAreas.clear();
+            version++;
         }
     }
 
@@ -193,14 +199,7 @@ public class BoundVizManager {
     /**
      * 根据维度ID获取文件名
      */
-    private String getFileNameForDimension(String dimension) {
-        if (dimension.contains("overworld")) {
-            return areahint.Areashint.OVERWORLD_FILE;
-        } else if (dimension.contains("nether")) {
-            return areahint.Areashint.NETHER_FILE;
-        } else if (dimension.contains("end")) {
-            return areahint.Areashint.END_FILE;
-        }
-        return null;
+    private String getFileNameForDimension(Identifier dimension) {
+        return AreashintClient.getDimensionFileName(dimension);
     }
 }

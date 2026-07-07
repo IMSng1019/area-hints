@@ -153,14 +153,32 @@ public class I18nManager {
     /**
      * 获取翻译文本（带参数替换）
      * @param key 翻译键
-     * @param args 替换参数（按顺序替换 {0}, {1}, ...）
+     * @param args 替换参数（兼容 {0}, {1}, ... 和 %s/%d 等格式）
      */
     public static String translate(String key, Object... args) {
         String text = translate(key);
-        for (int i = 0; i < args.length; i++) {
-            text = text.replace("{" + i + "}", String.valueOf(args[i]));
+        if (args == null || args.length == 0) {
+            return text;
         }
-        return text;
+
+        String indexedText = replaceIndexedPlaceholders(text, args);
+        if (!indexedText.equals(text)) {
+            return indexedText;
+        }
+
+        try {
+            return String.format(Locale.ROOT, text, args);
+        } catch (IllegalArgumentException e) {
+            return indexedText;
+        }
+    }
+
+    private static String replaceIndexedPlaceholders(String text, Object... args) {
+        String formattedText = text;
+        for (int i = 0; i < args.length; i++) {
+            formattedText = formattedText.replace("{" + i + "}", String.valueOf(args[i]));
+        }
+        return formattedText;
     }
 
     /**

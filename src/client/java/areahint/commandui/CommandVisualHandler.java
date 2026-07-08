@@ -14,6 +14,8 @@ public interface CommandVisualHandler {
 
     String descriptionKey();
 
+    String categoryKey();
+
     boolean hasVisualFlow();
 
     void open(Screen parent);

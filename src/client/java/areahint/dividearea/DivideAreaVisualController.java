@@ -9,6 +9,7 @@ import areahint.commandui.WizardTextInputScreen;
 import areahint.data.AreaData;
 import areahint.i18n.I18nManager;
 import areahint.util.AreaDataConverter;
+import areahint.util.ClientAreaText;
 import areahint.util.ColorUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
@@ -140,8 +141,7 @@ public final class DivideAreaVisualController {
             }
             items.add(new WizardSelectionListScreen.SelectionItem<>(area.getName(),
                 AreaDataConverter.getDisplayName(area),
-                I18nManager.translate("commandui.common.area.detail",
-                    area.getName(), area.getLevel(), area.getColor(), area.getSignature())));
+                ClientAreaText.areaDetail(area)));
         }
 
         setScreen(new WizardSelectionListScreen<>(parent,

@@ -151,6 +151,7 @@ public class RecolorCommand {
                 buf.writeString(area.getColor());
                 buf.writeInt(area.getLevel());
                 buf.writeString(area.getBaseName() != null ? area.getBaseName() : "");
+                buf.writeString(area.getSignature() != null ? area.getSignature() : "");
             }
             
             ServerPlayNetworking.send(player, Packets.S2C_RECOLOR_RESPONSE, buf);
@@ -264,6 +265,7 @@ public class RecolorCommand {
                 buf.writeString(area.getColor());
                 buf.writeInt(area.getLevel());
                 buf.writeString(area.getBaseName() != null ? area.getBaseName() : "");
+                buf.writeString(area.getSignature() != null ? area.getSignature() : "");
             }
             
             ServerPlayNetworking.send(player, Packets.S2C_RECOLOR_RESPONSE, buf);
@@ -288,4 +290,4 @@ public class RecolorCommand {
         }
         return null;
     }
-} 
+}

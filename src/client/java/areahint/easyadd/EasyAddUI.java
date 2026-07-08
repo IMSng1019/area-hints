@@ -2,6 +2,7 @@ package areahint.easyadd;
 
 import areahint.data.AreaData;
 import areahint.i18n.I18nManager;
+import areahint.util.ClientAreaText;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
@@ -225,7 +226,7 @@ public class EasyAddUI {
         String colorDisplay = colorHex != null ? colorHex : "#FFFFFF";
         client.player.sendMessage(Text.of(I18nManager.translate("easyadd.message.area.color_2") + colorDisplay), false);
 
-        client.player.sendMessage(Text.of(I18nManager.translate("gui.message.general_6") + areaData.getSignature()), false);
+        client.player.sendMessage(Text.of(I18nManager.translate("gui.message.general_6") + ClientAreaText.signature(areaData)), false);
         
         // 显示确认和取消按钮
         MutableText saveButton = Text.literal(I18nManager.translate("easyadd.button.area.save"))
@@ -433,4 +434,4 @@ public class EasyAddUI {
             client.player.sendMessage(Text.of("§7" + message), false);
         }
     }
-} 
+}

@@ -2,6 +2,7 @@ package areahint.delete;
 
 import areahint.data.AreaData;
 import areahint.i18n.I18nManager;
+import areahint.util.ClientAreaText;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
@@ -38,7 +39,7 @@ public class DeleteUI {
             String hoverText = I18nManager.translate("gui.message.area") +
                 I18nManager.translate("gui.message.name_2") + area.getName() + "\n" +
                 I18nManager.translate("gui.message.level") + area.getLevel() + "\n" +
-                I18nManager.translate("gui.message.general_7") + area.getSignature();
+                I18nManager.translate("gui.message.general_7") + ClientAreaText.signature(area);
 
             if (area.getBaseName() != null) {
                 hoverText += I18nManager.translate("gui.message.area.parent") + area.getBaseName();
@@ -109,7 +110,7 @@ public class DeleteUI {
             client.player.sendMessage(Text.of(I18nManager.translate("command.message.altitude_12") + minAlt + " ~ " + maxAlt), false);
         }
 
-        client.player.sendMessage(Text.of(I18nManager.translate("gui.message.general_6") + area.getSignature()), false);
+        client.player.sendMessage(Text.of(I18nManager.translate("gui.message.general_6") + ClientAreaText.signature(area)), false);
 
         client.player.sendMessage(Text.of(""), false);
         client.player.sendMessage(Text.of(I18nManager.translate("gui.error.delete")), false);

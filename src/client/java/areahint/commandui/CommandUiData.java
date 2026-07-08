@@ -6,6 +6,7 @@ import areahint.data.ConfigData;
 import areahint.file.FileManager;
 import areahint.i18n.I18nManager;
 import areahint.util.AreaDataConverter;
+import areahint.util.ClientAreaText;
 import areahint.util.ColorUtil;
 import areahint.world.ClientWorldFolderManager;
 import net.minecraft.client.MinecraftClient;
@@ -46,8 +47,7 @@ public final class CommandUiData {
         List<WizardSelectionListScreen.SelectionItem<AreaData>> items = new ArrayList<>();
         for (AreaData area : areas) {
             String displayName = AreaDataConverter.getDisplayName(area);
-            String detail = I18nManager.translate("commandui.common.area.detail",
-                area.getName(), area.getLevel(), area.getColor(), area.getSignature());
+            String detail = ClientAreaText.areaDetail(area);
             items.add(new WizardSelectionListScreen.SelectionItem<>(area, displayName, detail));
         }
         return items;

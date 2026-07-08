@@ -4,6 +4,7 @@ import areahint.data.AreaData;
 import areahint.file.FileManager;
 import areahint.i18n.I18nManager;
 import areahint.util.AreaDataConverter;
+import areahint.util.ClientAreaText;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
@@ -314,7 +315,7 @@ public class AddHintManager {
                     .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
                         "/areahint addhint select \"" + area.getName() + "\""))
                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                        Text.of(I18nManager.translate("addhint.prompt.general") + displayName + I18nManager.translate("addhint.message.general") + area.getSignature())))
+                        Text.of(I18nManager.translate("addhint.prompt.general") + displayName + I18nManager.translate("addhint.message.general") + ClientAreaText.signature(area))))
                     .withColor(Formatting.GOLD));
             client.player.sendMessage(btn, false);
         }

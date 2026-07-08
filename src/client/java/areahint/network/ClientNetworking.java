@@ -978,6 +978,7 @@ public class ClientNetworking {
                                 String currentColor = buf.readString();
                                 int level = buf.readInt();
                                 String baseName = buf.readString();
+                                String signature = buf.readString();
                                 
                                 client.player.sendMessage(net.minecraft.text.Text.of(
                                     String.format(I18nManager.translate("message.message.color.level"),
@@ -1007,6 +1008,7 @@ public class ClientNetworking {
                         String currentColor = buf.readString();
                         int level = buf.readInt();
                         String baseName = buf.readString();
+                        String signature = buf.readString();
 
                         // 创建简化的AreaData对象（只包含必要信息）
                         areahint.data.AreaData area = new areahint.data.AreaData();
@@ -1014,6 +1016,7 @@ public class ClientNetworking {
                         area.setColor(currentColor);
                         area.setLevel(level);
                         area.setBaseName(baseName.isEmpty() ? null : baseName);
+                        area.setSignature(signature.isEmpty() ? null : signature);
 
                         areas.add(area);
                     } catch (Exception e) {
@@ -1076,6 +1079,7 @@ public class ClientNetworking {
                 String currentColor = buf.readString();
                 int level = buf.readInt();
                 String baseName = buf.readString();
+                String signature = buf.readString();
                 
                 // 创建域名选择按钮
                 net.minecraft.text.MutableText areaButton = net.minecraft.text.Text.literal(

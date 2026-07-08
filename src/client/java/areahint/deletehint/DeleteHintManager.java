@@ -4,6 +4,7 @@ import areahint.data.AreaData;
 import areahint.file.FileManager;
 import areahint.i18n.I18nManager;
 import areahint.util.AreaDataConverter;
+import areahint.util.ClientAreaText;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
@@ -251,7 +252,7 @@ public class DeleteHintManager {
                     .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
                         "/areahint deletehint select \"" + area.getName() + "\""))
                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                        Text.of(I18nManager.translate("addhint.prompt.general") + displayName + I18nManager.translate("addhint.message.general") + area.getSignature()
+                        Text.of(I18nManager.translate("addhint.prompt.general") + displayName + I18nManager.translate("addhint.message.general") + ClientAreaText.signature(area)
                             + I18nManager.translate("deletehint.message.vertex_3") + area.getVertices().size())))
                     .withColor(Formatting.GOLD));
             client.player.sendMessage(btn, false);

@@ -3,6 +3,7 @@ package areahint.shrinkarea;
 import areahint.data.AreaData;
 import areahint.i18n.I18nManager;
 import areahint.util.AreaDataConverter;
+import areahint.util.ClientAreaText;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
@@ -59,7 +60,7 @@ public class ShrinkAreaUI {
         // 显示域名列表按钮
         for (AreaData area : areas) {
             String displayName = AreaDataConverter.getDisplayName(area);
-            String signature = area.getSignature();
+            String signature = ClientAreaText.signature(area);
             
             MutableText areaButton = Text.literal("§6[" + displayName + "]")
                 .setStyle(Style.EMPTY
@@ -128,4 +129,4 @@ public class ShrinkAreaUI {
         
         client.player.sendMessage(Text.of(I18nManager.translate("shrinkarea.error.area.cancel.shrink")), false);
     }
-} 
+}

@@ -95,6 +95,11 @@ public class DeleteHintVertexScreen extends CommandWizardScreen {
             return Math.min(420, DeleteHintVertexScreen.this.width - 36);
         }
 
+        @Override
+        protected int getScrollbarPositionX() {
+            return this.width - 6;
+        }
+
         private class Entry extends ElementListWidget.Entry<Entry> {
             private final int index;
             private final AreaData.Vertex vertex;
@@ -109,7 +114,7 @@ public class DeleteHintVertexScreen extends CommandWizardScreen {
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
                 Set<Integer> marked = DeleteHintVertexScreen.this.manager.getMarkedIndices();
                 boolean selected = marked.contains(this.index);
-                int titleColor = selected ? 0xFF5555 : hovered ? 0xFFFFAA : 0xFFFFFF;
+                int titleColor = selected ? 0xFF5555 : hovered ? BRIGHT_YELLOW : 0xFFFFFF;
                 String title = I18nManager.translate("commandui.deletehint.vertex.item",
                     this.index + 1, (int) this.vertex.getX(), (int) this.vertex.getZ());
                 String detail = t(selected

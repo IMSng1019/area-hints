@@ -71,6 +71,11 @@ public class WizardSelectionListScreen<T> extends CommandWizardScreen {
             return Math.min(520, WizardSelectionListScreen.this.width - 36);
         }
 
+        @Override
+        protected int getScrollbarPositionX() {
+            return this.width - 6;
+        }
+
         private class Entry extends ElementListWidget.Entry<Entry> {
             private final SelectionItem<T> item;
 
@@ -81,7 +86,7 @@ public class WizardSelectionListScreen<T> extends CommandWizardScreen {
             @Override
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                int titleColor = hovered ? 0xFFFFAA : 0xFFFFFF;
+                int titleColor = hovered ? BRIGHT_YELLOW : 0xFFFFFF;
                 WizardSelectionListScreen.this.drawTrimmed(context, Text.literal(this.item.title()),
                     x + 4, y + 5, entryWidth - 8, titleColor);
                 WizardSelectionListScreen.this.drawTrimmed(context, Text.literal(this.item.detail()),

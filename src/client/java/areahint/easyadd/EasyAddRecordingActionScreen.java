@@ -66,10 +66,10 @@ public class EasyAddRecordingActionScreen extends CommandUiScreen {
         drawTrimmed(context, Text.literal(t("commandui.easyadd.record.panel.prompt")),
             x, y, contentWidth, 0xFFFFFF);
         drawTrimmed(context, Text.literal(I18nManager.translate("commandui.easyadd.record.count", count)),
-            x, y + 14, contentWidth, 0xFFFF55);
+            x, y + 14, contentWidth, BRIGHT_YELLOW);
         drawTrimmed(context, Text.literal(t(count >= 3
                 ? "commandui.easyadd.record.panel.ready"
                 : "commandui.easyadd.record.panel.need_more")),
-            x, y + 28, contentWidth, count >= 3 ? 0x55FF55 : 0xFFAA55);
+            x, y + 28, contentWidth, count >= 3 ? BRIGHT_GREEN : 0xFFAA55);
     }
 }

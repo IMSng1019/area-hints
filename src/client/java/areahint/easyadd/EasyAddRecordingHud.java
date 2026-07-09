@@ -52,17 +52,17 @@ public final class EasyAddRecordingHud {
         int panelHeight = 76;
         int x = (width - panelWidth) / 2;
         int y = 18;
-        context.fill(x, y, x + panelWidth, y + panelHeight, 0xAA000000);
-        context.drawBorder(x, y, panelWidth, panelHeight, 0xAAFFFFFF);
+        context.fill(x, y, x + panelWidth, y + panelHeight, 0x77000000);
+        context.drawBorder(x, y, panelWidth, panelHeight, 0x88FFFFFF);
 
         context.drawCenteredTextWithShadow(client.textRenderer,
             Text.literal(I18nManager.translate("commandui.easyadd.record.title")), width / 2, y + 7, 0xFFFFFF);
         context.drawTextWithShadow(client.textRenderer,
-            Text.literal(I18nManager.translate("commandui.easyadd.record.count", points.size())), x + 10, y + 22, 0xFFFF55);
+            Text.literal(I18nManager.translate("commandui.easyadd.record.count", points.size())), x + 10, y + 22, 0xFFFF00);
         context.drawTextWithShadow(client.textRenderer, Text.literal(lastText), x + 10, y + 34, 0xAAAAAA);
         context.drawTextWithShadow(client.textRenderer,
             Text.literal(trim(client, I18nManager.translate("commandui.easyadd.record.action_hint", keyName), panelWidth - 20)),
-            x + 10, y + 46, 0x55FF55);
+            x + 10, y + 46, 0x00FF00);
         context.drawTextWithShadow(client.textRenderer,
             Text.literal(trim(client, I18nManager.translate(points.size() >= 3
                 ? "commandui.easyadd.record.ready"

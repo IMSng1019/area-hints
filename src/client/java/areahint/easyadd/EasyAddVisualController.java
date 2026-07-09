@@ -244,8 +244,8 @@ public final class EasyAddVisualController {
         addColor(options, "commandui.easyadd.color.red", "#FF0000");
         addColor(options, "commandui.easyadd.color.pink", "#FF55FF");
         addColor(options, "commandui.easyadd.color.gold", "#FFAA00");
-        addColor(options, "commandui.easyadd.color.yellow", "#FFFF55");
-        addColor(options, "commandui.easyadd.color.green", "#55FF55");
+        addColor(options, "commandui.easyadd.color.yellow", "#FFFF00");
+        addColor(options, "commandui.easyadd.color.green", "#00FF00");
         addColor(options, "commandui.easyadd.color.dark_green", "#00AA00");
         addColor(options, "commandui.easyadd.color.aqua", "#55FFFF");
         addColor(options, "commandui.easyadd.color.dark_aqua", "#00AAAA");

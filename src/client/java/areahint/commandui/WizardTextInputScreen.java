@@ -118,7 +118,7 @@ public class WizardTextInputScreen extends CommandWizardScreen {
             FieldSpec spec = this.fieldSpecs.get(i);
             TextFieldWidget field = this.fields.get(i);
             drawTrimmed(context, Text.literal(t(spec.labelKey())), field.getX(), field.getY() - LABEL_GAP,
-                INPUT_WIDTH, 0xFFFF55);
+                INPUT_WIDTH, BRIGHT_YELLOW);
             field.render(context, mouseX, mouseY, delta);
         }
     }

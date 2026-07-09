@@ -94,11 +94,11 @@ public class RecordCommandActionScreen extends CommandUiScreen {
         int y = Math.max(34, this.height / 2 - 34);
         drawTrimmed(context, Text.literal(t("commandui.record.panel.prompt")), x, y, contentWidth, 0xFFFFFF);
         drawTrimmed(context, Text.literal(I18nManager.translate("commandui.record.panel.count", this.flow.recordedCount())),
-            x, y + 14, contentWidth, 0xFFFF55);
+            x, y + 14, contentWidth, BRIGHT_YELLOW);
         drawTrimmed(context, Text.literal(t(this.flow.canFinish()
                 ? "commandui.record.panel.ready"
                 : "commandui.record.panel.need_more")),
-            x, y + 28, contentWidth, this.flow.canFinish() ? 0x55FF55 : 0xFFAA55);
+            x, y + 28, contentWidth, this.flow.canFinish() ? BRIGHT_GREEN : 0xFFAA55);
     }
 
     public record RecordFlow(String id, int recordedCount, int minFinishCount, Runnable continueAction,

@@ -25,7 +25,6 @@ public class WizardOptionScreen extends CommandWizardScreen {
     private static final int SWATCH_SIZE = 10;
     private static final int LIST_TOP = 62;
     private static final int LIST_BOTTOM_PADDING = 32;
-    private static final int SCROLLBAR_GAP = 8;
 
     private final String promptKey;
     private final String detailKey;
@@ -109,8 +108,8 @@ public class WizardOptionScreen extends CommandWizardScreen {
 
         @Override
         protected int getScrollbarPositionX() {
-            // 滚动条放在选项区右侧，避免和按钮、页脚取消按钮重叠。
-            return Math.min(this.width - 6, this.getRowRight() + SCROLLBAR_GAP);
+            // 滚动条贴近屏幕右边缘，避免长列表看起来偏向内容区内部。
+            return this.width - 6;
         }
 
         private class Entry extends ElementListWidget.Entry<Entry> {

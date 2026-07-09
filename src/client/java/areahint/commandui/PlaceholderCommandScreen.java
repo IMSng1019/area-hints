@@ -39,7 +39,7 @@ public class PlaceholderCommandScreen extends CommandUiScreen {
         int y = 54;
         drawTrimmed(context, handler.displayName(), x, y, contentWidth, 0xFFFFFF);
         drawTrimmed(context, handler.description(), x, y + 18, contentWidth, 0xAAAAAA);
-        drawTrimmed(context, Text.literal(t("commandui.placeholder.not_implemented")), x, y + 42, contentWidth, 0xFFFF55);
+        drawTrimmed(context, Text.literal(t("commandui.placeholder.not_implemented")), x, y + 42, contentWidth, BRIGHT_YELLOW);
         String command = handler.defaultCommand();
         drawTrimmed(context, Text.literal(t("commandui.placeholder.command") + (command == null ? "" : "/" + command)),
             x, y + 60, contentWidth, 0xAAAAAA);

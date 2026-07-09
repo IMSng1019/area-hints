@@ -15,6 +15,7 @@ import java.util.List;
  */
 public class HelpCommandScreen extends CommandUiScreen {
     private HelpListWidget list;
+    private Text hoveredDescription;
 
     public HelpCommandScreen(net.minecraft.client.gui.screen.Screen parent) {
         super("commandui.help.title", parent);
@@ -37,6 +38,15 @@ public class HelpCommandScreen extends CommandUiScreen {
             .dimensions(x + buttonWidth + 4, y, buttonWidth, BUTTON_HEIGHT).build());
     }
 
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        this.hoveredDescription = null;
+        super.render(context, mouseX, mouseY, delta);
+        if (this.hoveredDescription != null) {
+            drawWrappedTooltip(context, this.hoveredDescription, mouseX, mouseY);
+        }
+    }
+
     private class HelpListWidget extends ElementListWidget<HelpListWidget.Entry> {
         HelpListWidget(MinecraftClient client, int width, int height, int top, int bottom) {
             super(client, width, bottom - top, top, 34);
@@ -52,6 +62,11 @@ public class HelpCommandScreen extends CommandUiScreen {
             return Math.min(560, HelpCommandScreen.this.width - 36);
         }
 
+        @Override
+        protected int getScrollbarPositionX() {
+            return this.width - 6;
+        }
+
         private class Entry extends ElementListWidget.Entry<Entry> {
             private final CommandVisualHandler handler;
 
@@ -63,7 +78,11 @@ public class HelpCommandScreen extends CommandUiScreen {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
                 HelpCommandScreen.this.drawTrimmed(context, handler.displayName(), x + 4, y + 5, entryWidth - 8, 0xFFFFFF);
-                HelpCommandScreen.this.drawTrimmed(context, handler.description(), x + 4, y + 18, entryWidth - 8, hovered ? 0xFFFFAA : 0xAAAAAA);
+                HelpCommandScreen.this.drawTrimmed(context, Text.literal(displayCommand()), x + 4, y + 18,
+                    entryWidth - 8, hovered ? BRIGHT_YELLOW : 0xAAAAAA);
+                if (hovered) {
+                    HelpCommandScreen.this.hoveredDescription = handler.description();
+                }
             }
 
             @Override
@@ -83,6 +102,11 @@ public class HelpCommandScreen extends CommandUiScreen {
             @Override
             public List<? extends Selectable> selectableChildren() {
                 return List.of();
+            }
+
+            private String displayCommand() {
+                String command = this.handler.defaultCommand();
+                return command == null || command.isBlank() ? t("commandui.command.settings.name") : "/" + command;
             }
         }
     }

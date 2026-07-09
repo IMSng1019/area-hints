@@ -25,6 +25,7 @@ public class CommandListScreen extends CommandUiScreen {
     private CommandListWidget list;
     private TextFieldWidget searchField;
     private String searchQuery = "";
+    private Text hoveredDescription;
 
     public CommandListScreen(Screen parent) {
         super("commandui.commands.title", parent);
@@ -72,6 +73,15 @@ public class CommandListScreen extends CommandUiScreen {
             return true;
         }
         return super.charTyped(chr, modifiers);
+    }
+
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        this.hoveredDescription = null;
+        super.render(context, mouseX, mouseY, delta);
+        if (this.hoveredDescription != null) {
+            drawWrappedTooltip(context, this.hoveredDescription, mouseX, mouseY);
+        }
     }
 
     private void rebuildCommandList() {
@@ -151,6 +161,11 @@ public class CommandListScreen extends CommandUiScreen {
             return Math.min(560, CommandListScreen.this.width - 36);
         }
 
+        @Override
+        protected int getScrollbarPositionX() {
+            return this.width - 6;
+        }
+
         private abstract class Entry extends ElementListWidget.Entry<Entry> {
         }
 
@@ -168,8 +183,8 @@ public class CommandListScreen extends CommandUiScreen {
                 context.fill(x + 4, lineY, x + entryWidth - 4, lineY + 1, 0x66AAAAAA);
                 String title = t(this.categoryKey);
                 int textWidth = CommandListScreen.this.textRenderer.getWidth(title) + 12;
-                context.fill(x + 4, y + 7, x + 8 + textWidth, y + 20, 0xAA000000);
-                context.drawTextWithShadow(CommandListScreen.this.textRenderer, Text.literal(title), x + 10, y + 10, 0xFFFF55);
+                context.fill(x + 4, y + 7, x + 8 + textWidth, y + 20, 0x66000000);
+                context.drawTextWithShadow(CommandListScreen.this.textRenderer, Text.literal(title), x + 10, y + 10, BRIGHT_YELLOW);
             }
 
             @Override
@@ -206,15 +221,12 @@ public class CommandListScreen extends CommandUiScreen {
                 this.commandButton.setPosition(x + 6, y + 7);
                 this.commandButton.render(context, mouseX, mouseY, tickDelta);
 
-                int markerColor = handler.hasVisualFlow() ? 0x55FF55 : 0xAAAAAA;
-                String marker = handler.hasVisualFlow() ? t("commandui.marker.visual") : t("commandui.marker.command");
                 int detailX = x + buttonWidth + 16;
-                context.drawTextWithShadow(CommandListScreen.this.textRenderer, Text.literal(marker), detailX, y + 6, markerColor);
-                Text detail = this.commandButton.isMouseOver(mouseX, mouseY) || hovered
-                    ? handler.description()
-                    : Text.literal(displayCommand(handler));
-                CommandListScreen.this.drawTrimmed(context, detail, detailX, y + 19,
-                    entryWidth - buttonWidth - 20, this.commandButton.isMouseOver(mouseX, mouseY) ? 0xFFFFAA : 0xAAAAAA);
+                if (hovered || this.commandButton.isMouseOver(mouseX, mouseY)) {
+                    CommandListScreen.this.hoveredDescription = handler.description();
+                }
+                CommandListScreen.this.drawTrimmed(context, Text.literal(displayCommand(handler)), detailX, y + 14,
+                    entryWidth - buttonWidth - 20, hovered ? BRIGHT_YELLOW : 0xAAAAAA);
             }
 
             @Override

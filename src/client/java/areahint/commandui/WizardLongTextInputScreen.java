@@ -123,8 +123,8 @@ public class WizardLongTextInputScreen extends CommandWizardScreen {
 
         int boxY = 76;
         int boxHeight = Math.max(70, this.height - 118);
-        context.fill(x - 2, boxY - 2, x + contentWidth + 2, boxY + boxHeight + 2, 0xFF202020);
-        context.drawBorder(x - 2, boxY - 2, contentWidth + 4, boxHeight + 4, 0xFFAAAAAA);
+        context.fill(x - 2, boxY - 2, x + contentWidth + 2, boxY + boxHeight + 2, 0x99202020);
+        context.drawBorder(x - 2, boxY - 2, contentWidth + 4, boxHeight + 4, 0xCCAAAAAA);
         context.drawTextWrapped(this.textRenderer, Text.literal(this.text), x + 4, boxY + 4, contentWidth - 8, 0xFFFFFF);
     }
 

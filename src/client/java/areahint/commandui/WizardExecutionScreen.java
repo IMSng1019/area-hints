@@ -44,6 +44,6 @@ public class WizardExecutionScreen extends CommandUiScreen {
             drawTrimmed(context, Text.literal(t(this.promptKey)), x, y, contentWidth, 0xFFFFFF);
             y += 18;
         }
-        drawTrimmed(context, Text.literal("/" + this.command), x, y, contentWidth, 0xFFFF55);
+        drawTrimmed(context, Text.literal("/" + this.command), x, y, contentWidth, BRIGHT_YELLOW);
     }
 }

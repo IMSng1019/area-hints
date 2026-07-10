@@ -8,8 +8,14 @@ public final class PermissionNodes {
     public static final String CHECK = "areahint.command.check";
     public static final String RELOAD = "areahint.command.reload";
     public static final String DEBUG = "areahint.command.debug";
+    // 玩家个人客户端开关也允许 LuckPerms 显式拒绝，未定义节点时仍按权限等级0开放。
+    public static final String ON = "areahint.command.on";
+    public static final String OFF = "areahint.command.off";
     public static final String DIMENSIONALITY_NAME = "areahint.command.dimensionalityname";
     public static final String DIMENSIONALITY_COLOR = "areahint.command.dimensionalitycolor";
+    // 首次维度命名会写入服务端数据，指令树和网络包必须共同使用以下节点。
+    public static final String FIRST_DIM_NAME = "areahint.command.firstdimname";
+    public static final String FIRST_DIM_NAME_SKIP = "areahint.command.firstdimname_skip";
     public static final String ADD = "areahint.command.add";
     public static final String DELETE = "areahint.command.delete";
     public static final String EASYADD = "areahint.command.easyadd";
@@ -37,6 +43,10 @@ public final class PermissionNodes {
     public static final String DELETE_SUBTITLE = "areahint.command.deletesubtitle";
     public static final String REPLACE_SUBTITLE_COLOR = "areahint.command.replacesubtitlecolor";
     public static final String REPLACE_SUBTITLE_SIZE = "areahint.command.replacesubtitlesize";
+    // 以下节点只限制个人客户端设置指令入口，不影响客户端正常配置同步。
+    public static final String REPLACE_BUTTON = "areahint.command.replacebutton";
+    public static final String LANGUAGE = "areahint.command.language";
+    public static final String BOUND_VIZ = "areahint.command.boundviz";
     public static final String SERVER_LANGUAGE = "areahint.command.serverlanguage";
 
     private PermissionNodes() {

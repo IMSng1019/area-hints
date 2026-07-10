@@ -81,8 +81,10 @@ public class ServerCommands {
 
             // on/off 命令（客户端本地开关，权限等级0，只影响执行命令的玩家）
             .then(literal("on")
+                .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.ON, 0))
                 .executes(context -> executeModToggle(context, "on")))
             .then(literal("off")
+                .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.OFF, 0))
                 .executes(context -> executeModToggle(context, "off")))
 	            
             // dimensionalityname 命令 (交互式维度域名管理)
@@ -119,12 +121,14 @@ public class ServerCommands {
                 .then(literal("cancel")
                     .executes(DimensionalNameCommands::executeColorCancel)))
 
-            // firstdimname 命令（首次维度命名，无权限要求）
+            // firstdimname 命令默认对玩家开放，但允许 LuckPerms 通过独立节点显式拒绝。
             .then(literal("firstdimname")
+                .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.FIRST_DIM_NAME, 0))
                 .then(argument("name", StringArgumentType.greedyString())
                     .executes(context -> DimensionalNameCommands.executeFirstDimName(context,
                         StringArgumentType.getString(context, "name")))))
             .then(literal("firstdimname_skip")
+                .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.FIRST_DIM_NAME_SKIP, 0))
                 .executes(DimensionalNameCommands::executeFirstDimNameSkip))
 
             // add 命令 (仅服务端)
@@ -571,6 +575,7 @@ public class ServerCommands {
 
             // replacebutton 命令
             .then(literal("replacebutton")
+                .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.REPLACE_BUTTON, 0))
                 .executes(ServerCommands::executeReplaceButtonStart)
                 .then(literal("confirm")
                     .executes(ServerCommands::executeReplaceButtonConfirm))
@@ -579,6 +584,7 @@ public class ServerCommands {
 
             // language 命令（交互式语言选择）
             .then(literal("language")
+                .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.LANGUAGE, 0))
                 .executes(ServerCommands::executeLanguageStart)
                 .then(literal("select")
                     .then(argument("langCode", StringArgumentType.word())
@@ -588,6 +594,7 @@ public class ServerCommands {
 
             // boundviz 命令
             .then(literal("boundviz")
+                .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.BOUND_VIZ, 0))
                 .executes(ServerCommands::executeBoundViz))
 
             // serverlanguage 命令（服务端语言，权限等级4）

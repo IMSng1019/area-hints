@@ -362,13 +362,18 @@ public class ServerNetworking {
                 }
             });
 
-        // 注册首次维度命名处理器（无权限要求，仅限未命名维度）
+        // 注册首次维度命名处理器，同时校验权限节点并限制为尚未命名的维度。
         ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_FIRST_DIMNAME,
             (server, player, handler, buf, responseSender) -> {
                 try {
                     final String dimensionId = buf.readString();
                     final String newName = buf.readString();
                     server.execute(() -> {
+                        // 网络包可能绕过 Brigadier 指令树，因此写入维度域名前必须再次检查同一权限节点。
+                        if (!PermissionService.hasCommandPermission(player, PermissionNodes.FIRST_DIM_NAME, 0)) {
+                            player.sendMessage(net.minecraft.text.Text.translatable("message.error.permission"), false);
+                            return;
+                        }
                         String currentName = areahint.dimensional.DimensionalNameManager.getDimensionalName(dimensionId);
                         // 仅当维度名称等于维度ID时（未被命名）才允许
                         if (!currentName.equals(dimensionId)) {
@@ -581,4 +586,4 @@ public class ServerNetworking {
             Areashint.LOGGER.error(ServerI18nManager.translate("message.message.delete_3") + e.getMessage());
         }
     }
-} 
+}

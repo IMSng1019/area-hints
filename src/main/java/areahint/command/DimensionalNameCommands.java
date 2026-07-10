@@ -244,7 +244,7 @@ public class DimensionalNameCommands {
         DimensionalNameManager.saveDimensionalNames();
     }
 
-    // ===== 首次维度命名（无权限要求） =====
+    // ===== 首次维度命名（权限由指令树和网络接收器统一校验） =====
 
     public static int executeFirstDimName(CommandContext<ServerCommandSource> context, String name) {
         ServerCommandSource source = context.getSource();

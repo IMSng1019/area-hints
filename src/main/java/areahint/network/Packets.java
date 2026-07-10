@@ -90,7 +90,7 @@ public class Packets {
     public static final Identifier C2S_DIMNAME_REQUEST = new Identifier(Areashint.MOD_ID, "c2s_dimname_request");
     public static final Identifier C2S_DIMCOLOR_REQUEST = new Identifier(Areashint.MOD_ID, "c2s_dimcolor_request");
 
-    // 首次维度命名（无权限要求）
+    // 首次维度命名请求，服务端接收器会使用对应 LuckPerms 节点再次校验。
     public static final Identifier C2S_FIRST_DIMNAME = new Identifier(Areashint.MOD_ID, "c2s_first_dimname");
 
     // ReplaceButton功能相关的包ID

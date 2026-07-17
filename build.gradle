@@ -14,10 +14,14 @@ repositories {
 	mavenCentral()
 	maven { url 'https://repo.bluecolored.de/releases' }
 	maven { url 'https://maven.terraformersmc.com/' }
+	maven {
+		name = 'Modrinth'
+		url = 'https://api.modrinth.com/maven'
+		content {
+			includeGroup 'maven.modrinth'
+		}
+	}
 }
-
-def xaeroMinimapJar = file('.deps/xaero/Xaeros_Minimap_25.2.0_Fabric_1.20.4.jar')
-def xaeroWorldMapJar = file('.deps/xaero/XaerosWorldMap_1.39.2_Fabric_1.20.4.jar')
 
 loom {
 	splitEnvironmentSourceSets()
@@ -51,15 +55,12 @@ dependencies {
 	compileOnly "net.luckperms:api:5.4"
 	compileOnly "de.bluecolored.bluemap:BlueMapAPI:2.7.2"
 
-	// Xaero 联动只在开发环境使用本地 jar，最终模组不会打包或重新分发这些文件。
-	if (xaeroMinimapJar.exists()) {
-		modCompileOnly files(xaeroMinimapJar)
-		modLocalRuntime files(xaeroMinimapJar)
-	}
-	if (xaeroWorldMapJar.exists()) {
-		modCompileOnly files(xaeroWorldMapJar)
-		modLocalRuntime files(xaeroWorldMapJar)
-	}
+	// Xaero 兼容代码使用远程精确版本编译，避免 CI 依赖被 Git 忽略的本地 JAR。
+	modCompileOnly "maven.modrinth:xaeros-minimap:${project.xaero_minimap_version}"
+	modCompileOnly "maven.modrinth:xaeros-world-map:${project.xaero_world_map_version}"
+	// 本地运行时加载相同版本用于联调，modLocalRuntime 不会将 Xaero 打进最终模组。
+	modLocalRuntime "maven.modrinth:xaeros-minimap:${project.xaero_minimap_version}"
+	modLocalRuntime "maven.modrinth:xaeros-world-map:${project.xaero_world_map_version}"
 
 	testImplementation platform("org.junit:junit-bom:5.12.2")
 	testImplementation "org.junit.jupiter:junit-jupiter"

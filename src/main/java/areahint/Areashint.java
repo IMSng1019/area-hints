@@ -86,6 +86,9 @@ public class Areashint implements ModInitializer {
 
 		// 初始化服务端网络处理
 		ServerNetworking.init();
+
+		// 初始化 Xaero 世界地图域名管理能力查询
+		areahint.management.AreaManagementServerNetworking.register();
 		
 		// 初始化EasyAdd服务端网络处理
 		areahint.easyadd.EasyAddServerNetworking.registerServerReceivers();

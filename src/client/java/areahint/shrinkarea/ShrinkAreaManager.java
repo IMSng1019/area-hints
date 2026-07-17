@@ -1,5 +1,6 @@
 package areahint.shrinkarea;
 
+import areahint.commandui.CommandVisualLaunchContext;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
 import areahint.i18n.I18nManager;
@@ -56,6 +57,7 @@ public class ShrinkAreaManager {
     // 域名相关
     private List<AreaData> availableAreas = new ArrayList<>();
     private AreaData selectedArea = null;
+    private String selectedDimensionId = null;
     private String playerName = "";
     private boolean isAdmin = false;
     
@@ -205,6 +207,10 @@ public class ShrinkAreaManager {
      */
     public void handleAreaSelection(AreaData selectedArea) {
         this.selectedArea = selectedArea;
+        MinecraftClient client = MinecraftClient.getInstance();
+        // 锁定选择域名时的维度，避免录点期间切换维度后把几何结果提交给新维度的同名域名。
+        this.selectedDimensionId = client.world == null ? null
+            : client.world.getRegistryKey().getValue().toString();
 
         sendMessage(I18nManager.translate("dividearea.prompt.area") + AreaDataConverter.getDisplayName(selectedArea), Formatting.GREEN);
         sendMessage(I18nManager.translate("addhint.message.general_2") + areahint.keyhandler.UnifiedKeyHandler.getRecordKeyDisplayName() + I18nManager.translate("shrinkarea.message.vertex.record.shrink"), Formatting.YELLOW);
@@ -317,6 +323,7 @@ public class ShrinkAreaManager {
      */
     public void reset() {
         this.selectedArea = null;
+        this.selectedDimensionId = null;
         this.shrinkVertices.clear();
         this.isRecording = false;
         this.isActive = false;  // 重置活动状态
@@ -353,6 +360,12 @@ public class ShrinkAreaManager {
                     }
                 }
             }
+
+            // LuckPerms 可单独授权地图所选域名，客户端仅补入这一个已由服务端确认的目标。
+            List<AreaData> launchAreas = CommandVisualLaunchContext.ensureTargetIncluded(
+                "shrinkarea", availableAreas, allAreas);
+            availableAreas.clear();
+            availableAreas.addAll(launchAreas);
 
             if (availableAreas.isEmpty()) {
                 sendMessage(I18nManager.translate("shrinkarea.error.area.shrink_7"), Formatting.RED);
@@ -491,18 +504,13 @@ public class ShrinkAreaManager {
 
             // 3. 获取当前维度信息
             MinecraftClient client = MinecraftClient.getInstance();
-            String currentDimension = null;
-            if (client.world != null) {
-                currentDimension = client.world.getRegistryKey().getValue().toString();
-            }
-
-            if (currentDimension == null) {
+            if (selectedDimensionId == null) {
                 sendMessage(I18nManager.translate("dividearea.error.dimension"), Formatting.RED);
                 return;
             }
 
             // 4. 发送给服务端
-            ShrinkAreaClientNetworking.sendShrunkAreaToServer(shrunkArea, currentDimension);
+            ShrinkAreaClientNetworking.sendShrunkAreaToServer(shrunkArea, selectedDimensionId);
 
             sendMessage(I18nManager.translate("shrinkarea.message.area.finish.shrink"), Formatting.GREEN);
 

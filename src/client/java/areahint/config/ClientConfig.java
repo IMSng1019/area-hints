@@ -288,6 +288,24 @@ public class ClientConfig {
         save();
     }
 
+    public static boolean isXaeroMinimapOverlayEnabled() {
+        return config.isXaeroMinimapOverlayEnabled();
+    }
+
+    public static void setXaeroMinimapOverlayEnabled(boolean enabled) {
+        config.setXaeroMinimapOverlayEnabled(enabled);
+        save();
+    }
+
+    public static boolean isXaeroWorldMapOverlayEnabled() {
+        return config.isXaeroWorldMapOverlayEnabled();
+    }
+
+    public static void setXaeroWorldMapOverlayEnabled(boolean enabled) {
+        config.setXaeroWorldMapOverlayEnabled(enabled);
+        save();
+    }
+
     public static String getTeleportFormat() {
         return config.getTeleportFormat();
     }

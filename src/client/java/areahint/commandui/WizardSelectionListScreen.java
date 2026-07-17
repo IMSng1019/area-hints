@@ -20,17 +20,27 @@ public class WizardSelectionListScreen<T> extends CommandWizardScreen {
     }
 
     private final String promptKey;
+    private final String launchOperationId;
     private final List<SelectionItem<T>> items;
     private final Consumer<T> selectAction;
+    private final boolean returnToParentOnCancel;
     private SelectionListWidget list;
 
     public WizardSelectionListScreen(Screen parent, String titleKey, String promptKey,
                                      List<SelectionItem<T>> items, Consumer<T> selectAction,
                                      Runnable cancelAction) {
+        this(parent, titleKey, promptKey, items, selectAction, cancelAction, false);
+    }
+
+    public WizardSelectionListScreen(Screen parent, String titleKey, String promptKey,
+                                     List<SelectionItem<T>> items, Consumer<T> selectAction,
+                                     Runnable cancelAction, boolean returnToParentOnCancel) {
         super(titleKey, parent, cancelAction);
         this.promptKey = promptKey;
+        this.launchOperationId = operationIdFromTitleKey(titleKey);
         this.items = items;
         this.selectAction = selectAction;
+        this.returnToParentOnCancel = returnToParentOnCancel;
     }
 
     @Override
@@ -41,11 +51,35 @@ public class WizardSelectionListScreen<T> extends CommandWizardScreen {
             this.list.addItem(item);
         }
 
+        T launchTarget = CommandVisualLaunchContext.findMatchingValue(this.launchOperationId, this.items);
+        if (launchTarget != null && this.client != null) {
+            this.client.execute(() -> {
+                try {
+                    markFlowHandled();
+                    this.selectAction.accept(launchTarget);
+                } finally {
+                    CommandVisualLaunchContext.consume();
+                }
+            });
+        }
+
         int y = this.height - FOOTER_Y_OFFSET;
         int buttonWidth = 90;
         int x = (this.width - buttonWidth) / 2;
-        this.addDrawableChild(ButtonWidget.builder(Text.literal(t("commandui.button.cancel")), button -> cancelAndCloseToGame())
+        this.addDrawableChild(ButtonWidget.builder(Text.literal(t("commandui.button.cancel")), button -> cancelSelection())
             .dimensions(x, y, buttonWidth, BUTTON_HEIGHT).build());
+    }
+
+    @Override
+    public void close() {
+        if (!this.returnToParentOnCancel) {
+            super.close();
+            return;
+        }
+        cancelFlow();
+        if (this.client != null) {
+            this.client.setScreen(this.parent);
+        }
     }
 
     @Override
@@ -54,6 +88,23 @@ public class WizardSelectionListScreen<T> extends CommandWizardScreen {
         if (this.promptKey != null && !this.promptKey.isBlank()) {
             context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(t(this.promptKey)), this.width / 2, 34, 0xFFFFFF);
         }
+    }
+
+    private void cancelSelection() {
+        if (this.returnToParentOnCancel) {
+            close();
+        } else {
+            cancelAndCloseToGame();
+        }
+    }
+
+    private static String operationIdFromTitleKey(String titleKey) {
+        String prefix = "commandui.";
+        String suffix = ".title";
+        if (titleKey == null || !titleKey.startsWith(prefix) || !titleKey.endsWith(suffix)) {
+            return null;
+        }
+        return titleKey.substring(prefix.length(), titleKey.length() - suffix.length());
     }
 
     private class SelectionListWidget extends ElementListWidget<SelectionListWidget.Entry> {
@@ -96,6 +147,8 @@ public class WizardSelectionListScreen<T> extends CommandWizardScreen {
             @Override
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 if (button == 0) {
+                    WizardSelectionListScreen.this.markFlowHandled();
+                    CommandVisualLaunchContext.consume();
                     WizardSelectionListScreen.this.selectAction.accept(this.item.value());
                     return true;
                 }

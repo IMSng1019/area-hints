@@ -7,12 +7,12 @@ import areahint.file.FileManager;
 import areahint.dimensional.DimensionalNameManager;
 import areahint.file.JsonHelper;
 import areahint.i18n.ServerI18nManager;
+import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Packets;
 import areahint.network.ServerNetworking;
 import areahint.permission.PermissionNodes;
 import areahint.permission.PermissionService;
 import areahint.subtitle.SubtitleCommand;
-import areahint.util.AreaPermissionUtil;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -1366,45 +1366,24 @@ public class ServerCommands {
         }
     }
     
-    private static boolean canDeleteArea(ServerPlayerEntity player, String playerName, AreaData area) {
-        return PermissionService.hasNodeOr(player, PermissionNodes.DELETE,
-            () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
+    private static boolean canDeleteArea(ServerPlayerEntity player, AreaData area, List<AreaData> areas) {
+        return AreaManagementCapabilityService.canPerform(
+            player, AreaManagementCapabilityService.DELETE, area, areas);
     }
 
     private static boolean canSetHighArea(ServerPlayerEntity player, String playerName, AreaData area, List<AreaData> areas) {
-        return PermissionService.hasNodeOr(player, PermissionNodes.SETHIGH, () -> {
-            if (player.hasPermissionLevel(2)) {
-                return true;
-            }
-            if (AreaPermissionUtil.isSignedBy(area, playerName)) {
-                return true;
-            }
-            for (AreaData otherArea : areas) {
-                if (area.getName().equals(otherArea.getBaseName())
-                    && AreaPermissionUtil.isSignedBy(otherArea, playerName)) {
-                    return true;
-                }
-            }
-            return false;
-        });
+        return AreaManagementCapabilityService.canPerform(
+            player, AreaManagementCapabilityService.SET_HIGH, area, areas);
     }
 
     private static boolean canExpandArea(ServerPlayerEntity player, String playerName, AreaData area, List<AreaData> areas) {
-        return PermissionService.hasNodeOr(player, PermissionNodes.EXPANDAREA,
-            () -> AreaPermissionUtil.canModifyArea(player, area, areas));
+        return AreaManagementCapabilityService.canPerform(
+            player, AreaManagementCapabilityService.EXPAND_AREA, area, areas);
     }
 
     private static boolean canShrinkArea(ServerPlayerEntity player, String playerName, AreaData area, List<AreaData> areas) {
-        return PermissionService.hasNodeOr(player, PermissionNodes.SHRINKAREA, () -> {
-            if (player.hasPermissionLevel(2)) {
-                return true;
-            }
-            String baseName = area.getBaseName();
-            if (baseName == null) {
-                return false;
-            }
-            return AreaPermissionUtil.isBaseSignedByPlayer(baseName, areas, playerName);
-        });
+        return AreaManagementCapabilityService.canPerform(
+            player, AreaManagementCapabilityService.SHRINK_AREA, area, areas);
     }
 
     /**
@@ -1431,11 +1410,8 @@ public class ServerCommands {
             }
 
             List<AreaData> areas = FileManager.readAreaData(areaFile);
-            String playerName = source.getName();
-
             return areas.stream()
-                .filter(area -> canDeleteArea(player, playerName, area))
-                .filter(area -> areas.stream().noneMatch(child -> area.getName().equals(child.getBaseName())))
+                .filter(area -> canDeleteArea(player, area, areas))
                 .map(AreaData::getName)
                 .toList();
         } catch (Exception e) {

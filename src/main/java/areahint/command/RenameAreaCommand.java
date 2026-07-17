@@ -4,12 +4,10 @@ import areahint.Areashint;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
 import areahint.i18n.ServerI18nManager;
+import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Packets;
 import areahint.network.ServerNetworking;
 import areahint.network.TranslatableMessage;
-import areahint.permission.PermissionNodes;
-import areahint.permission.PermissionService;
-import areahint.util.AreaPermissionUtil;
 import areahint.network.TranslatableMessage.Part;
 import static areahint.network.TranslatableMessage.key;
 import static areahint.network.TranslatableMessage.lit;
@@ -166,7 +164,7 @@ public class RenameAreaCommand {
 
             // 筛选可编辑的域名
             for (AreaData area : areas) {
-                if (canRenameArea(player, area, playerName)) {
+                if (canRenameArea(player, area, areas)) {
                     editableAreas.add(area);
                 }
             }
@@ -202,6 +200,11 @@ public class RenameAreaCommand {
                                           String newSurfaceName, String dimension) {
         try {
             String playerName = player.getName().getString();
+
+            if (!AreaManagementCapabilityService.isCurrentDimension(player, dimension)) {
+                sendRenameResponse(player, false, key("command.message.dimension_3"));
+                return;
+            }
 
             // 验证新域名格式
             if (newName == null || newName.trim().isEmpty()) {
@@ -259,7 +262,7 @@ public class RenameAreaCommand {
                 return;
             }
 
-            if (!canRenameArea(player, targetArea, playerName)) {
+            if (!canRenameArea(player, targetArea, areas)) {
                 sendRenameResponse(player, false, key("command.message.area.rename.permission"), lit(oldName + "\""));
                 return;
             }
@@ -310,9 +313,9 @@ public class RenameAreaCommand {
      * @param isAdmin 是否为管理员
      * @return 是否可以重命名
      */
-    private static boolean canRenameArea(ServerPlayerEntity player, AreaData area, String playerName) {
-        return PermissionService.hasNodeOr(player, PermissionNodes.RENAME,
-            () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
+    private static boolean canRenameArea(ServerPlayerEntity player, AreaData area, List<AreaData> allAreas) {
+        return AreaManagementCapabilityService.canPerform(
+            player, AreaManagementCapabilityService.RENAME, area, allAreas);
     }
 
     /**

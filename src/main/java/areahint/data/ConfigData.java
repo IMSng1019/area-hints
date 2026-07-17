@@ -38,6 +38,12 @@ public class ConfigData {
     // 边界可视化开关：true为开启，false为关闭
     private boolean boundVizEnabled;
 
+    // Xaero 小地图域名覆盖层开关：缺少配置字段时默认开启
+    private boolean xaeroMinimapOverlayEnabled;
+
+    // Xaero 世界地图域名覆盖层开关：缺少配置字段时默认开启
+    private boolean xaeroWorldMapOverlayEnabled;
+
     // 语言设置
     private String language;
 
@@ -60,6 +66,8 @@ public class ConfigData {
         this.titleSize = "medium"; // 默认为中等大小
         this.subtitleSize = "auto"; // 默认比当前域名标题小一级
         this.boundVizEnabled = false; // 默认关闭边界可视化
+        this.xaeroMinimapOverlayEnabled = true; // 默认开启小地图域名覆盖层
+        this.xaeroWorldMapOverlayEnabled = true; // 默认开启世界地图域名覆盖层
         this.language = "zh_cn"; // 默认中文
         this.languageLocked = false; // 默认不上锁
         this.teleportFormat = "tp"; // 默认传送命令头
@@ -80,6 +88,8 @@ public class ConfigData {
         this.titleSize = "medium"; // 默认为中等大小
         this.subtitleSize = "auto"; // 默认比当前域名标题小一级
         this.boundVizEnabled = false; // 默认关闭边界可视化
+        this.xaeroMinimapOverlayEnabled = true; // 默认开启小地图域名覆盖层
+        this.xaeroWorldMapOverlayEnabled = true; // 默认开启世界地图域名覆盖层
         this.language = "zh_cn"; // 默认中文
         this.languageLocked = false; // 默认不上锁
         this.teleportFormat = "tp"; // 默认传送命令头
@@ -101,6 +111,8 @@ public class ConfigData {
         this.titleSize = "medium"; // 默认为中等大小
         this.subtitleSize = "auto"; // 默认比当前域名标题小一级
         this.boundVizEnabled = false; // 默认关闭边界可视化
+        this.xaeroMinimapOverlayEnabled = true; // 默认开启小地图域名覆盖层
+        this.xaeroWorldMapOverlayEnabled = true; // 默认开启世界地图域名覆盖层
         this.language = "zh_cn"; // 默认中文
         this.languageLocked = false; // 默认不上锁
         this.teleportFormat = "tp"; // 默认传送命令头
@@ -120,6 +132,8 @@ public class ConfigData {
         copy.setTitleSize(normalizeSize(this.titleSize));
         copy.setSubtitleSize(normalizeSubtitleSize(this.subtitleSize));
         copy.setBoundVizEnabled(this.boundVizEnabled);
+        copy.setXaeroMinimapOverlayEnabled(this.xaeroMinimapOverlayEnabled);
+        copy.setXaeroWorldMapOverlayEnabled(this.xaeroWorldMapOverlayEnabled);
         copy.setLanguage(this.language != null && !this.language.isEmpty() ? this.language : "zh_cn");
         copy.setLanguageLocked(this.languageLocked);
         copy.setTeleportFormat(this.teleportFormat);
@@ -263,6 +277,22 @@ public class ConfigData {
      */
     public void setBoundVizEnabled(boolean boundVizEnabled) {
         this.boundVizEnabled = boundVizEnabled;
+    }
+
+    public boolean isXaeroMinimapOverlayEnabled() {
+        return xaeroMinimapOverlayEnabled;
+    }
+
+    public void setXaeroMinimapOverlayEnabled(boolean xaeroMinimapOverlayEnabled) {
+        this.xaeroMinimapOverlayEnabled = xaeroMinimapOverlayEnabled;
+    }
+
+    public boolean isXaeroWorldMapOverlayEnabled() {
+        return xaeroWorldMapOverlayEnabled;
+    }
+
+    public void setXaeroWorldMapOverlayEnabled(boolean xaeroWorldMapOverlayEnabled) {
+        this.xaeroWorldMapOverlayEnabled = xaeroWorldMapOverlayEnabled;
     }
 
     /**

@@ -1,5 +1,6 @@
 package areahint.signature;
 
+import areahint.commandui.CommandVisualLaunchContext;
 import areahint.data.AreaData;
 import areahint.dimensional.ClientDimensionalNameManager;
 import areahint.file.FileManager;
@@ -305,7 +306,9 @@ public class SignatureManager {
             }
         }
 
-        return result;
+        String operationId = operation == Operation.DELETE ? "deletesignature" : "addsignature";
+        // 地图入口的单个目标已由服务端能力查询确认，客户端只在本轮流程中补入它。
+        return CommandVisualLaunchContext.ensureTargetIncluded(operationId, result, allAreas);
     }
 
     private boolean isBaseSignedByPlayer(AreaData area, List<AreaData> allAreas, String playerName) {

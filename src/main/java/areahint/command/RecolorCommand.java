@@ -3,15 +3,13 @@ package areahint.command;
 import areahint.Areashint;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
+import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Packets;
 import areahint.network.ServerNetworking;
 import areahint.network.TranslatableMessage;
-import areahint.permission.PermissionNodes;
-import areahint.permission.PermissionService;
 import areahint.network.TranslatableMessage.Part;
 import static areahint.network.TranslatableMessage.key;
 import static areahint.network.TranslatableMessage.lit;
-import areahint.util.AreaPermissionUtil;
 import areahint.util.ColorUtil;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -124,7 +122,7 @@ public class RecolorCommand {
             List<AreaData> allAreas = FileManager.readAreaData(areaFile);
 
             for (AreaData area : allAreas) {
-                if (canEditArea(player, playerName, area)) {
+                if (canEditArea(player, area, allAreas)) {
                     editableAreas.add(area);
                 }
             }
@@ -168,6 +166,11 @@ public class RecolorCommand {
         try {
             String playerName = player.getName().getString();
 
+            if (!AreaManagementCapabilityService.isCurrentDimension(player, dimension)) {
+                sendRecolorResponse(player, false, key("addhint.error.dimension"), lit(String.valueOf(dimension)));
+                return;
+            }
+
             // 验证颜色格式
             if (!ColorUtil.isValidColor(newColor)) {
                 sendRecolorResponse(player, false, key("command.error.color_3"), lit(newColor));
@@ -194,7 +197,7 @@ public class RecolorCommand {
             
             for (AreaData area : areas) {
                 if (area.getName().equals(areaName)) {
-                    if (!canEditArea(player, playerName, area)) {
+                    if (!canEditArea(player, area, areas)) {
                         sendRecolorResponse(player, false, key("command.message.area.modify.permission"), lit(areaName + "\""));
                         return;
                     }
@@ -230,9 +233,9 @@ public class RecolorCommand {
         }
     }
     
-    private static boolean canEditArea(ServerPlayerEntity player, String playerName, AreaData area) {
-        return PermissionService.hasNodeOr(player, PermissionNodes.RECOLOR,
-            () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
+    private static boolean canEditArea(ServerPlayerEntity player, AreaData area, List<AreaData> allAreas) {
+        return AreaManagementCapabilityService.canPerform(
+            player, AreaManagementCapabilityService.RECOLOR, area, allAreas);
     }
 
     /**

@@ -2,12 +2,11 @@ package areahint.deletehint;
 
 import areahint.data.AreaData;
 import areahint.file.FileManager;
+import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Packets;
 import areahint.network.ServerNetworking;
 import areahint.network.TranslatableMessage;
 import areahint.network.TranslatableMessage.Part;
-import areahint.permission.PermissionNodes;
-import areahint.permission.PermissionService;
 import areahint.util.AreaDataConverter;
 import areahint.util.AreaPermissionUtil;
 import com.google.gson.JsonObject;
@@ -45,6 +44,11 @@ public class DeleteHintServerNetworking {
 
     private static void handleRequest(ServerPlayerEntity player, String jsonStr, String dimension) {
         try {
+            if (!AreaManagementCapabilityService.isCurrentDimension(player, dimension)) {
+                sendResponse(player, false, key("addhint.error.dimension"), lit(String.valueOf(dimension)));
+                return;
+            }
+
             JsonObject json = JsonParser.parseString(jsonStr).getAsJsonObject();
             AreaData updatedArea = AreaDataConverter.fromJsonObject(json);
 
@@ -110,8 +114,8 @@ public class DeleteHintServerNetworking {
     }
 
     private static boolean validatePermission(ServerPlayerEntity player, AreaData existingArea, List<AreaData> areas) {
-        return PermissionService.hasNodeOr(player, PermissionNodes.DELETEHINT,
-            () -> AreaPermissionUtil.canModifyArea(player, existingArea, areas));
+        return AreaManagementCapabilityService.canPerform(
+            player, AreaManagementCapabilityService.DELETE_HINT, existingArea, areas);
     }
 
     private static String convertDimensionIdToType(String dim) {

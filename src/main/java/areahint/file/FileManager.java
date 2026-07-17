@@ -139,6 +139,10 @@ public class FileManager {
                     "  // BoundVizEnabled: 边界可视化开关\n" +
                     "  // true: 显示域名边界, false: 隐藏域名边界\n" +
                     "  \"boundVizEnabled\": " + defaultConfig.isBoundVizEnabled() + ",\n\n" +
+                    "  // XaeroMinimapOverlayEnabled: Xaero 小地图域名覆盖层开关\n" +
+                    "  \"xaeroMinimapOverlayEnabled\": " + defaultConfig.isXaeroMinimapOverlayEnabled() + ",\n\n" +
+                    "  // XaeroWorldMapOverlayEnabled: Xaero 世界地图域名覆盖层开关\n" +
+                    "  \"xaeroWorldMapOverlayEnabled\": " + defaultConfig.isXaeroWorldMapOverlayEnabled() + ",\n\n" +
                     "  // Language: 语言设置\n" +
                     "  // 对应 areas-hint/lang/ 文件夹中的语言文件名（不含.json后缀）\n" +
                     "  \"language\": \"" + defaultConfig.getLanguage() + "\",\n\n" +
@@ -218,22 +222,14 @@ public class FileManager {
             JsonObject configJson = JsonParser.parseString(normalizedJson).getAsJsonObject();
             ConfigData defaultConfig = new ConfigData();
 
-            // 新版本配置必须同时包含全部字段。旧配置缺少 hintRender/titleStyle/titleSize/subtitlesize
-            // 等新字段时，直接重置整份个人配置，避免旧字段继续残留或被部分迁移。
-            if (!hasAllRequiredConfigFields(configJson)) {
-                Areashint.LOGGER.warn("个人配置文件缺少必要字段，已重置为默认配置: " + path);
-                writeConfigData(path, defaultConfig);
-                return defaultConfig;
-            }
-
             ConfigData config = GSON.fromJson(normalizedJson, ConfigData.class);
             // 如果解析失败，返回默认配置
             if (config == null) {
                 return new ConfigData();
             }
 
-            // 字段齐全后，再检查字段值是否有效；值非法时只修正对应值并保存。
-            boolean needsUpdate = false;
+            // 旧配置缺少字段时只补充对应默认值，保留用户已有的其他设置。
+            boolean needsUpdate = applyMissingConfigDefaults(configJson, config, defaultConfig);
 
             // 检查并补全 frequency
             if (config.getFrequency() <= 0) {
@@ -310,27 +306,25 @@ public class FileManager {
         }
     }
 
-    /**
-     * 检查个人配置文件是否包含当前版本需要的全部字段。
-     * <p>
-     * 这里按字段是否存在判断，而不是按反序列化后的默认值判断，因为 boolean
-     * 字段缺失时会被 Gson 解析为 false，无法区分“用户设置为 false”和“旧配置缺字段”。
-     *
-     * @param configJson 去除注释后的配置 JSON 对象
-     * @return true 表示字段齐全，false 表示需要重置整份配置
-     */
-    private static boolean hasAllRequiredConfigFields(JsonObject configJson) {
-        return configJson.has("frequency")
-                && configJson.has("hintRender")
-                && configJson.has("titleStyle")
-                && configJson.has("enabled")
-                && configJson.has("recordKey")
-                && configJson.has("titleSize")
-                && (configJson.has("subtitlesize") || configJson.has("subtitleSize"))
-                && configJson.has("boundVizEnabled")
-                && configJson.has("language")
-                && configJson.has("languageLocked")
-                && configJson.has("teleportFormat");
+    private static boolean applyMissingConfigDefaults(JsonObject json, ConfigData config, ConfigData defaults) {
+        boolean changed = false;
+        if (!json.has("frequency")) { config.setFrequency(defaults.getFrequency()); changed = true; }
+        if (!json.has("hintRender")) { config.setHintRender(defaults.getHintRender()); changed = true; }
+        if (!json.has("titleStyle")) { config.setTitleStyle(defaults.getTitleStyle()); changed = true; }
+        if (!json.has("enabled")) { config.setEnabled(defaults.isEnabled()); changed = true; }
+        if (!json.has("recordKey")) { config.setRecordKey(defaults.getRecordKey()); changed = true; }
+        if (!json.has("titleSize")) { config.setTitleSize(defaults.getTitleSize()); changed = true; }
+        if (!json.has("subtitlesize") && !json.has("subtitleSize")) { config.setSubtitleSize(defaults.getSubtitleSize()); changed = true; }
+        if (!json.has("boundVizEnabled")) { config.setBoundVizEnabled(defaults.isBoundVizEnabled()); changed = true; }
+        if (!json.has("xaeroMinimapOverlayEnabled")) { config.setXaeroMinimapOverlayEnabled(defaults.isXaeroMinimapOverlayEnabled()); changed = true; }
+        if (!json.has("xaeroWorldMapOverlayEnabled")) { config.setXaeroWorldMapOverlayEnabled(defaults.isXaeroWorldMapOverlayEnabled()); changed = true; }
+        if (!json.has("language")) { config.setLanguage(defaults.getLanguage()); changed = true; }
+        if (!json.has("languageLocked")) { config.setLanguageLocked(defaults.isLanguageLocked()); changed = true; }
+        if (!json.has("teleportFormat")) { config.setTeleportFormat(defaults.getTeleportFormat()); changed = true; }
+        if (changed) {
+            Areashint.LOGGER.info("检测到旧版个人配置，已保留现有设置并补充缺失字段: " + json.keySet());
+        }
+        return changed;
     }
     
     /**
@@ -366,6 +360,10 @@ public class FileManager {
                     "  // BoundVizEnabled: 边界可视化开关\n" +
                     "  // true: 显示域名边界, false: 隐藏域名边界\n" +
                     "  \"boundVizEnabled\": " + config.isBoundVizEnabled() + ",\n\n" +
+                    "  // XaeroMinimapOverlayEnabled: Xaero 小地图域名覆盖层开关\n" +
+                    "  \"xaeroMinimapOverlayEnabled\": " + config.isXaeroMinimapOverlayEnabled() + ",\n\n" +
+                    "  // XaeroWorldMapOverlayEnabled: Xaero 世界地图域名覆盖层开关\n" +
+                    "  \"xaeroWorldMapOverlayEnabled\": " + config.isXaeroWorldMapOverlayEnabled() + ",\n\n" +
                     "  // Language: 语言设置\n" +
                     "  // 对应 areas-hint/lang/ 文件夹中的语言文件名（不含.json后缀）\n" +
                     "  \"language\": \"" + (config.getLanguage() != null ? config.getLanguage() : "zh_cn") + "\",\n\n" +

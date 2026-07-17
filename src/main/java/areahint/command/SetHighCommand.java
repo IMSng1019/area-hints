@@ -4,11 +4,9 @@ import areahint.Areashint;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
 import areahint.i18n.ServerI18nManager;
+import areahint.management.AreaManagementCapabilityService;
 
 import areahint.network.Packets;
-import areahint.permission.PermissionNodes;
-import areahint.permission.PermissionService;
-import areahint.util.AreaPermissionUtil;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.command.ServerCommandSource;
@@ -251,24 +249,8 @@ public class SetHighCommand {
      * @return 是否可以编辑
      */
     private static boolean canEditAreaHeight(ServerPlayerEntity player, AreaData area, String playerName, List<AreaData> allAreas) {
-        return PermissionService.hasNodeOr(player, PermissionNodes.SETHIGH, () -> {
-            if (player.hasPermissionLevel(2)) {
-                return true;
-            }
-
-            if (AreaPermissionUtil.isSignedBy(area, playerName)) {
-                return true;
-            }
-
-            for (AreaData otherArea : allAreas) {
-                if (area.getName().equals(otherArea.getBaseName())
-                    && AreaPermissionUtil.isSignedBy(otherArea, playerName)) {
-                    return true;
-                }
-            }
-
-            return false;
-        });
+        return AreaManagementCapabilityService.canPerform(
+            player, AreaManagementCapabilityService.SET_HIGH, area, allAreas);
     }
     
     /**
@@ -521,4 +503,4 @@ public class SetHighCommand {
             Areashint.LOGGER.error("发送客户端命令时发生错误", e);
         }
     }
-} 
+}

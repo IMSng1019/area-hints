@@ -2,12 +2,11 @@ package areahint.expandarea;
 
 import areahint.data.AreaData;
 import areahint.file.FileManager;
+import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Packets;
 import areahint.network.ServerNetworking;
 import areahint.network.TranslatableMessage;
 import areahint.network.TranslatableMessage.Part;
-import areahint.permission.PermissionNodes;
-import areahint.permission.PermissionService;
 import areahint.util.AreaDataConverter;
 import areahint.util.AreaPermissionUtil;
 import com.google.gson.JsonObject;
@@ -51,6 +50,11 @@ public class ExpandAreaServerNetworking {
      */
     private static void handleExpandAreaRequest(ServerPlayerEntity player, String areaJsonString, String dimension) {
         try {
+            if (!AreaManagementCapabilityService.isCurrentDimension(player, dimension)) {
+                sendResponse(player, false, key("dividearea.error.dimension"));
+                return;
+            }
+
             // 解析接收到的域名数据
             JsonObject areaJson = JsonParser.parseString(areaJsonString).getAsJsonObject();
             AreaData expandedArea = AreaDataConverter.fromJsonObject(areaJson);
@@ -113,8 +117,8 @@ public class ExpandAreaServerNetworking {
      * @param existingAreas 目标维度的已存域名列表
      */
     private static boolean validatePermission(ServerPlayerEntity player, AreaData existingArea, List<AreaData> existingAreas) {
-        return PermissionService.hasNodeOr(player, PermissionNodes.EXPANDAREA,
-            () -> AreaPermissionUtil.canModifyArea(player, existingArea, existingAreas));
+        return AreaManagementCapabilityService.canPerform(
+            player, AreaManagementCapabilityService.EXPAND_AREA, existingArea, existingAreas);
     }
 
     /**

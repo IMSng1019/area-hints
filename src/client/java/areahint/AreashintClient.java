@@ -140,6 +140,10 @@ public class AreashintClient implements ClientModInitializer {
 		// 初始化i18n系统
 		areahint.i18n.I18nManager.init();
 
+		// 初始化 Xaero 可选兼容与世界地图域名管理协议
+		areahint.management.client.AreaManagementClient.register();
+		areahint.xaero.XaeroCompat.initialize();
+
 		// 注册统一的X键处理器
 		areahint.keyhandler.UnifiedKeyHandler.register();
 
@@ -417,6 +421,8 @@ public class AreashintClient implements ClientModInitializer {
 			areahint.log.AreaChangeTracker.reset();
 			areahint.description.DescriptionManager.getInstance().reset();
 			asyncAreaDetector.reset();
+			areahint.xaero.AreaOverlayRepository.getInstance().clear();
+			areahint.management.client.AreaManagementClient.clear();
 
 			LOGGER.info("世界文件夹管理器状态已清理");
 		});
@@ -428,10 +434,16 @@ public class AreashintClient implements ClientModInitializer {
 	private void registerTickEvents() {
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			ClientPlayerEntity player = client.player;
+			boolean justLeftWorld = !wasPlayerNull && (player == null || client.world == null);
 			
 			// 检测玩家状态变化（从null变为非null = 刚进入世界）
 			boolean justEnteredWorld = wasPlayerNull && (player != null && client.world != null);
 			wasPlayerNull = (player == null || client.world == null);
+			if (justLeftWorld) {
+				areahint.xaero.AreaOverlayRepository.getInstance().clear();
+				areahint.management.client.AreaManagementClient.clear();
+			}
+			areahint.management.client.AreaManagementClient.tick();
 			
 			if (player == null || client.world == null) {
 				return;

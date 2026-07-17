@@ -16,6 +16,9 @@ repositories {
 	maven { url 'https://maven.terraformersmc.com/' }
 }
 
+def xaeroMinimapJar = file('.deps/xaero/Xaeros_Minimap_25.2.0_Fabric_1.20.4.jar')
+def xaeroWorldMapJar = file('.deps/xaero/XaerosWorldMap_1.39.2_Fabric_1.20.4.jar')
+
 loom {
 	splitEnvironmentSourceSets()
 
@@ -47,6 +50,16 @@ dependencies {
 	}
 	compileOnly "net.luckperms:api:5.4"
 	compileOnly "de.bluecolored.bluemap:BlueMapAPI:2.7.2"
+
+	// Xaero 联动只在开发环境使用本地 jar，最终模组不会打包或重新分发这些文件。
+	if (xaeroMinimapJar.exists()) {
+		modCompileOnly files(xaeroMinimapJar)
+		modLocalRuntime files(xaeroMinimapJar)
+	}
+	if (xaeroWorldMapJar.exists()) {
+		modCompileOnly files(xaeroWorldMapJar)
+		modLocalRuntime files(xaeroWorldMapJar)
+	}
 
 	testImplementation platform("org.junit:junit-bom:5.12.2")
 	testImplementation "org.junit.jupiter:junit-jupiter"

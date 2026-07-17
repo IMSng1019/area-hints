@@ -1,5 +1,6 @@
 package areahint.dividearea;
 
+import areahint.commandui.CommandVisualLaunchContext;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
 import areahint.i18n.I18nManager;
@@ -25,6 +26,7 @@ public class DivideAreaManager {
     private DivideAreaUI ui;
     private State state = State.IDLE;
     private AreaData selectedArea;
+    private String selectedDimensionId;
     private List<Double[]> newVertices = new ArrayList<>();
     private boolean isActive = false;
     private boolean isRecording = false;
@@ -189,6 +191,9 @@ public class DivideAreaManager {
             return;
         }
         this.selectedArea = area;
+        // 锁定选择域名时的维度，切维度后仍携带旧维度交由服务端二次校验并拒绝。
+        this.selectedDimensionId = client.world == null ? null
+            : client.world.getRegistryKey().getValue().toString();
         sendMsg(I18nManager.translate("dividearea.prompt.area") + areahint.util.AreaDataConverter.getDisplayName(area), Formatting.GREEN);
         sendMsg(I18nManager.translate("dividearea.prompt.general_3") + areahint.keyhandler.UnifiedKeyHandler.getRecordKeyDisplayName() + I18nManager.translate("dividearea.message.vertex.record.divide"), Formatting.YELLOW);
         state = State.RECORDING_POINTS;
@@ -502,14 +507,12 @@ public class DivideAreaManager {
 
     private void sendToServer() {
         state = State.SAVING;
-        String dimension = null;
-        if (client.world != null)
-            dimension = client.world.getRegistryKey().getValue().toString();
-        if (dimension == null) {
+        if (selectedDimensionId == null) {
             sendMsg(I18nManager.translate("dividearea.error.dimension"), Formatting.RED);
             reset(); return;
         }
-        DivideAreaClientNetworking.sendDividedAreasToServer(area1Config, area2Config, selectedArea.getName(), dimension);
+        DivideAreaClientNetworking.sendDividedAreasToServer(
+            area1Config, area2Config, selectedArea.getName(), selectedDimensionId);
         sendMsg(I18nManager.translate("dividearea.message.divide_3"), Formatting.GREEN);
         reset();
     }
@@ -822,7 +825,8 @@ public class DivideAreaManager {
                 }
             }
         }
-        return result;
+        // 地图入口只补入服务端刚确认有权分割的目标，避免客户端权限缓存与 LuckPerms 结果不一致。
+        return CommandVisualLaunchContext.ensureTargetIncluded("dividearea", result, all);
     }
 
     private List<AreaData> loadAllAreas() {
@@ -858,6 +862,7 @@ public class DivideAreaManager {
         isActive = false;
         isRecording = false;
         selectedArea = null;
+        selectedDimensionId = null;
         newVertices.clear();
         area1Vertices = null;
         area2Vertices = null;

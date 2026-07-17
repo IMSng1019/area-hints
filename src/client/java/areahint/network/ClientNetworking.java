@@ -160,6 +160,7 @@ public class ClientNetworking {
                 Files.writeString(filePath, fileContent, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                 
                 AreashintClient.LOGGER.info("已接收并保存 " + dimensionName + " 的区域数据");
+				areahint.xaero.AreaOverlayRepository.getInstance().refreshDimension(dimensionName);
                 AreashintClient.LOGGER.info("[调试] 区域数据内容长度: " + fileContent.length() + " 字节");
                 if (fileContent.length() < 100) {
                     AreashintClient.LOGGER.info("[调试] 区域数据内容预览: " + fileContent);

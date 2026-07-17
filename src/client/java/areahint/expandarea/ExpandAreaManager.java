@@ -1,5 +1,6 @@
 package areahint.expandarea;
 
+import areahint.commandui.CommandVisualLaunchContext;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
 import areahint.i18n.I18nManager;
@@ -20,6 +21,7 @@ public class ExpandAreaManager {
     private static ExpandAreaManager instance;
     private MinecraftClient client;
     private String selectedAreaName;
+    private String selectedDimensionId;
     private AreaData selectedArea;
     private List<Double[]> newVertices;
     private boolean isRecording = false;
@@ -163,6 +165,7 @@ public class ExpandAreaManager {
         isRecording = false;
         selectedArea = null;
         selectedAreaName = null;
+        selectedDimensionId = null;
         newVertices.clear();
 
         // 清除边界可视化的临时顶点
@@ -206,7 +209,8 @@ public class ExpandAreaManager {
         }
         
         System.out.println("DEBUG: 找到 " + result.size() + " 个可修改的域名");
-        return result;
+        // 地图入口的目标已经由服务端授权，客户端只为本次流程补入该目标，最终写入仍由服务端复核。
+        return CommandVisualLaunchContext.ensureTargetIncluded("expandarea", result, allAreas);
     }
     
     /**
@@ -215,6 +219,9 @@ public class ExpandAreaManager {
     public void handleAreaSelection(AreaData selectedArea) {
         this.selectedArea = selectedArea;
         this.selectedAreaName = selectedArea.getName();
+        // 锁定选择域名时的维度，途中切换维度后服务端会拒绝旧维度请求而不会误改同名域名。
+        this.selectedDimensionId = client.world == null ? null
+            : client.world.getRegistryKey().getValue().toString();
         
         sendMessage(I18nManager.translate("dividearea.prompt.area") + areahint.util.AreaDataConverter.getDisplayName(selectedArea), Formatting.GREEN);
         sendMessage(I18nManager.translate("expandarea.button.area.record.save"), Formatting.GRAY);
@@ -336,18 +343,13 @@ public class ExpandAreaManager {
             AreaData expandedArea = createExpandedArea(fixedVertices, secondVertices, updatedAltitude);
 
             // 12. 获取当前维度信息
-            String currentDimension = null;
-            if (client.world != null) {
-                currentDimension = client.world.getRegistryKey().getValue().toString();
-            }
-
-            if (currentDimension == null) {
+            if (selectedDimensionId == null) {
                 sendMessage(I18nManager.translate("dividearea.error.dimension"), Formatting.RED);
                 return;
             }
 
             // 13. 发送给服务端
-            ExpandAreaClientNetworking.sendExpandedAreaToServer(expandedArea, currentDimension);
+            ExpandAreaClientNetworking.sendExpandedAreaToServer(expandedArea, selectedDimensionId);
 
             sendMessage(I18nManager.translate("expandarea.message.area.finish.expand"), Formatting.GREEN);
             
@@ -667,6 +669,7 @@ public class ExpandAreaManager {
      */
     public void reset() {
         this.selectedAreaName = null;
+        this.selectedDimensionId = null;
         this.selectedArea = null;
         this.newVertices.clear();
         this.isRecording = false;

@@ -2,6 +2,7 @@ package areahint.boundviz;
 
 import areahint.data.AreaData;
 import areahint.render.FlashColorHelper;
+import areahint.geometry.PolygonGeometry;
 import areahint.util.ColorUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
@@ -606,62 +607,6 @@ public class BoundVizRenderer {
     // ========== 耳切法三角剖分 ==========
 
     private static List<int[]> earClipTriangulate(List<AreaData.Vertex> polygon) {
-        int n = polygon.size();
-        List<int[]> triangles = new ArrayList<>();
-        if (n < 3) return triangles;
-
-        double area = 0;
-        for (int i = 0; i < n; i++) {
-            AreaData.Vertex c = polygon.get(i);
-            AreaData.Vertex nx = polygon.get((i + 1) % n);
-            area += c.getX() * nx.getZ() - nx.getX() * c.getZ();
-        }
-        boolean ccw = area > 0;
-
-        List<Integer> rem = new ArrayList<>();
-        for (int i = 0; i < n; i++) rem.add(i);
-
-        int safe = n * n;
-        while (rem.size() > 2 && safe-- > 0) {
-            boolean found = false;
-            for (int i = 0; i < rem.size(); i++) {
-                int pi = rem.get((i - 1 + rem.size()) % rem.size());
-                int ci = rem.get(i);
-                int ni = rem.get((i + 1) % rem.size());
-                if (!isEar(polygon, rem, pi, ci, ni, ccw)) continue;
-                triangles.add(new int[]{pi, ci, ni});
-                rem.remove(i);
-                found = true;
-                break;
-            }
-            if (!found) break;
-        }
-        return triangles;
-    }
-
-    private static boolean isEar(List<AreaData.Vertex> poly, List<Integer> rem,
-                                  int pi, int ci, int ni, boolean ccw) {
-        AreaData.Vertex a = poly.get(pi), b = poly.get(ci), c = poly.get(ni);
-        double cross = (b.getX() - a.getX()) * (c.getZ() - a.getZ())
-                     - (b.getZ() - a.getZ()) * (c.getX() - a.getX());
-        if (ccw ? cross <= 0 : cross >= 0) return false;
-        for (int idx : rem) {
-            if (idx == pi || idx == ci || idx == ni) continue;
-            if (pointInTriangle(poly.get(idx), a, b, c)) return false;
-        }
-        return true;
-    }
-
-    private static boolean pointInTriangle(AreaData.Vertex p,
-                                            AreaData.Vertex a, AreaData.Vertex b, AreaData.Vertex c) {
-        double d1 = sign(p, a, b), d2 = sign(p, b, c), d3 = sign(p, c, a);
-        boolean hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-        boolean hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
-        return !(hasNeg && hasPos);
-    }
-
-    private static double sign(AreaData.Vertex p1, AreaData.Vertex p2, AreaData.Vertex p3) {
-        return (p1.getX() - p3.getX()) * (p2.getZ() - p3.getZ())
-             - (p2.getX() - p3.getX()) * (p1.getZ() - p3.getZ());
+        return PolygonGeometry.triangulate(polygon);
     }
 }

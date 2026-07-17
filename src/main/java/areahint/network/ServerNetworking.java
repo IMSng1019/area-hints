@@ -4,9 +4,9 @@ import areahint.Areashint;
 import areahint.file.FileManager;
 import areahint.map.BlueMapCompat;
 import areahint.i18n.ServerI18nManager;
+import areahint.management.AreaManagementCapabilityService;
 import areahint.permission.PermissionNodes;
 import areahint.permission.PermissionService;
-import areahint.util.AreaPermissionUtil;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -401,6 +401,11 @@ public class ServerNetworking {
 
             Areashint.LOGGER.info(ServerI18nManager.translate("message.prompt.area.delete.list") + playerName + ServerI18nManager.translate("message.message.dimension_2") + dimension + ServerI18nManager.translate("message.message.general_21") + hasNode);
 
+            if (!AreaManagementCapabilityService.isCurrentDimension(player, dimension)) {
+                sendEmptyDeletableAreasList(player);
+                return;
+            }
+
             // 获取文件名
             String fileName = Packets.getFileNameForDimension(dimension);
             if (fileName == null) {
@@ -418,24 +423,9 @@ public class ServerNetworking {
 
             // 筛选可删除的域名
             for (areahint.data.AreaData area : allAreas) {
-                // 检查权限
-                boolean canDelete = PermissionService.hasNodeOr(player, PermissionNodes.DELETE,
-                    () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
-
-                if (canDelete) {
-                    // 检查是否有次级域名引用此域名
-                    boolean hasChildren = false;
-                    for (areahint.data.AreaData childArea : allAreas) {
-                        if (area.getName().equals(childArea.getBaseName())) {
-                            hasChildren = true;
-                            break;
-                        }
-                    }
-
-                    // 只有没有子域名的才能删除
-                    if (!hasChildren) {
-                        deletableAreas.add(area);
-                    }
+                if (AreaManagementCapabilityService.canPerform(
+                    player, AreaManagementCapabilityService.DELETE, area, allAreas)) {
+                    deletableAreas.add(area);
                 }
             }
 
@@ -487,6 +477,11 @@ public class ServerNetworking {
 
             Areashint.LOGGER.info(ServerI18nManager.translate("message.prompt.delete_3") + playerName + ServerI18nManager.translate("message.message.area_5") + areaName + ServerI18nManager.translate("message.message.dimension_2") + dimension);
 
+            if (!AreaManagementCapabilityService.isCurrentDimension(player, dimension)) {
+                sendDeleteResponse(player, false, key("message.message.dimension_12"), lit(dimension + "）"));
+                return;
+            }
+
             // 获取文件名
             String fileName = Packets.getFileNameForDimension(dimension);
             if (fileName == null) {
@@ -521,11 +516,20 @@ public class ServerNetworking {
 
             Areashint.LOGGER.info(ServerI18nManager.translate("message.message.area_11") + areaName + ServerI18nManager.translate("message.message.general_3") + targetArea.getSignature());
 
-            // 检查签名权限
-            final areahint.data.AreaData finalTargetArea = targetArea;
-            String signature = finalTargetArea.getSignature();
-            boolean canDelete = PermissionService.hasNodeOr(player, PermissionNodes.DELETE,
-                () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(finalTargetArea, playerName));
+            String signature = targetArea.getSignature();
+
+            // 检查是否有次级域名引用此域名
+            for (areahint.data.AreaData area : areas) {
+                if (areaName.equals(area.getBaseName())) {
+                    Areashint.LOGGER.warn(ServerI18nManager.translate("message.message.area_8") + areaName + ServerI18nManager.translate("message.message.area_4") + area.getName() + ServerI18nManager.translate("message.message.general_15"));
+                    sendDeleteResponse(player, false, key("message.message.area.delete_5"), lit(area.getName()), key("message.message.general_16"));
+                    return;
+                }
+            }
+
+            // 子域名状态先给出专用提示，随后使用统一能力服务复核实际删除权限。
+            boolean canDelete = AreaManagementCapabilityService.canPerform(
+                player, AreaManagementCapabilityService.DELETE, targetArea, areas);
             if (!canDelete) {
                 if (signature == null) {
                     Areashint.LOGGER.warn(ServerI18nManager.translate("message.message.general_28") + playerName + ServerI18nManager.translate("message.message.area.delete") + ServerI18nManager.translate("message.message.area.delete_4"));
@@ -538,15 +542,6 @@ public class ServerNetworking {
             }
             if (signature == null) {
                 Areashint.LOGGER.info(ServerI18nManager.translate("message.message.general_216") + playerName + ServerI18nManager.translate("message.message.area.delete_4"));
-            }
-
-            // 检查是否有次级域名引用此域名
-            for (areahint.data.AreaData area : areas) {
-                if (areaName.equals(area.getBaseName())) {
-                    Areashint.LOGGER.warn(ServerI18nManager.translate("message.message.area_8") + areaName + ServerI18nManager.translate("message.message.area_4") + area.getName() + ServerI18nManager.translate("message.message.general_15"));
-                    sendDeleteResponse(player, false, key("message.message.area.delete_5"), lit(area.getName()), key("message.message.general_16"));
-                    return;
-                }
             }
 
             // 执行删除

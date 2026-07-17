@@ -133,6 +133,14 @@ public class AreasHintConfigScreen extends Screen {
             draft.setBoundVizEnabled(!draft.isBoundVizEnabled());
             button.setMessage(onOffText(draft.isBoundVizEnabled()));
         }));
+        this.list.addButton("screen.areahint.config.xaero_minimap_overlay", onOffButton(draft.isXaeroMinimapOverlayEnabled(), button -> {
+            draft.setXaeroMinimapOverlayEnabled(!draft.isXaeroMinimapOverlayEnabled());
+            button.setMessage(onOffText(draft.isXaeroMinimapOverlayEnabled()));
+        }));
+        this.list.addButton("screen.areahint.config.xaero_world_map_overlay", onOffButton(draft.isXaeroWorldMapOverlayEnabled(), button -> {
+            draft.setXaeroWorldMapOverlayEnabled(!draft.isXaeroWorldMapOverlayEnabled());
+            button.setMessage(onOffText(draft.isXaeroWorldMapOverlayEnabled()));
+        }));
         this.list.addButton("screen.areahint.config.teleport_format", cycleButton(Text.literal(draft.getTeleportFormat()), button -> {
             draft.setTeleportFormat(nextValue(draft.getTeleportFormat(), TELEPORT_FORMATS));
             button.setMessage(Text.literal(draft.getTeleportFormat()));

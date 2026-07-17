@@ -2,12 +2,11 @@ package areahint.signature;
 
 import areahint.data.AreaData;
 import areahint.file.FileManager;
+import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Packets;
 import areahint.network.ServerNetworking;
 import areahint.network.TranslatableMessage;
 import areahint.network.TranslatableMessage.Part;
-import areahint.permission.PermissionNodes;
-import areahint.permission.PermissionService;
 import areahint.util.AreaPermissionUtil;
 import areahint.world.WorldFolderManager;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -71,6 +70,11 @@ public class SignatureServerNetworking {
                 return;
             }
 
+            if (!AreaManagementCapabilityService.isCurrentDimension(player, dimension)) {
+                sendResponse(player, false, key("signature.server.error.unknown_dimension"), lit(String.valueOf(dimension)));
+                return;
+            }
+
             String dimType = convertDimensionIdToType(dimension);
             String fileName = Packets.getFileNameForDimension(dimType);
             if (fileName == null) {
@@ -86,10 +90,10 @@ public class SignatureServerNetworking {
                 return;
             }
 
-            String node = "add".equals(normalizedOperation)
-                ? PermissionNodes.ADDSIGNATURE
-                : PermissionNodes.DELETESIGNATURE;
-            if (!PermissionService.hasNodeOr(player, node, () -> canModifySignatureArea(player, storedArea, areas))) {
+            String capability = "add".equals(normalizedOperation)
+                ? AreaManagementCapabilityService.ADD_SIGNATURE
+                : AreaManagementCapabilityService.DELETE_SIGNATURE;
+            if (!AreaManagementCapabilityService.canPerform(player, capability, storedArea, areas)) {
                 sendResponse(player, false, key("signature.server.error.no_permission"));
                 return;
             }
@@ -120,27 +124,6 @@ public class SignatureServerNetworking {
         } catch (Exception e) {
             sendResponse(player, false, key("signature.server.error.process"), lit(e.getMessage()));
         }
-    }
-
-    /**
-     * 签名扩展权限：
-     * 管理员可修改全部域名；普通玩家只能修改base-name指向了自己签名域名的下级域名。
-     */
-    private static boolean canModifySignatureArea(ServerPlayerEntity player, AreaData area, List<AreaData> allAreas) {
-        if (player == null || area == null) {
-            return false;
-        }
-        if (player.hasPermissionLevel(2)) {
-            return true;
-        }
-
-        String baseName = cleanText(area.getBaseName());
-        if (baseName == null) {
-            return false;
-        }
-
-        String playerName = player.getGameProfile().getName();
-        return AreaPermissionUtil.isBaseSignedByPlayer(baseName, allAreas, playerName);
     }
 
     private static String convertDimensionIdToType(String dimension) {

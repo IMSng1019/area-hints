@@ -6,6 +6,7 @@ import areahint.data.AreaData;
 import areahint.dimensional.DimensionalNameManager;
 import areahint.file.FileManager;
 import areahint.i18n.ServerI18nManager;
+import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Packets;
 import areahint.permission.PermissionNodes;
 import areahint.permission.PermissionService;
@@ -194,8 +195,8 @@ public final class DescriptionServerNetworking {
                 translate(player, "description.server.error.area_not_found", clean(areaName)), clean(areaName), "");
             return;
         }
-        if (!PermissionService.hasCommandPermission(player, PermissionNodes.ADD_DESCRIPTION, 0)
-            || !AreaPermissionUtil.canModifyArea(player, context.area(), context.allAreas())) {
+        if (!AreaManagementCapabilityService.canPerform(player,
+            AreaManagementCapabilityService.REPLACE_DESCRIPTION, context.area(), context.allAreas())) {
             sendEditResponse(player, TARGET_AREA, dimensionType, context.area().getName(), false,
                 translate(player, "description.server.error.no_modify_permission"), context.surfaceName(), "");
             return;
@@ -248,7 +249,9 @@ public final class DescriptionServerNetworking {
         if (dimensionType != null) {
             List<AreaData> areas = readAreas(dimensionType);
             String normalizedQuery = normalizeQuery(query);
-            boolean admin = player.hasPermissionLevel(2);
+            String capability = OPERATION_DELETE.equals(operation)
+                ? AreaManagementCapabilityService.DELETE_DESCRIPTION
+                : AreaManagementCapabilityService.ADD_DESCRIPTION;
 
             for (AreaData area : areas) {
                 if (area == null || area.getName() == null) {
@@ -258,7 +261,7 @@ public final class DescriptionServerNetworking {
                 if (!matches(normalizedQuery, area.getName(), surfaceName, area.getBaseName())) {
                     continue;
                 }
-                if (admin || AreaPermissionUtil.canModifyArea(player, area, areas)) {
+                if (AreaManagementCapabilityService.canPerform(player, capability, area, areas)) {
                     entries.add(new ListEntry(area.getName(), surfaceName, area.getLevel(), area.getBaseName(), area.getSignature(), dimensionType));
                 }
             }
@@ -319,8 +322,8 @@ public final class DescriptionServerNetworking {
             sendMutationResponse(player, false, translate(player, "description.server.error.area_not_found", clean(areaName)));
             return;
         }
-        if (!PermissionService.hasCommandPermission(player, PermissionNodes.ADD_DESCRIPTION, 0)
-            || !AreaPermissionUtil.canModifyArea(player, context.area(), context.allAreas())) {
+        if (!AreaManagementCapabilityService.canPerform(player,
+            AreaManagementCapabilityService.ADD_DESCRIPTION, context.area(), context.allAreas())) {
             sendMutationResponse(player, false, translate(player, "description.server.error.no_modify_permission"));
             return;
         }
@@ -375,8 +378,8 @@ public final class DescriptionServerNetworking {
             sendMutationResponse(player, false, translate(player, "description.server.error.area_not_found", clean(areaName)));
             return;
         }
-        if (!PermissionService.hasCommandPermission(player, PermissionNodes.DELETE_DESCRIPTION, 0)
-            || !AreaPermissionUtil.canModifyArea(player, context.area(), context.allAreas())) {
+        if (!AreaManagementCapabilityService.canPerform(player,
+            AreaManagementCapabilityService.DELETE_DESCRIPTION, context.area(), context.allAreas())) {
             sendMutationResponse(player, false, translate(player, "description.server.error.no_delete_permission"));
             return;
         }

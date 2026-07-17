@@ -1,5 +1,6 @@
 package areahint.addhint;
 
+import areahint.commandui.CommandVisualLaunchContext;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
 import areahint.i18n.I18nManager;
@@ -25,6 +26,7 @@ public class AddHintManager {
     private boolean isActive = false;
     private boolean isRecording = false;
     private AreaData selectedArea;
+    private String selectedDimensionId;
     private List<Double[]> newVertices = new ArrayList<>();
 
     public static AddHintManager getInstance() {
@@ -99,6 +101,9 @@ public class AddHintManager {
         }
 
         selectedArea = area;
+        // 锁定域名来自的维度，防止录点途中切维度后误写新维度中的同名域名。
+        selectedDimensionId = client.world == null ? null
+            : client.world.getRegistryKey().getValue().toString();
         isRecording = true;
         newVertices.clear();
 
@@ -168,11 +173,13 @@ public class AddHintManager {
             selectedArea.setVertices(vertices);
             selectedArea.setSecondVertices(secondVertices);
 
-            // 获取当前维度
-            String dimension = client.world.getRegistryKey().getValue().toString();
+            if (selectedDimensionId == null) {
+                client.player.sendMessage(Text.of(I18nManager.translate("dividearea.error.dimension")), false);
+                return;
+            }
 
             // 发送到服务端
-            AddHintClientNetworking.sendToServer(selectedArea, dimension);
+            AddHintClientNetworking.sendToServer(selectedArea, selectedDimensionId);
 
             client.player.sendMessage(Text.of(I18nManager.translate("addhint.message.area") + selectedArea.getName() + I18nManager.translate("addhint.message.vertex_2")), false);
 
@@ -199,6 +206,7 @@ public class AddHintManager {
         isActive = false;
         isRecording = false;
         selectedArea = null;
+        selectedDimensionId = null;
         newVertices.clear();
         areahint.boundviz.BoundVizManager.getInstance().clearTemporaryVertices();
     }
@@ -269,7 +277,8 @@ public class AddHintManager {
                 }
             }
         }
-        return result;
+        // 地图管理入口的目标已经过能力查询，只为当前上下文补入该目标。
+        return CommandVisualLaunchContext.ensureTargetIncluded("addhint", result, allAreas);
     }
 
     private AreaData findAreaByName(String name, List<AreaData> areas) {

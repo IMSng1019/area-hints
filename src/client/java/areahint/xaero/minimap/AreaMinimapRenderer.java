@@ -1,0 +1,304 @@
+package areahint.xaero.minimap;
+
+import areahint.config.ClientConfig;
+import areahint.xaero.AreaOverlayColorResolver;
+import areahint.xaero.AreaOverlayRepository;
+import areahint.xaero.AreaOverlayRepository.OverlayArea;
+import areahint.xaero.AreaOverlayRepository.Point;
+import areahint.xaero.AreaOverlayRepository.Triangle;
+import areahint.xaero.OverlayRenderHelper;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.text.Text;
+import net.minecraft.util.math.Vec3d;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import xaero.common.graphics.renderer.multitexture.MultiTextureRenderTypeRendererProvider;
+import xaero.hud.minimap.element.render.MinimapElementRenderInfo;
+import xaero.hud.minimap.element.render.MinimapElementRenderLocation;
+import xaero.hud.minimap.element.render.MinimapElementRenderer;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElement, AreaMinimapContext> {
+    private static final int CIRCLE_CLIP_SEGMENTS = 64;
+    private static final float CIRCLE_LINE_INSET = 0.75F;
+
+    AreaMinimapRenderer() {
+        this(new AreaMinimapContext());
+    }
+
+    private AreaMinimapRenderer(AreaMinimapContext context) {
+        super(new AreaMinimapReader(), new AreaMinimapProvider(), context);
+    }
+
+    @Override
+    public void preRender(MinimapElementRenderInfo renderInfo, VertexConsumerProvider.Immediate immediate,
+                          MultiTextureRenderTypeRendererProvider multiTextureProvider) {
+        immediate.draw();
+        context.active = false;
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (!ClientConfig.isXaeroMinimapOverlayEnabled() || client == null || client.world == null
+            || renderInfo == null || renderInfo.mapDimension == null || renderInfo.renderPos == null) {
+            return;
+        }
+
+        context.dimensionId = renderInfo.mapDimension.getValue().toString();
+        if (!context.dimensionId.equals(client.world.getRegistryKey().getValue().toString())) {
+            return;
+        }
+
+        Vec3d renderPos = renderInfo.renderPos;
+        context.renderX = renderPos.x;
+        context.renderY = renderPos.y;
+        context.renderZ = renderPos.z;
+        context.backgroundCoordinateScale = renderInfo.backgroundCoordinateScale;
+        context.transform = XaeroMinimapBridge.captureTransform();
+        if (!context.transform.valid()) {
+            return;
+        }
+
+        double radius = context.transform.worldRadius();
+        List<OverlayArea> visible = new ArrayList<>();
+        List<OverlayArea> containing = new ArrayList<>();
+        for (OverlayArea area : AreaOverlayRepository.getInstance().getSnapshot(context.dimensionId).areas()) {
+            if (!area.isVisibleAt(context.renderY)) {
+                continue;
+            }
+            if (area.maxX() >= context.renderX - radius && area.minX() <= context.renderX + radius
+                && area.maxZ() >= context.renderZ - radius && area.minZ() <= context.renderZ + radius) {
+                visible.add(area);
+            }
+            if (area.contains(context.renderX, context.renderZ)) {
+                containing.add(area);
+            }
+        }
+        containing.sort(Comparator.comparingInt(OverlayArea::level).reversed());
+        context.visibleAreas = List.copyOf(visible);
+        context.deepestArea = containing.isEmpty() ? null : containing.get(0);
+        context.active = !visible.isEmpty();
+        if (context.active) {
+            OverlayRenderHelper.beginOverlay();
+        }
+    }
+
+    @Override
+    public void postRender(MinimapElementRenderInfo renderInfo, VertexConsumerProvider.Immediate immediate,
+                           MultiTextureRenderTypeRendererProvider multiTextureProvider) {
+        if (context.active) {
+            OverlayRenderHelper.endOverlay();
+        }
+    }
+
+    @Override
+    public boolean renderElement(AreaMinimapElement element, boolean outOfBounds, boolean highlighted,
+                                 double depth, float optionalScale, double partialX, double partialZ,
+                                 MinimapElementRenderInfo renderInfo, DrawContext drawContext,
+                                 VertexConsumerProvider.Immediate immediate) {
+        MatrixStack matrices = drawContext.getMatrices();
+        matrices.push();
+        matrices.translate(partialX, partialZ, depth);
+        Matrix4f matrix = matrices.peek().getPositionMatrix();
+        Vector3f origin = matrix.transformPosition(new Vector3f());
+        int halfWidth = context.transform.halfViewW();
+        int halfHeight = context.transform.halfViewH();
+        drawContext.enableScissor((int) Math.floor(origin.x - halfWidth), (int) Math.floor(origin.y - halfHeight),
+            (int) Math.ceil(origin.x + halfWidth), (int) Math.ceil(origin.y + halfHeight));
+
+        long now = System.currentTimeMillis();
+        if (context.deepestArea != null) {
+            drawAreaFill(matrix, context.deepestArea, AreaOverlayColorResolver.resolve(context.deepestArea, now));
+        }
+        for (OverlayArea area : context.visibleAreas) {
+            drawAreaBoundary(matrix, area, AreaOverlayColorResolver.resolve(area, now));
+        }
+        renderDeepestName(drawContext, context.deepestArea, now);
+
+        drawContext.disableScissor();
+        matrices.pop();
+        return true;
+    }
+
+    @Override
+    public boolean shouldRender(MinimapElementRenderLocation location) {
+        return location == MinimapElementRenderLocation.OVER_MINIMAP;
+    }
+
+    @Override
+    public int getOrder() {
+        return 40;
+    }
+
+    private void drawAreaFill(Matrix4f matrix, OverlayArea area, int color) {
+        List<float[]> triangles = new ArrayList<>();
+        for (Triangle triangle : area.triangles()) {
+            float[] first = transform(area.vertices().get(triangle.first()));
+            float[] second = transform(area.vertices().get(triangle.second()));
+            float[] third = transform(area.vertices().get(triangle.third()));
+            if (context.transform.circle()) {
+                addCircleClippedTriangle(triangles, first, second, third, context.transform.halfViewW());
+            } else {
+                triangles.add(new float[]{first[0], first[1], second[0], second[1], third[0], third[1]});
+            }
+        }
+        OverlayRenderHelper.drawTriangles(matrix, triangles, color, 0.23F, 0.0F);
+    }
+
+    private void drawAreaBoundary(Matrix4f matrix, OverlayArea area, int color) {
+        List<float[]> lines = new ArrayList<>();
+        for (int i = 0; i < area.vertices().size(); i++) {
+            float[] first = transform(area.vertices().get(i));
+            float[] second = transform(area.vertices().get((i + 1) % area.vertices().size()));
+            if (context.transform.circle()) {
+                float radius = Math.max(0.0F, context.transform.halfViewW() - CIRCLE_LINE_INSET);
+                float[] clipped = clipLineToCircle(first, second, radius);
+                if (clipped != null) {
+                    lines.add(clipped);
+                }
+            } else {
+                lines.add(new float[]{first[0], first[1], second[0], second[1]});
+            }
+        }
+        OverlayRenderHelper.drawLines(matrix, lines, color, 0.9F, 0.01F);
+    }
+
+    private void renderDeepestName(DrawContext drawContext, OverlayArea area, long now) {
+        if (area == null) {
+            return;
+        }
+        float[] center = transform(new Point(area.centerX(), area.centerZ()));
+        net.minecraft.client.font.TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+        String name = area.displayName();
+        int maxTextWidth = Math.max(16, context.transform.halfViewW() * 2 - 16);
+        if (textRenderer.getWidth(name) > maxTextWidth) {
+            String suffix = "...";
+            name = textRenderer.trimToWidth(name,
+                Math.max(1, maxTextWidth - textRenderer.getWidth(suffix))) + suffix;
+        }
+        int width = textRenderer.getWidth(name);
+        if (context.transform.circle()) {
+            // 用文字外接矩形的半对角线收缩可用半径，确保完整名称不会进入圆形小地图四角。
+            float textExtent = (float) Math.hypot(width / 2.0F, 5.0F);
+            float availableRadius = Math.max(0.0F,
+                context.transform.halfViewW() - 4.0F - textExtent);
+            float distance = (float) Math.hypot(center[0], center[1]);
+            if (distance > availableRadius && distance > 1.0E-4F) {
+                float scale = availableRadius / distance;
+                center[0] *= scale;
+                center[1] *= scale;
+            }
+        } else {
+            float maxX = Math.max(0.0F, context.transform.halfViewW() - 8.0F - width / 2.0F);
+            float maxY = Math.max(4.0F, context.transform.halfViewH() - 8.0F);
+            center[0] = Math.max(-maxX, Math.min(maxX, center[0]));
+            center[1] = Math.max(-maxY, Math.min(maxY, center[1]));
+        }
+        int color = 0xFF000000 | AreaOverlayColorResolver.resolve(area, now);
+        drawContext.drawTextWithShadow(textRenderer, Text.literal(name),
+            Math.round(center[0] - width / 2.0F), Math.round(center[1] - 4.0F), color);
+    }
+
+    private void addCircleClippedTriangle(List<float[]> output, float[] first, float[] second,
+                                          float[] third, float radius) {
+        if (radius <= 0.0F) {
+            return;
+        }
+        if (isInsideCircle(first, radius) && isInsideCircle(second, radius)
+            && isInsideCircle(third, radius)) {
+            output.add(new float[]{first[0], first[1], second[0], second[1], third[0], third[1]});
+            return;
+        }
+
+        List<float[]> polygon = new ArrayList<>(List.of(first, second, third));
+        double apothem = radius * Math.cos(Math.PI / CIRCLE_CLIP_SEGMENTS);
+        // 使用内接正六十四边形逐边裁剪，每个输出三角形都严格留在 Xaero 的可见圆内。
+        for (int edge = 0; edge < CIRCLE_CLIP_SEGMENTS && !polygon.isEmpty(); edge++) {
+            double angle = Math.PI * 2.0D * (edge + 0.5D) / CIRCLE_CLIP_SEGMENTS;
+            polygon = clipAgainstHalfPlane(polygon, Math.cos(angle), Math.sin(angle), apothem);
+        }
+        for (int i = 1; i + 1 < polygon.size(); i++) {
+            float[] point = polygon.get(i);
+            float[] next = polygon.get(i + 1);
+            output.add(new float[]{polygon.get(0)[0], polygon.get(0)[1],
+                point[0], point[1], next[0], next[1]});
+        }
+    }
+
+    private List<float[]> clipAgainstHalfPlane(List<float[]> polygon, double normalX,
+                                                double normalY, double limit) {
+        List<float[]> clipped = new ArrayList<>(polygon.size() + 1);
+        float[] previous = polygon.get(polygon.size() - 1);
+        double previousDistance = previous[0] * normalX + previous[1] * normalY - limit;
+        boolean previousInside = previousDistance <= 1.0E-4D;
+        for (float[] current : polygon) {
+            double currentDistance = current[0] * normalX + current[1] * normalY - limit;
+            boolean currentInside = currentDistance <= 1.0E-4D;
+            if (currentInside != previousInside) {
+                double denominator = previousDistance - currentDistance;
+                if (Math.abs(denominator) > 1.0E-8D) {
+                    double ratio = previousDistance / denominator;
+                    clipped.add(new float[]{
+                        (float) (previous[0] + (current[0] - previous[0]) * ratio),
+                        (float) (previous[1] + (current[1] - previous[1]) * ratio)
+                    });
+                }
+            }
+            if (currentInside) {
+                clipped.add(current);
+            }
+            previous = current;
+            previousDistance = currentDistance;
+            previousInside = currentInside;
+        }
+        return clipped;
+    }
+
+    private float[] clipLineToCircle(float[] first, float[] second, float radius) {
+        if (radius <= 0.0F) {
+            return null;
+        }
+        if (isInsideCircle(first, radius) && isInsideCircle(second, radius)) {
+            return new float[]{first[0], first[1], second[0], second[1]};
+        }
+
+        double deltaX = second[0] - first[0];
+        double deltaY = second[1] - first[1];
+        double quadratic = deltaX * deltaX + deltaY * deltaY;
+        if (quadratic < 1.0E-8D) {
+            return null;
+        }
+        double linear = 2.0D * (first[0] * deltaX + first[1] * deltaY);
+        double constant = first[0] * first[0] + first[1] * first[1] - radius * radius;
+        double discriminant = linear * linear - 4.0D * quadratic * constant;
+        if (discriminant < 0.0D) {
+            return null;
+        }
+        double root = Math.sqrt(discriminant);
+        double enter = Math.max(0.0D, (-linear - root) / (2.0D * quadratic));
+        double exit = Math.min(1.0D, (-linear + root) / (2.0D * quadratic));
+        if (enter > exit) {
+            return null;
+        }
+        return new float[]{
+            (float) (first[0] + deltaX * enter), (float) (first[1] + deltaY * enter),
+            (float) (first[0] + deltaX * exit), (float) (first[1] + deltaY * exit)
+        };
+    }
+
+    private boolean isInsideCircle(float[] point, float radius) {
+        return point[0] * point[0] + point[1] * point[1] <= radius * radius + 1.0E-3F;
+    }
+
+    private float[] transform(Point point) {
+        double deltaX = point.x() - context.renderX;
+        double deltaZ = point.z() - context.renderZ;
+        // 与 Xaero 25.2.0 的 translatePosition 保持完全相同的旋转和缩放顺序。
+        double screenX = (deltaX * context.transform.ps() - deltaZ * context.transform.pc()) * context.transform.zoom();
+        double screenY = (deltaX * context.transform.pc() + deltaZ * context.transform.ps()) * context.transform.zoom();
+        return new float[]{(float) screenX, (float) screenY};
+    }
+}

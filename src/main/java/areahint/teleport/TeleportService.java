@@ -4,6 +4,7 @@ import areahint.Areashint;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
 import areahint.i18n.ServerI18nManager;
+import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Packets;
 import areahint.permission.PermissionNodes;
 import areahint.permission.PermissionService;
@@ -74,6 +75,10 @@ public final class TeleportService {
         AreaData area = findArea(areas, areaName.trim());
         if (area == null) {
             sendResponse(player, false, translate(player, "teleport.server.error.area_not_found", areaName));
+            return;
+        }
+        if (!AreaManagementCapabilityService.canPerform(player, normalizedMode, area, areas)) {
+            sendResponse(player, false, translate(player, "teleport.server.error.no_permission"));
             return;
         }
 

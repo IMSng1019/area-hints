@@ -28,6 +28,7 @@ public abstract class CommandWizardScreen extends CommandUiScreen {
             return;
         }
         this.cancelHandled = true;
+        CommandVisualLaunchContext.clear();
         if (this.cancelAction != null) {
             this.cancelAction.run();
         }

@@ -5,10 +5,9 @@ import areahint.data.AreaData;
 import areahint.file.FileManager;
 import areahint.file.JsonHelper;
 import areahint.i18n.ServerI18nManager;
+import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Packets;
 import areahint.network.ServerNetworking;
-import areahint.permission.PermissionNodes;
-import areahint.permission.PermissionService;
 import areahint.util.AreaPermissionUtil;
 import areahint.util.ColorUtil;
 import com.mojang.brigadier.Command;
@@ -125,6 +124,11 @@ public class SubtitleCommand {
     private static void handleSubtitleMutation(ServerPlayerEntity player, String mutation, String areaName,
                                                String value, String dimension, String extraValue) {
         try {
+            if (!AreaManagementCapabilityService.isCurrentDimension(player, dimension)) {
+                sendResponse(player, false, translate(player, "subtitle.server.error.invalid_dimension", dimension));
+                return;
+            }
+
             String fileName = Packets.getFileNameForDimension(dimension);
             if (fileName == null) {
                 sendResponse(player, false, translate(player, "subtitle.server.error.invalid_dimension", dimension));
@@ -186,12 +190,11 @@ public class SubtitleCommand {
     }
 
     private static void handleDeleteSubtitle(ServerPlayerEntity player, AreaData targetArea, List<AreaData> allAreas) {
-        if (!canOperate(player, targetArea, allAreas, SubtitlePermissionMode.DELETE_LIKE)) {
-            throw new IllegalStateException(translate(player, "subtitle.server.error.no_delete_permission"));
-        }
-
         if (!targetArea.hasSubtitle()) {
             throw new IllegalStateException(translate(player, "subtitle.server.error.no_subtitle"));
+        }
+        if (!canOperate(player, targetArea, allAreas, SubtitlePermissionMode.DELETE_LIKE)) {
+            throw new IllegalStateException(translate(player, "subtitle.server.error.no_delete_permission"));
         }
 
         targetArea.setSubtitle(null);
@@ -200,12 +203,11 @@ public class SubtitleCommand {
 
     private static void handleSetSubtitleColor(ServerPlayerEntity player, AreaData targetArea,
                                                List<AreaData> allAreas, String rawColor) {
-        if (!canOperate(player, targetArea, allAreas, SubtitlePermissionMode.COLOR_BY_REFERENCE)) {
-            throw new IllegalStateException(translate(player, "subtitle.server.error.no_color_permission"));
-        }
-
         if (!targetArea.hasSubtitle()) {
             throw new IllegalStateException(translate(player, "subtitle.server.error.no_subtitle_for_color"));
+        }
+        if (!canOperate(player, targetArea, allAreas, SubtitlePermissionMode.COLOR_BY_REFERENCE)) {
+            throw new IllegalStateException(translate(player, "subtitle.server.error.no_color_permission"));
         }
 
         String normalizedColor = ColorUtil.normalizeColor(rawColor);
@@ -218,20 +220,12 @@ public class SubtitleCommand {
 
     private static boolean canOperate(ServerPlayerEntity player, AreaData area, List<AreaData> allAreas,
                                       SubtitlePermissionMode permissionMode) {
-        String playerName = player.getName().getString();
-        switch (permissionMode) {
-            case DELETE_LIKE:
-                // deletesubtitle 对齐 delete 的权限口径：管理员或该域名签名者。
-                return PermissionService.hasNodeOr(player, PermissionNodes.DELETE_SUBTITLE,
-                    () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
-            case COLOR_BY_REFERENCE:
-                return PermissionService.hasNodeOr(player, PermissionNodes.REPLACE_SUBTITLE_COLOR,
-                    () -> AreaPermissionUtil.canModifyArea(player, area, allAreas));
-            case MODIFY_BY_REFERENCE:
-            default:
-                return PermissionService.hasNodeOr(player, PermissionNodes.ADD_SUBTITLE,
-                    () -> AreaPermissionUtil.canModifyArea(player, area, allAreas));
-        }
+        String operation = switch (permissionMode) {
+            case DELETE_LIKE -> AreaManagementCapabilityService.DELETE_SUBTITLE;
+            case COLOR_BY_REFERENCE -> AreaManagementCapabilityService.REPLACE_SUBTITLE_COLOR;
+            case MODIFY_BY_REFERENCE -> AreaManagementCapabilityService.ADD_SUBTITLE;
+        };
+        return AreaManagementCapabilityService.canPerform(player, operation, area, allAreas);
     }
 
     private static void sendAreaList(ServerPlayerEntity player, String action, String dimension, List<AreaData> areas) {

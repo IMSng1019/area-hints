@@ -101,6 +101,10 @@ public class Packets {
     // 语言同步包ID
     public static final Identifier C2S_LANGUAGE_SYNC = new Identifier(Areashint.MOD_ID, "c2s_language_sync");
 
+    // Xaero 世界地图域名管理能力查询
+    public static final Identifier C2S_AREA_MANAGEMENT_CAPABILITIES = new Identifier(Areashint.MOD_ID, "c2s_area_management_capabilities");
+    public static final Identifier S2C_AREA_MANAGEMENT_CAPABILITIES = new Identifier(Areashint.MOD_ID, "s2c_area_management_capabilities");
+
     // Description功能相关的包ID
     public static final Identifier C2S_DESCRIPTION_QUERY = new Identifier(Areashint.MOD_ID, "c2s_description_query");
     public static final Identifier C2S_DESCRIPTION_CURRENT_QUERY = new Identifier(Areashint.MOD_ID, "c2s_description_current_query");

@@ -2,12 +2,11 @@ package areahint.dividearea;
 
 import areahint.data.AreaData;
 import areahint.file.FileManager;
+import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Packets;
 import areahint.network.ServerNetworking;
 import areahint.network.TranslatableMessage;
 import areahint.network.TranslatableMessage.Part;
-import areahint.permission.PermissionNodes;
-import areahint.permission.PermissionService;
 import areahint.util.AreaDataConverter;
 import areahint.util.AreaPermissionUtil;
 import com.google.gson.JsonParser;
@@ -44,6 +43,11 @@ public class DivideAreaServerNetworking {
 
     private static void handleDivideRequest(ServerPlayerEntity player, String a1Json, String a2Json, String origName, String dimension) {
         try {
+            if (!AreaManagementCapabilityService.isCurrentDimension(player, dimension)) {
+                sendResponse(player, false, key("dividearea.error.dimension"));
+                return;
+            }
+
             AreaData area1 = AreaDataConverter.fromJsonObject(JsonParser.parseString(a1Json).getAsJsonObject());
             AreaData area2 = AreaDataConverter.fromJsonObject(JsonParser.parseString(a2Json).getAsJsonObject());
             String dimType = convertDimId(dimension);
@@ -69,10 +73,10 @@ public class DivideAreaServerNetworking {
     }
 
     private static boolean validatePermission(ServerPlayerEntity player, String areaName, String dimType) {
-        return PermissionService.hasNodeOr(player, PermissionNodes.DIVIDEAREA, () -> {
-            List<AreaData> areas = readAreas(dimType);
-            return AreaPermissionUtil.canModifyAreaName(player, areaName, areas);
-        });
+        List<AreaData> areas = readAreas(dimType);
+        AreaData area = AreaPermissionUtil.findByName(areas, areaName);
+        return AreaManagementCapabilityService.canPerform(
+            player, AreaManagementCapabilityService.DIVIDE_AREA, area, areas);
     }
 
     private static boolean saveDividedAreas(AreaData area1, AreaData area2, String origName, String dimension) {

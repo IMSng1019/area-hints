@@ -42,3 +42,4 @@ Do not edit generated build output in `build/`, runtime data in `run/`, or local
 - 我的提示词中涉及需要参考的对象都是可以正常运作的 你需要详细读取代码 理解它的实现
 - 添加或者修改翻译文件时必须将所有的翻译文件都进行对应语言的修改 不要偷懒 不要用英文批量替换 非不必要不进行翻译文件的行数的减少
 - 所有的子agent也是直接在main上修改，不需要创额外的worktree
+- 不要commit 直接在main上修改

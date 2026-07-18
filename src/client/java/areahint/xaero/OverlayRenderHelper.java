@@ -41,6 +41,8 @@ public final class OverlayRenderHelper {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableDepthTest();
+        // 域名顶点允许按任意方向记录，关闭背面剔除可避免某一种绕序的填充面被 Xaero 丢弃
+        RenderSystem.disableCull();
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
     }
 
@@ -97,7 +99,7 @@ public final class OverlayRenderHelper {
         BufferRenderer.drawWithGlobalProgram(buffer.end());
     }
 
-    private record RenderState(boolean blendEnabled, boolean depthEnabled,
+    private record RenderState(boolean blendEnabled, boolean depthEnabled, boolean cullEnabled,
                                int blendSourceRgb, int blendDestinationRgb,
                                int blendSourceAlpha, int blendDestinationAlpha,
                                ShaderProgram shader) {
@@ -105,6 +107,7 @@ public final class OverlayRenderHelper {
             return new RenderState(
                 GL11.glIsEnabled(GL11.GL_BLEND),
                 GL11.glIsEnabled(GL11.GL_DEPTH_TEST),
+                GL11.glIsEnabled(GL11.GL_CULL_FACE),
                 GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB),
                 GL11.glGetInteger(GL14.GL_BLEND_DST_RGB),
                 GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA),
@@ -124,6 +127,11 @@ public final class OverlayRenderHelper {
                 RenderSystem.enableDepthTest();
             } else {
                 RenderSystem.disableDepthTest();
+            }
+            if (cullEnabled) {
+                RenderSystem.enableCull();
+            } else {
+                RenderSystem.disableCull();
             }
             if (shader != null) {
                 RenderSystem.setShader(() -> shader);

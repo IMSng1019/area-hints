@@ -4,6 +4,7 @@ import areahint.AreashintClient;
 import areahint.config.ClientConfig;
 import areahint.data.AreaData;
 import areahint.log.AreaChangeTracker;
+import areahint.log.AreaChangeTracker.DetectionState;
 import areahint.xaero.AreaOverlayRepository.OverlayArea;
 import areahint.xaero.AreaOverlayRepository.OverlaySnapshot;
 import areahint.xaero.AreaOverlayRepository.Point;
@@ -11,6 +12,7 @@ import areahint.xaero.AreaOverlayRepository.Triangle;
 import net.minecraft.client.MinecraftClient;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,78 +25,125 @@ import java.util.Set;
  */
 public final class AreaOverlayFillResolver {
     private static final double GEOMETRY_EPSILON = 1.0E-7D;
+    private static final AreaOverlayFillResolver INSTANCE = new AreaOverlayFillResolver();
 
-    private long cachedRevision = Long.MIN_VALUE;
-    private String cachedDimensionId;
-    private String cachedActiveAreaName;
-    private FillPlan cachedPlan = FillPlan.empty();
-    private long cachedDetectionRevision = Long.MIN_VALUE;
-    private String cachedDetectionDimensionId;
-    private double cachedDetectionX = Double.NaN;
-    private double cachedDetectionY = Double.NaN;
-    private double cachedDetectionZ = Double.NaN;
-    private String cachedDetectedAreaName;
+    // 每个维度只保存最近计划，世界地图查看其他维度时不会挤掉小地图正在使用的计划
+    private final Map<String, CachedFillPlan> cachedPlans = new HashMap<>();
+    private long cachedFallbackSnapshotRevision = Long.MIN_VALUE;
+    private String cachedFallbackDimensionId;
+    private double cachedFallbackX = Double.NaN;
+    private double cachedFallbackY = Double.NaN;
+    private double cachedFallbackZ = Double.NaN;
+    private long cachedFallbackCheckTime = Long.MIN_VALUE;
+    private long fallbackStateRevision;
+    private String cachedFallbackAreaName;
+
+    private AreaOverlayFillResolver() {
+    }
+
+    public static AreaOverlayFillResolver getInstance() {
+        return INSTANCE;
+    }
 
     /**
-     * 读取主检测器的当前域名并复用最近一次差集结果，玩家仍在同一域名时不会重复计算网格。
+     * 读取模组已经完成的域名判定，并让两张地图复用同一个按维度缓存的差集结果。
      */
-    public FillPlan resolve(OverlaySnapshot snapshot, MinecraftClient client) {
+    public synchronized FillPlan resolve(OverlaySnapshot snapshot, MinecraftClient client) {
         OverlaySnapshot safeSnapshot = snapshot == null ? OverlaySnapshot.empty("") : snapshot;
         String playerDimensionId = client == null || client.world == null
             ? null : client.world.getRegistryKey().getValue().toString();
         String normalizedPlayerDimension = AreaOverlayRepository.normalizeDimensionId(playerDimensionId);
-        String activeAreaName = Objects.equals(safeSnapshot.dimensionId(), normalizedPlayerDimension)
-            ? resolveActiveAreaName(safeSnapshot, client, playerDimensionId) : null;
-        OverlayArea activeArea = activeAreaName != null
-            ? safeSnapshot.byName().get(activeAreaName) : null;
+        ActiveAreaState activeState = resolveActiveAreaState(safeSnapshot, client,
+            playerDimensionId, normalizedPlayerDimension);
+        OverlayArea activeArea = activeState.areaName() == null ? null
+            : safeSnapshot.byName().get(activeState.areaName());
         String resolvedActiveAreaName = activeArea == null ? null : activeArea.name();
-
-        if (cachedRevision == safeSnapshot.revision()
-            && Objects.equals(cachedDimensionId, safeSnapshot.dimensionId())
-            && Objects.equals(cachedActiveAreaName, resolvedActiveAreaName)) {
-            return cachedPlan;
+        FillCacheKey cacheKey = new FillCacheKey(safeSnapshot.revision(), safeSnapshot.dimensionId(),
+            activeState.dimensionId(), activeState.revision(), resolvedActiveAreaName);
+        CachedFillPlan cached = cachedPlans.get(safeSnapshot.dimensionId());
+        if (cached != null && cached.key().equals(cacheKey)) {
+            return cached.plan();
         }
 
-        cachedRevision = safeSnapshot.revision();
-        cachedDimensionId = safeSnapshot.dimensionId();
-        cachedActiveAreaName = resolvedActiveAreaName;
-        cachedPlan = buildPlan(safeSnapshot, activeArea);
-        return cachedPlan;
+        FillPlan plan = buildPlan(safeSnapshot, activeArea);
+        cachedPlans.put(safeSnapshot.dimensionId(), new CachedFillPlan(cacheKey, plan));
+        return plan;
     }
 
     /**
-     * 主功能开启时以 AreaChangeTracker 为权威，关闭时复用 AreaDetector 保持 Xaero 独立开关可用。
+     * 主功能开启时只消费 AreaChangeTracker，关闭时才复用一次受检测频率限制的备用判定。
      */
-    private String resolveActiveAreaName(OverlaySnapshot snapshot, MinecraftClient client,
-                                         String playerDimensionId) {
+    private ActiveAreaState resolveActiveAreaState(OverlaySnapshot snapshot, MinecraftClient client,
+                                                   String playerDimensionId,
+                                                   String normalizedPlayerDimension) {
         if (client == null || client.player == null || client.world == null) {
-            return null;
+            return ActiveAreaState.empty();
+        }
+        if (!Objects.equals(snapshot.dimensionId(), normalizedPlayerDimension)) {
+            return new ActiveAreaState(null, normalizedPlayerDimension, Long.MIN_VALUE);
         }
         if (ClientConfig.isEnabled()) {
-            AreaData currentArea = AreaChangeTracker.getCurrentAreaData();
-            return currentArea == null ? null : currentArea.getName();
+            DetectionState detectionState = AreaChangeTracker.getDetectionState();
+            String detectionDimension = AreaOverlayRepository.normalizeDimensionId(detectionState.dimensionId());
+            String activeAreaName = Objects.equals(detectionDimension, normalizedPlayerDimension)
+                ? detectionState.areaName() : null;
+            return new ActiveAreaState(activeAreaName, detectionDimension, detectionState.revision());
         }
 
+        return resolveFallbackActiveAreaState(snapshot, client, playerDimensionId,
+            normalizedPlayerDimension);
+    }
+
+    /**
+     * 独立覆盖层模式只在玩家移动且达到配置间隔后检测，两个 Xaero 渲染入口共享该结果。
+     */
+    private ActiveAreaState resolveFallbackActiveAreaState(OverlaySnapshot snapshot, MinecraftClient client,
+                                                            String playerDimensionId,
+                                                            String normalizedPlayerDimension) {
         double playerX = client.player.getX();
         double playerY = client.player.getY();
         double playerZ = client.player.getZ();
-        if (cachedDetectionRevision == snapshot.revision()
-            && Objects.equals(cachedDetectionDimensionId, playerDimensionId)
-            && Double.compare(cachedDetectionX, playerX) == 0
-            && Double.compare(cachedDetectionY, playerY) == 0
-            && Double.compare(cachedDetectionZ, playerZ) == 0) {
-            return cachedDetectedAreaName;
+        boolean sameSnapshotAndDimension = cachedFallbackSnapshotRevision == snapshot.revision()
+            && Objects.equals(cachedFallbackDimensionId, playerDimensionId);
+        boolean samePosition = Double.compare(cachedFallbackX, playerX) == 0
+            && Double.compare(cachedFallbackY, playerY) == 0
+            && Double.compare(cachedFallbackZ, playerZ) == 0;
+        if (sameSnapshotAndDimension && samePosition) {
+            return new ActiveAreaState(cachedFallbackAreaName,
+                normalizedPlayerDimension, fallbackStateRevision);
+        }
+
+        long now = System.currentTimeMillis();
+        long elapsed = cachedFallbackCheckTime == Long.MIN_VALUE
+            ? Long.MAX_VALUE : now - cachedFallbackCheckTime;
+        if (sameSnapshotAndDimension && elapsed >= 0L && elapsed < getDetectionIntervalMillis()) {
+            return new ActiveAreaState(cachedFallbackAreaName,
+                normalizedPlayerDimension, fallbackStateRevision);
         }
 
         AreaData detectedArea = AreashintClient.getAreaDetector() == null ? null
             : AreashintClient.getAreaDetector().findAreaForXaeroOverlay(playerX, playerY, playerZ);
-        cachedDetectionRevision = snapshot.revision();
-        cachedDetectionDimensionId = playerDimensionId;
-        cachedDetectionX = playerX;
-        cachedDetectionY = playerY;
-        cachedDetectionZ = playerZ;
-        cachedDetectedAreaName = detectedArea == null ? null : detectedArea.getName();
-        return cachedDetectedAreaName;
+        String detectedAreaName = detectedArea == null ? null : detectedArea.getName();
+        if (!Objects.equals(cachedFallbackDimensionId, playerDimensionId)
+                || !Objects.equals(cachedFallbackAreaName, detectedAreaName)) {
+            fallbackStateRevision++;
+        }
+        cachedFallbackSnapshotRevision = snapshot.revision();
+        cachedFallbackDimensionId = playerDimensionId;
+        cachedFallbackX = playerX;
+        cachedFallbackY = playerY;
+        cachedFallbackZ = playerZ;
+        cachedFallbackCheckTime = now;
+        cachedFallbackAreaName = detectedAreaName;
+        return new ActiveAreaState(detectedAreaName, normalizedPlayerDimension, fallbackStateRevision);
+    }
+
+    private long getDetectionIntervalMillis() {
+        double frequency = ClientConfig.getFrequency();
+        if (!Double.isFinite(frequency) || frequency <= 0.0D) {
+            return 1000L;
+        }
+        return Math.max(1L, Math.round(1000.0D / frequency));
     }
 
     private FillPlan buildPlan(OverlaySnapshot snapshot, OverlayArea activeArea) {
@@ -307,6 +356,20 @@ public final class AreaOverlayFillResolver {
     private double cross(Point first, Point second, Point third) {
         return (second.x() - first.x()) * (third.z() - first.z())
             - (second.z() - first.z()) * (third.x() - first.x());
+    }
+
+    private record ActiveAreaState(String areaName, String dimensionId, long revision) {
+        private static ActiveAreaState empty() {
+            return new ActiveAreaState(null, null, Long.MIN_VALUE);
+        }
+    }
+
+    private record FillCacheKey(long snapshotRevision, String snapshotDimensionId,
+                                String detectionDimensionId, long detectionRevision,
+                                String activeAreaName) {
+    }
+
+    private record CachedFillPlan(FillCacheKey key, FillPlan plan) {
     }
 
     public record FillTriangle(Point first, Point second, Point third) {

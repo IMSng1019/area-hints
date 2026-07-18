@@ -13,7 +13,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -43,7 +42,6 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
         immediate.draw();
         context.active = false;
         context.visibleAreas = List.of();
-        context.deepestArea = null;
         context.fillPlan = FillPlan.empty();
         MinecraftClient client = MinecraftClient.getInstance();
         if (!ClientConfig.isXaeroMinimapOverlayEnabled() || client == null || client.world == null
@@ -81,7 +79,6 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
 
         FillPlan fillPlan = context.fillResolver.resolve(snapshot, client);
         context.visibleAreas = List.copyOf(visible);
-        context.deepestArea = fillPlan.activeArea();
         context.fillPlan = fillPlan;
         context.active = !visible.isEmpty();
         if (context.active) {
@@ -121,7 +118,6 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
         for (OverlayArea area : context.visibleAreas) {
             drawAreaBoundary(matrix, area, AreaOverlayColorResolver.resolve(area, now));
         }
-        renderDeepestName(drawContext, context.deepestArea, now);
 
         drawContext.disableScissor();
         matrices.pop();
@@ -175,55 +171,6 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
             }
         }
         OverlayRenderHelper.drawLines(matrix, lines, color, 0.9F, 0.01F);
-    }
-
-    private void renderDeepestName(DrawContext drawContext, OverlayArea area, long now) {
-        if (area == null) {
-            return;
-        }
-        float[] center = transform(new Point(area.centerX(), area.centerZ()));
-        net.minecraft.client.font.TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
-        String name = area.displayName();
-        float nameScale = OverlayRenderHelper.AREA_NAME_SCALE;
-        int availableScreenWidth = Math.max(1, context.transform.halfViewW() * 2 - 16);
-        int maxTextWidth = Math.max(1, (int) Math.floor(availableScreenWidth / nameScale));
-        if (textRenderer.getWidth(name) > maxTextWidth) {
-            String suffix = "...";
-            int suffixWidth = textRenderer.getWidth(suffix);
-            name = suffixWidth < maxTextWidth
-                ? textRenderer.trimToWidth(name, maxTextWidth - suffixWidth) + suffix
-                : textRenderer.trimToWidth(name, maxTextWidth);
-        }
-        int width = textRenderer.getWidth(name);
-        float scaledWidth = width * nameScale;
-        float scaledHeight = textRenderer.fontHeight * nameScale;
-        if (context.transform.circle()) {
-            // 用文字外接矩形的半对角线收缩可用半径，确保完整名称不会进入圆形小地图四角。
-            float textExtent = (float) Math.hypot(scaledWidth / 2.0F, scaledHeight / 2.0F);
-            float availableRadius = Math.max(0.0F,
-                context.transform.halfViewW() - 4.0F - textExtent);
-            float distance = (float) Math.hypot(center[0], center[1]);
-            if (distance > availableRadius && distance > 1.0E-4F) {
-                float scale = availableRadius / distance;
-                center[0] *= scale;
-                center[1] *= scale;
-            }
-        } else {
-            float maxX = Math.max(0.0F,
-                context.transform.halfViewW() - 8.0F - scaledWidth / 2.0F);
-            float maxY = Math.max(0.0F,
-                context.transform.halfViewH() - 8.0F - scaledHeight / 2.0F);
-            center[0] = Math.max(-maxX, Math.min(maxX, center[0]));
-            center[1] = Math.max(-maxY, Math.min(maxY, center[1]));
-        }
-        int color = 0xFF000000 | AreaOverlayColorResolver.resolve(area, now);
-        MatrixStack matrices = drawContext.getMatrices();
-        matrices.push();
-        matrices.translate(Math.round(center[0]), Math.round(center[1]), 0.0D);
-        matrices.scale(nameScale, nameScale, 1.0F);
-        drawContext.drawTextWithShadow(textRenderer, Text.literal(name),
-            -width / 2, -textRenderer.fontHeight / 2, color);
-        matrices.pop();
     }
 
     private void addCircleClippedTriangle(List<float[]> output, float[] first, float[] second,

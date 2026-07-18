@@ -7,7 +7,7 @@ import areahint.xaero.AreaOverlayRepository.OverlayArea;
 import java.util.List;
 
 final class AreaWorldMapRenderContext {
-    final AreaOverlayFillResolver fillResolver = new AreaOverlayFillResolver();
+    final AreaOverlayFillResolver fillResolver = AreaOverlayFillResolver.getInstance();
     String dimensionId;
     List<OverlayArea> areas = List.of();
     FillPlan fillPlan = FillPlan.empty();

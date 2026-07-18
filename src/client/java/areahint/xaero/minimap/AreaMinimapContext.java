@@ -7,7 +7,7 @@ import areahint.xaero.AreaOverlayRepository.OverlayArea;
 import java.util.List;
 
 final class AreaMinimapContext {
-    final AreaOverlayFillResolver fillResolver = new AreaOverlayFillResolver();
+    final AreaOverlayFillResolver fillResolver = AreaOverlayFillResolver.getInstance();
     boolean active;
     String dimensionId;
     double renderX;
@@ -15,7 +15,6 @@ final class AreaMinimapContext {
     double renderZ;
     double backgroundCoordinateScale = 1.0D;
     List<OverlayArea> visibleAreas = List.of();
-    OverlayArea deepestArea;
     FillPlan fillPlan = FillPlan.empty();
     XaeroMinimapBridge.TransformState transform = XaeroMinimapBridge.TransformState.EMPTY;
 }

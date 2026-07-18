@@ -26,7 +26,7 @@ import java.util.List;
 
 final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElement, AreaMinimapContext> {
     private static final int CIRCLE_CLIP_SEGMENTS = 64;
-    private static final float CIRCLE_LINE_INSET = 0.75F;
+    private static final float VIEW_LINE_INSET = 0.75F;
 
     AreaMinimapRenderer() {
         this(new AreaMinimapContext());
@@ -110,8 +110,9 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
             (int) Math.ceil(origin.x + halfWidth), (int) Math.ceil(origin.y + halfHeight));
 
         long now = System.currentTimeMillis();
-        if (context.deepestArea != null) {
-            drawAreaFill(matrix, context.deepestArea, AreaOverlayColorResolver.resolve(context.deepestArea, now));
+        // 先填充所有可见域名，再统一绘制边界，避免后绘制的填充遮住已有边线。
+        for (OverlayArea area : context.visibleAreas) {
+            drawAreaFill(matrix, area, AreaOverlayColorResolver.resolve(area, now));
         }
         for (OverlayArea area : context.visibleAreas) {
             drawAreaBoundary(matrix, area, AreaOverlayColorResolver.resolve(area, now));
@@ -142,7 +143,8 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
             if (context.transform.circle()) {
                 addCircleClippedTriangle(triangles, first, second, third, context.transform.halfViewW());
             } else {
-                triangles.add(new float[]{first[0], first[1], second[0], second[1], third[0], third[1]});
+                addRectangleClippedTriangle(triangles, first, second, third,
+                    context.transform.halfViewW(), context.transform.halfViewH());
             }
         }
         OverlayRenderHelper.drawTriangles(matrix, triangles, color, 0.23F, 0.0F);
@@ -154,13 +156,18 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
             float[] first = transform(area.vertices().get(i));
             float[] second = transform(area.vertices().get((i + 1) % area.vertices().size()));
             if (context.transform.circle()) {
-                float radius = Math.max(0.0F, context.transform.halfViewW() - CIRCLE_LINE_INSET);
+                float radius = Math.max(0.0F, context.transform.halfViewW() - VIEW_LINE_INSET);
                 float[] clipped = clipLineToCircle(first, second, radius);
                 if (clipped != null) {
                     lines.add(clipped);
                 }
             } else {
-                lines.add(new float[]{first[0], first[1], second[0], second[1]});
+                float halfWidth = Math.max(0.0F, context.transform.halfViewW() - VIEW_LINE_INSET);
+                float halfHeight = Math.max(0.0F, context.transform.halfViewH() - VIEW_LINE_INSET);
+                float[] clipped = clipLineToRectangle(first, second, halfWidth, halfHeight);
+                if (clipped != null) {
+                    lines.add(clipped);
+                }
             }
         }
         OverlayRenderHelper.drawLines(matrix, lines, color, 0.9F, 0.01F);
@@ -220,6 +227,36 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
             double angle = Math.PI * 2.0D * (edge + 0.5D) / CIRCLE_CLIP_SEGMENTS;
             polygon = clipAgainstHalfPlane(polygon, Math.cos(angle), Math.sin(angle), apothem);
         }
+        addTriangleFan(output, polygon);
+    }
+
+    private void addRectangleClippedTriangle(List<float[]> output, float[] first, float[] second,
+                                             float[] third, float halfWidth, float halfHeight) {
+        if (halfWidth <= 0.0F || halfHeight <= 0.0F) {
+            return;
+        }
+        if (isInsideRectangle(first, halfWidth, halfHeight)
+            && isInsideRectangle(second, halfWidth, halfHeight)
+            && isInsideRectangle(third, halfWidth, halfHeight)) {
+            output.add(new float[]{first[0], first[1], second[0], second[1], third[0], third[1]});
+            return;
+        }
+
+        List<float[]> polygon = new ArrayList<>(List.of(first, second, third));
+        polygon = clipAgainstHalfPlane(polygon, 1.0D, 0.0D, halfWidth);
+        if (!polygon.isEmpty()) {
+            polygon = clipAgainstHalfPlane(polygon, -1.0D, 0.0D, halfWidth);
+        }
+        if (!polygon.isEmpty()) {
+            polygon = clipAgainstHalfPlane(polygon, 0.0D, 1.0D, halfHeight);
+        }
+        if (!polygon.isEmpty()) {
+            polygon = clipAgainstHalfPlane(polygon, 0.0D, -1.0D, halfHeight);
+        }
+        addTriangleFan(output, polygon);
+    }
+
+    private void addTriangleFan(List<float[]> output, List<float[]> polygon) {
         for (int i = 1; i + 1 < polygon.size(); i++) {
             float[] point = polygon.get(i);
             float[] next = polygon.get(i + 1);
@@ -257,6 +294,45 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
         return clipped;
     }
 
+    private float[] clipLineToRectangle(float[] first, float[] second, float halfWidth, float halfHeight) {
+        if (halfWidth <= 0.0F || halfHeight <= 0.0F) {
+            return null;
+        }
+        double deltaX = second[0] - first[0];
+        double deltaY = second[1] - first[1];
+        double[] range = {0.0D, 1.0D};
+        // Liang-Barsky 参数裁剪同时覆盖线段两端都位于视口外但中部穿过视口的情况。
+        if (!updateClipRange(-deltaX, first[0] + halfWidth, range)
+            || !updateClipRange(deltaX, halfWidth - first[0], range)
+            || !updateClipRange(-deltaY, first[1] + halfHeight, range)
+            || !updateClipRange(deltaY, halfHeight - first[1], range)) {
+            return null;
+        }
+        return new float[]{
+            (float) (first[0] + deltaX * range[0]), (float) (first[1] + deltaY * range[0]),
+            (float) (first[0] + deltaX * range[1]), (float) (first[1] + deltaY * range[1])
+        };
+    }
+
+    private boolean updateClipRange(double direction, double distance, double[] range) {
+        if (Math.abs(direction) < 1.0E-8D) {
+            return distance >= 0.0D;
+        }
+        double ratio = distance / direction;
+        if (direction < 0.0D) {
+            if (ratio > range[1]) {
+                return false;
+            }
+            range[0] = Math.max(range[0], ratio);
+        } else {
+            if (ratio < range[0]) {
+                return false;
+            }
+            range[1] = Math.min(range[1], ratio);
+        }
+        return true;
+    }
+
     private float[] clipLineToCircle(float[] first, float[] second, float radius) {
         if (radius <= 0.0F) {
             return null;
@@ -291,6 +367,11 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
 
     private boolean isInsideCircle(float[] point, float radius) {
         return point[0] * point[0] + point[1] * point[1] <= radius * radius + 1.0E-3F;
+    }
+
+    private boolean isInsideRectangle(float[] point, float halfWidth, float halfHeight) {
+        return point[0] >= -halfWidth - 1.0E-3F && point[0] <= halfWidth + 1.0E-3F
+            && point[1] >= -halfHeight - 1.0E-3F && point[1] <= halfHeight + 1.0E-3F;
     }
 
     private float[] transform(Point point) {

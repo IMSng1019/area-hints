@@ -28,6 +28,13 @@ public final class OverlayRenderHelper {
 
     public static void beginOverlay() {
         RENDER_STATES.get().push(RenderState.capture());
+        prepareGeometryState();
+    }
+
+    /**
+     * 文字渲染会切换全局着色器，因此每次提交几何前都必须恢复覆盖层状态。
+     */
+    private static void prepareGeometryState() {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableDepthTest();
@@ -50,6 +57,7 @@ public final class OverlayRenderHelper {
         if (triangles == null || triangles.isEmpty()) {
             return;
         }
+        prepareGeometryState();
         float red = ((rgb >> 16) & 0xFF) / 255.0F;
         float green = ((rgb >> 8) & 0xFF) / 255.0F;
         float blue = (rgb & 0xFF) / 255.0F;
@@ -70,6 +78,7 @@ public final class OverlayRenderHelper {
         if (lines == null || lines.isEmpty()) {
             return;
         }
+        prepareGeometryState();
         float red = ((rgb >> 16) & 0xFF) / 255.0F;
         float green = ((rgb >> 8) & 0xFF) / 255.0F;
         float blue = (rgb & 0xFF) / 255.0F;

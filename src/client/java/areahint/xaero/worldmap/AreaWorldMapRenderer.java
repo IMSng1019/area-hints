@@ -73,6 +73,9 @@ final class AreaWorldMapRenderer extends MapElementRenderer<OverlayArea, AreaWor
         MatrixStack matrices = drawContext.getMatrices();
         matrices.push();
         matrices.translate(partialX, partialZ, depth);
+        // Xaero 只为元素中心应用地图缩放，相对顶点需要在元素局部矩阵中使用同一比例。
+        float worldMapScale = (float) Math.max(0.0001D, context.mapScale);
+        matrices.scale(worldMapScale, worldMapScale, 1.0F);
         Matrix4f matrix = matrices.peek().getPositionMatrix();
         double coordinateScale = context.coordinateScale <= 0.0D ? 1.0D : context.coordinateScale;
 

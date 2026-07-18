@@ -2,10 +2,12 @@ package areahint.xaero.minimap;
 
 import areahint.config.ClientConfig;
 import areahint.xaero.AreaOverlayColorResolver;
+import areahint.xaero.AreaOverlayFillResolver.FillPlan;
+import areahint.xaero.AreaOverlayFillResolver.FillTriangle;
 import areahint.xaero.AreaOverlayRepository;
 import areahint.xaero.AreaOverlayRepository.OverlayArea;
+import areahint.xaero.AreaOverlayRepository.OverlaySnapshot;
 import areahint.xaero.AreaOverlayRepository.Point;
-import areahint.xaero.AreaOverlayRepository.Triangle;
 import areahint.xaero.OverlayRenderHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -21,7 +23,6 @@ import xaero.hud.minimap.element.render.MinimapElementRenderLocation;
 import xaero.hud.minimap.element.render.MinimapElementRenderer;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElement, AreaMinimapContext> {
@@ -41,6 +42,9 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
                           MultiTextureRenderTypeRendererProvider multiTextureProvider) {
         immediate.draw();
         context.active = false;
+        context.visibleAreas = List.of();
+        context.deepestArea = null;
+        context.fillPlan = FillPlan.empty();
         MinecraftClient client = MinecraftClient.getInstance();
         if (!ClientConfig.isXaeroMinimapOverlayEnabled() || client == null || client.world == null
             || renderInfo == null || renderInfo.mapDimension == null || renderInfo.renderPos == null) {
@@ -64,8 +68,8 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
 
         double radius = context.transform.worldRadius();
         List<OverlayArea> visible = new ArrayList<>();
-        List<OverlayArea> containing = new ArrayList<>();
-        for (OverlayArea area : AreaOverlayRepository.getInstance().getSnapshot(context.dimensionId).areas()) {
+        OverlaySnapshot snapshot = AreaOverlayRepository.getInstance().getSnapshot(context.dimensionId);
+        for (OverlayArea area : snapshot.areas()) {
             if (!area.isVisibleAt(context.renderY)) {
                 continue;
             }
@@ -73,13 +77,12 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
                 && area.maxZ() >= context.renderZ - radius && area.minZ() <= context.renderZ + radius) {
                 visible.add(area);
             }
-            if (area.contains(context.renderX, context.renderZ)) {
-                containing.add(area);
-            }
         }
-        containing.sort(Comparator.comparingInt(OverlayArea::level).reversed());
+
+        FillPlan fillPlan = context.fillResolver.resolve(snapshot, client);
         context.visibleAreas = List.copyOf(visible);
-        context.deepestArea = containing.isEmpty() ? null : containing.get(0);
+        context.deepestArea = fillPlan.activeArea();
+        context.fillPlan = fillPlan;
         context.active = !visible.isEmpty();
         if (context.active) {
             OverlayRenderHelper.beginOverlay();
@@ -110,9 +113,10 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
             (int) Math.ceil(origin.x + halfWidth), (int) Math.ceil(origin.y + halfHeight));
 
         long now = System.currentTimeMillis();
-        // 先填充所有可见域名，再统一绘制边界，避免后绘制的填充遮住已有边线。
+        // 先提交进入状态处理后的填充网格，再统一绘制边界，避免后绘制的填充遮住已有边线。
         for (OverlayArea area : context.visibleAreas) {
-            drawAreaFill(matrix, area, AreaOverlayColorResolver.resolve(area, now));
+            drawAreaFill(matrix, context.fillPlan.trianglesFor(area),
+                AreaOverlayColorResolver.resolve(area, now));
         }
         for (OverlayArea area : context.visibleAreas) {
             drawAreaBoundary(matrix, area, AreaOverlayColorResolver.resolve(area, now));
@@ -134,12 +138,12 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
         return 40;
     }
 
-    private void drawAreaFill(Matrix4f matrix, OverlayArea area, int color) {
+    private void drawAreaFill(Matrix4f matrix, List<FillTriangle> fillMesh, int color) {
         List<float[]> triangles = new ArrayList<>();
-        for (Triangle triangle : area.triangles()) {
-            float[] first = transform(area.vertices().get(triangle.first()));
-            float[] second = transform(area.vertices().get(triangle.second()));
-            float[] third = transform(area.vertices().get(triangle.third()));
+        for (FillTriangle triangle : fillMesh) {
+            float[] first = transform(triangle.first());
+            float[] second = transform(triangle.second());
+            float[] third = transform(triangle.third());
             if (context.transform.circle()) {
                 addCircleClippedTriangle(triangles, first, second, third, context.transform.halfViewW());
             } else {
@@ -180,16 +184,22 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
         float[] center = transform(new Point(area.centerX(), area.centerZ()));
         net.minecraft.client.font.TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
         String name = area.displayName();
-        int maxTextWidth = Math.max(16, context.transform.halfViewW() * 2 - 16);
+        float nameScale = OverlayRenderHelper.AREA_NAME_SCALE;
+        int availableScreenWidth = Math.max(1, context.transform.halfViewW() * 2 - 16);
+        int maxTextWidth = Math.max(1, (int) Math.floor(availableScreenWidth / nameScale));
         if (textRenderer.getWidth(name) > maxTextWidth) {
             String suffix = "...";
-            name = textRenderer.trimToWidth(name,
-                Math.max(1, maxTextWidth - textRenderer.getWidth(suffix))) + suffix;
+            int suffixWidth = textRenderer.getWidth(suffix);
+            name = suffixWidth < maxTextWidth
+                ? textRenderer.trimToWidth(name, maxTextWidth - suffixWidth) + suffix
+                : textRenderer.trimToWidth(name, maxTextWidth);
         }
         int width = textRenderer.getWidth(name);
+        float scaledWidth = width * nameScale;
+        float scaledHeight = textRenderer.fontHeight * nameScale;
         if (context.transform.circle()) {
             // 用文字外接矩形的半对角线收缩可用半径，确保完整名称不会进入圆形小地图四角。
-            float textExtent = (float) Math.hypot(width / 2.0F, 5.0F);
+            float textExtent = (float) Math.hypot(scaledWidth / 2.0F, scaledHeight / 2.0F);
             float availableRadius = Math.max(0.0F,
                 context.transform.halfViewW() - 4.0F - textExtent);
             float distance = (float) Math.hypot(center[0], center[1]);
@@ -199,14 +209,21 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
                 center[1] *= scale;
             }
         } else {
-            float maxX = Math.max(0.0F, context.transform.halfViewW() - 8.0F - width / 2.0F);
-            float maxY = Math.max(4.0F, context.transform.halfViewH() - 8.0F);
+            float maxX = Math.max(0.0F,
+                context.transform.halfViewW() - 8.0F - scaledWidth / 2.0F);
+            float maxY = Math.max(0.0F,
+                context.transform.halfViewH() - 8.0F - scaledHeight / 2.0F);
             center[0] = Math.max(-maxX, Math.min(maxX, center[0]));
             center[1] = Math.max(-maxY, Math.min(maxY, center[1]));
         }
         int color = 0xFF000000 | AreaOverlayColorResolver.resolve(area, now);
+        MatrixStack matrices = drawContext.getMatrices();
+        matrices.push();
+        matrices.translate(Math.round(center[0]), Math.round(center[1]), 0.0D);
+        matrices.scale(nameScale, nameScale, 1.0F);
         drawContext.drawTextWithShadow(textRenderer, Text.literal(name),
-            Math.round(center[0] - width / 2.0F), Math.round(center[1] - 4.0F), color);
+            -width / 2, -textRenderer.fontHeight / 2, color);
+        matrices.pop();
     }
 
     private void addCircleClippedTriangle(List<float[]> output, float[] first, float[] second,

@@ -1,9 +1,9 @@
 package areahint.xaero.worldmap;
 
 import areahint.xaero.AreaOverlayColorResolver;
+import areahint.xaero.AreaOverlayFillResolver.FillTriangle;
 import areahint.xaero.AreaOverlayRepository.OverlayArea;
 import areahint.xaero.AreaOverlayRepository.Point;
-import areahint.xaero.AreaOverlayRepository.Triangle;
 import areahint.xaero.OverlayRenderHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -80,10 +80,10 @@ final class AreaWorldMapRenderer extends MapElementRenderer<OverlayArea, AreaWor
         double coordinateScale = context.coordinateScale <= 0.0D ? 1.0D : context.coordinateScale;
 
         List<float[]> triangles = new ArrayList<>();
-        for (Triangle triangle : area.triangles()) {
-            Point first = area.vertices().get(triangle.first());
-            Point second = area.vertices().get(triangle.second());
-            Point third = area.vertices().get(triangle.third());
+        for (FillTriangle triangle : context.fillPlan.trianglesFor(area)) {
+            Point first = triangle.first();
+            Point second = triangle.second();
+            Point third = triangle.third();
             triangles.add(new float[]{
                 relativeX(area, first, coordinateScale), relativeZ(area, first, coordinateScale),
                 relativeX(area, second, coordinateScale), relativeZ(area, second, coordinateScale),
@@ -136,8 +136,9 @@ final class AreaWorldMapRenderer extends MapElementRenderer<OverlayArea, AreaWor
 
         MatrixStack matrices = drawContext.getMatrices();
         matrices.push();
-        float inverseScale = (float) (1.0D / Math.max(0.0001D, context.mapScale));
-        matrices.scale(inverseScale, inverseScale, 1.0F);
+        float nameScale = (float) (OverlayRenderHelper.AREA_NAME_SCALE
+            / Math.max(0.0001D, context.mapScale));
+        matrices.scale(nameScale, nameScale, 1.0F);
         drawContext.drawTextWithShadow(textRenderer, Text.literal(name), -textWidth / 2, -4, 0xFF000000 | color);
         matrices.pop();
     }

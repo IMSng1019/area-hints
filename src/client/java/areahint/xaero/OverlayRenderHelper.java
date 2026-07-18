@@ -20,6 +20,9 @@ import java.util.List;
  * Xaero 两类地图共用的二维彩色几何提交工具。
  */
 public final class OverlayRenderHelper {
+    /** 两张 Xaero 地图共用的域名名称放大倍数。 */
+    public static final float AREA_NAME_SCALE = 4.0F;
+
     private static final ThreadLocal<Deque<RenderState>> RENDER_STATES =
         ThreadLocal.withInitial(ArrayDeque::new);
 

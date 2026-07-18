@@ -148,6 +148,17 @@ public class AreaDetector {
     }
 
     /**
+     * 为独立开启的 Xaero 覆盖层执行同一套域名命中，不受主标题显示开关限制。
+     * @param x 玩家X坐标
+     * @param y 玩家Y坐标
+     * @param z 玩家Z坐标
+     * @return 玩家所在的最深层域名，不在任何域名内时返回null
+     */
+    public AreaData findAreaForXaeroOverlay(double x, double y, double z) {
+        return findArea(x, y, z);
+    }
+
+    /**
      * 查找玩家所在的区域
      * @param x 玩家的X坐标
      * @param y 玩家的Y坐标（高度）

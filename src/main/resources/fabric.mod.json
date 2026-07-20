@@ -2,7 +2,7 @@
 	"schemaVersion": 1,
 	"id": "areas-hint",
 	"version": "${version}",
-	"name": "区域提示",
+	"name": "Area Hints - 域名",
 	"description": "一个可以在玩家进入区域时显示域名的模组 A mod that displays the domain name when a player enters an area",
 	"authors": [
 		"IMSng"

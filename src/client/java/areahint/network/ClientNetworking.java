@@ -20,13 +20,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 客户端网络处理类
  * 处理客户端接收服务端数据
  */
 public class ClientNetworking {
+    // 登录阶段正式世界目录尚未确定，按维度保留最近一次收到的域名数据
+    private static final Object PENDING_AREA_DATA_LOCK = new Object();
+    private static final Map<String, String> PENDING_AREA_DATA = new LinkedHashMap<>();
+    private static ClientPlayNetworkHandler pendingAreaDataHandler;
+
     /**
      * 初始化客户端网络处理
      */
@@ -138,48 +145,139 @@ public class ClientNetworking {
         // 读取维度名称和文件内容
         String dimensionName = buf.readString();
         String fileContent = buf.readString();
-        
-        // 确保在主线程中处理
+
+        // 未知维度不进入静态缓存，避免异常数据持续占用客户端内存
+        if (Packets.getFileNameForDimension(dimensionName) == null) {
+            AreashintClient.LOGGER.warn("接收到未知维度的区域数据: " + dimensionName);
+            return;
+        }
+
+        registerAreaDataConnection(handler);
+
+        // 确保缓存判断和文件写入都在客户端主线程中处理
         client.execute(() -> {
-            try {
-                // 确定文件名
-                String fileName = Packets.getFileNameForDimension(dimensionName);
-                if (fileName == null) {
-                    AreashintClient.LOGGER.warn("接收到未知维度的区域数据: " + dimensionName);
-                    return;
-                }
-                
-                // 获取文件路径
-                Path filePath = areahint.world.ClientWorldFolderManager.getWorldDimensionFile(fileName);
-                AreashintClient.LOGGER.info("[调试] 客户端保存区域数据到文件: " + filePath.toAbsolutePath());
-                
-                // 确保目录存在
-                FileManager.checkFolderExist();
-                
-                // 写入文件
-                Files.writeString(filePath, fileContent, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-                
-                AreashintClient.LOGGER.info("已接收并保存 " + dimensionName + " 的区域数据");
-				areahint.xaero.AreaOverlayRepository.getInstance().refreshDimension(dimensionName);
-                AreashintClient.LOGGER.info("[调试] 区域数据内容长度: " + fileContent.length() + " 字节");
-                if (fileContent.length() < 100) {
-                    AreashintClient.LOGGER.info("[调试] 区域数据内容预览: " + fileContent);
-                } else {
-                    AreashintClient.LOGGER.info("[调试] 区域数据内容预览: " + fileContent.substring(0, 100) + "...");
-                }
-                
-                // 如果当前在该维度中，则重新加载区域数据
-                if (client.world != null && 
-                        dimensionName.equals(Packets.convertDimensionPathToType(client.world.getDimensionKey().getValue().getPath()))) {
-                    AreashintClient.LOGGER.info("[调试] 重新加载当前维度的区域数据: " + fileName);
-                    AreashintClient.getAreaDetector().loadAreaData(fileName);
-                    areahint.boundviz.BoundVizManager.getInstance().reload();
-                }
-                
-            } catch (IOException e) {
-                AreashintClient.LOGGER.error("保存接收到的区域数据时出错: " + e.getMessage());
+            if (!isActiveAreaDataConnection(handler)) {
+                AreashintClient.LOGGER.debug("已忽略失效连接发送的区域数据: {}", dimensionName);
+                return;
             }
+            if (!areahint.world.ClientWorldFolderManager.isInitialized()) {
+                cachePendingAreaData(handler, dimensionName, fileContent);
+                return;
+            }
+            processAreaData(client, dimensionName, fileContent);
         });
+    }
+
+    /**
+     * 为当前网络连接建立独立缓存，连接对象变化时立即丢弃上一连接遗留的数据。
+     */
+    private static void registerAreaDataConnection(ClientPlayNetworkHandler handler) {
+        synchronized (PENDING_AREA_DATA_LOCK) {
+            if (pendingAreaDataHandler != handler) {
+                pendingAreaDataHandler = handler;
+                PENDING_AREA_DATA.clear();
+            }
+        }
+    }
+
+    private static boolean isActiveAreaDataConnection(ClientPlayNetworkHandler handler) {
+        synchronized (PENDING_AREA_DATA_LOCK) {
+            return pendingAreaDataHandler == handler;
+        }
+    }
+
+    /**
+     * 暂存正式世界目录初始化前收到的域名数据，同一维度只保留最新内容。
+     */
+    private static void cachePendingAreaData(ClientPlayNetworkHandler handler, String dimensionName, String fileContent) {
+        synchronized (PENDING_AREA_DATA_LOCK) {
+            if (pendingAreaDataHandler != handler) {
+                return;
+            }
+            PENDING_AREA_DATA.put(dimensionName, fileContent);
+        }
+        AreashintClient.LOGGER.info("客户端世界文件夹尚未完成初始化，已暂存 {} 的区域数据", dimensionName);
+    }
+
+    /**
+     * 正式世界目录初始化完成后，通过原有处理流程回放登录阶段暂存的数据。
+     */
+    public static void flushPendingAreaData(MinecraftClient client, ClientPlayNetworkHandler handler) {
+        if (client == null || !areahint.world.ClientWorldFolderManager.isInitialized()) {
+            return;
+        }
+
+        Map<String, String> pendingSnapshot;
+        synchronized (PENDING_AREA_DATA_LOCK) {
+            if (pendingAreaDataHandler != handler || PENDING_AREA_DATA.isEmpty()) {
+                return;
+            }
+            pendingSnapshot = new LinkedHashMap<>(PENDING_AREA_DATA);
+        }
+
+        AreashintClient.LOGGER.info("正式世界文件夹已就绪，开始回放 {} 个维度的区域数据", pendingSnapshot.size());
+        for (Map.Entry<String, String> entry : pendingSnapshot.entrySet()) {
+            if (!isActiveAreaDataConnection(handler)) {
+                return;
+            }
+            if (processAreaData(client, entry.getKey(), entry.getValue())) {
+                synchronized (PENDING_AREA_DATA_LOCK) {
+                    if (pendingAreaDataHandler == handler) {
+                        PENDING_AREA_DATA.remove(entry.getKey(), entry.getValue());
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 断开连接时清除尚未回放的数据，避免下一台服务器复用旧内容。
+     */
+    public static void invalidateAreaDataConnection(ClientPlayNetworkHandler handler) {
+        synchronized (PENDING_AREA_DATA_LOCK) {
+            if (pendingAreaDataHandler == handler) {
+                pendingAreaDataHandler = null;
+                PENDING_AREA_DATA.clear();
+            }
+        }
+    }
+
+    /**
+     * 将单个维度的数据写入当前正式世界目录，并刷新所有依赖该文件的客户端组件。
+     */
+    private static boolean processAreaData(MinecraftClient client, String dimensionName, String fileContent) {
+        try {
+            String fileName = Packets.getFileNameForDimension(dimensionName);
+            if (fileName == null) {
+                AreashintClient.LOGGER.warn("接收到未知维度的区域数据: " + dimensionName);
+                return true;
+            }
+
+            Path filePath = areahint.world.ClientWorldFolderManager.getWorldDimensionFile(fileName);
+            AreashintClient.LOGGER.info("[调试] 客户端保存区域数据到文件: " + filePath.toAbsolutePath());
+            FileManager.checkFolderExist();
+            Files.writeString(filePath, fileContent, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+
+            AreashintClient.LOGGER.info("已接收并保存 " + dimensionName + " 的区域数据");
+            areahint.xaero.AreaOverlayRepository.getInstance().refreshDimension(dimensionName);
+            AreashintClient.LOGGER.info("[调试] 区域数据内容长度: " + fileContent.length() + " 字节");
+            if (fileContent.length() < 100) {
+                AreashintClient.LOGGER.info("[调试] 区域数据内容预览: " + fileContent);
+            } else {
+                AreashintClient.LOGGER.info("[调试] 区域数据内容预览: " + fileContent.substring(0, 100) + "...");
+            }
+
+            if (client.world != null &&
+                    dimensionName.equals(Packets.convertDimensionPathToType(client.world.getDimensionKey().getValue().getPath()))) {
+                AreashintClient.LOGGER.info("[调试] 重新加载当前维度的区域数据: " + fileName);
+                AreashintClient.getAreaDetector().loadAreaData(fileName);
+                areahint.boundviz.BoundVizManager.getInstance().reload();
+            }
+            return true;
+        } catch (IOException e) {
+            AreashintClient.LOGGER.error("保存接收到的区域数据时出错: " + e.getMessage());
+            return false;
+        }
     }
     
     /**

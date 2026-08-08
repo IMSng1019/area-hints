@@ -44,14 +44,15 @@ public class ClientWorldFolderManager {
             
             // 获取服务器地址
             String serverAddress = getServerAddress();
-            
-            // 请求服务端发送世界名称
-            ClientWorldNetworking.requestWorldInfo();
-            
+
             // 临时使用默认世界名称，等待服务端响应
             String tempWorldName = "TempWorld";
-            
+
+            // 先建立临时目录上下文，再发送请求，避免响应先于本地初始化完成
             initializeWorldFolderTemporary(serverAddress, tempWorldName);
+
+            // 请求服务端发送世界名称
+            ClientWorldNetworking.requestWorldInfo();
             
             AreashintClient.LOGGER.info("客户端世界文件夹临时初始化完成，等待服务端世界信息");
             
@@ -332,4 +333,4 @@ public class ClientWorldFolderManager {
     public static boolean isInitialized() {
         return isInitialized;
     }
-} 
+}

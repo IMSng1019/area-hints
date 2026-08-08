@@ -403,28 +403,35 @@ public class AreashintClient implements ClientModInitializer {
 	 */
 	private void registerDisconnectListener() {
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-			LOGGER.info("检测到断开连接,清理世界文件夹管理器状态");
+			// 先在线程安全缓存中使旧连接失效，阻止已经排队的数据包任务重新写入
+			areahint.network.ClientNetworking.invalidateAreaDataConnection(handler);
 
-			// 重置ClientWorldFolderManager状态
-			areahint.world.ClientWorldFolderManager.resetState();
+			// Fabric 可能从网络线程触发断开事件，其余客户端状态统一回到主线程清理
+			client.execute(() -> {
+				if (client.getNetworkHandler() != null && client.getNetworkHandler() != handler) {
+					LOGGER.info("旧连接清理执行前已建立新连接，已跳过延迟清理");
+					return;
+				}
 
-			// 重置当前状态
-			currentDimension = null;
-			currentAreaName = null;
-			currentServerAddress = null;
-			wasPlayerNull = true;
-			hasShownDimensionalName = false;
-			pendingFirstNameDimId = null;
-			firstNameTimeoutTicks = 0;
+				LOGGER.info("检测到断开连接,清理世界文件夹管理器状态");
+				areahint.world.ClientWorldFolderManager.resetState();
 
-			// 重置区域追踪器、描述状态机和异步检测器
-			areahint.log.AreaChangeTracker.reset();
-			areahint.description.DescriptionManager.getInstance().reset();
-			asyncAreaDetector.reset();
-			areahint.xaero.AreaOverlayRepository.getInstance().clear();
-			areahint.management.client.AreaManagementClient.clear();
+				currentDimension = null;
+				currentAreaName = null;
+				currentServerAddress = null;
+				wasPlayerNull = true;
+				hasShownDimensionalName = false;
+				pendingFirstNameDimId = null;
+				firstNameTimeoutTicks = 0;
 
-			LOGGER.info("世界文件夹管理器状态已清理");
+				areahint.log.AreaChangeTracker.reset();
+				areahint.description.DescriptionManager.getInstance().reset();
+				asyncAreaDetector.reset();
+				areahint.xaero.AreaOverlayRepository.getInstance().clear();
+				areahint.management.client.AreaManagementClient.clear();
+
+				LOGGER.info("世界文件夹管理器状态已清理");
+			});
 		});
 	}
 
@@ -703,6 +710,9 @@ public class AreashintClient implements ClientModInitializer {
 			if (currentDimension != null) {
 				String dimensionFileName = getDimensionFileName(currentDimension);
 				LOGGER.info("强制重新加载维度{}的区域文件：{}", currentDimension.toString(), dimensionFileName);
+
+				// 先使旧文件产生的在途异步结果失效，防止其覆盖本次同步检测
+				asyncAreaDetector.reset();
 				areaDetector.loadAreaData(dimensionFileName);
 
 				// 关闭状态下只重新加载同步文件，不进行域名计算，也不显示维度域名。
@@ -718,6 +728,9 @@ public class AreashintClient implements ClientModInitializer {
 				double playerZ = player.getZ();
 				AreaData detectedArea = areaDetector.findAreaRaw(playerX, playerY, playerZ);
 				String areaName = detectedArea != null ? areaDetector.formatAreaNameFromData(detectedArea) : null;
+
+				// 同步发布当前实际域名，Xaero 无需等待下一次异步检测即可更新填充差集
+				areahint.log.AreaChangeTracker.handlePrecomputedChange(detectedArea, currentDimension);
 				
 				// 立即显示结果
 				if (areaName != null) {

@@ -69,11 +69,18 @@ public class ClientWorldNetworking {
             // 在主线程中处理世界信息
             client.execute(() -> {
                 try {
+                    if (client.getNetworkHandler() != handler) {
+                        AreashintClient.LOGGER.debug("已忽略失效连接发送的世界信息: {}", worldName);
+                        return;
+                    }
                     AreashintClient.LOGGER.info("收到服务端世界信息: '{}'", worldName);
                     AreashintClient.LOGGER.info("开始完成世界文件夹初始化...");
                     
                     // 完成世界文件夹初始化
                     ClientWorldFolderManager.finalizeWorldInitialization(worldName);
+
+                    // 正式目录确定后先回放登录阶段暂存的域名数据，避免检测器读取空目录
+                    ClientNetworking.flushPendingAreaData(client, handler);
                     
                     // 重新加载当前区域数据
                     reloadCurrentAreaData();
@@ -127,4 +134,4 @@ public class ClientWorldNetworking {
         }
         return areahint.Areashint.OVERWORLD_FILE; // 默认返回主世界
     }
-} 
+}

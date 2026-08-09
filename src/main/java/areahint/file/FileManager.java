@@ -150,7 +150,14 @@ public class FileManager {
                     "  // false: 进入世界时自动跟随当前游戏语言, true: 使用 /areahint language 后锁定当前模组语言\n" +
                     "  \"languageLocked\": " + defaultConfig.isLanguageLocked() + ",\n\n" +
                     "  // TeleportFormat: 传送命令头，默认 tp\n" +
-                    "  \"teleportFormat\": \"" + defaultConfig.getTeleportFormat() + "\"\n" +
+                    "  \"teleportFormat\": \"" + defaultConfig.getTeleportFormat() + "\",\n\n" +
+
+                    "  // SoundEvent: 域名进入或离开时播放的声音事件 ID\n" +
+                    "  // none: 不播放声音；也可以填写客户端声音注册表中的 namespace:path\n" +
+                    "  \"soundEvent\": \"" + defaultConfig.getSoundEvent() + "\",\n\n" +
+
+                    "  // SoundPitch: 声音播放音高，范围为 0.5 到 2.0\n" +
+                    "  \"soundPitch\": " + defaultConfig.getSoundPitch() + "\n" +
                     "}";
 
             Files.write(path, jsonWithComments.getBytes(StandardCharsets.UTF_8));
@@ -293,6 +300,35 @@ public class FileManager {
                 Areashint.LOGGER.warn("配置项 'teleportFormat' 无效，已补全为默认值: " + defaultConfig.getTeleportFormat());
             }
 
+            // 检查并补全 soundEvent
+            String rawSoundEvent = null;
+            if (configJson.has("soundEvent") && !configJson.get("soundEvent").isJsonNull()
+                    && configJson.get("soundEvent").isJsonPrimitive()
+                    && configJson.get("soundEvent").getAsJsonPrimitive().isString()) {
+                rawSoundEvent = configJson.get("soundEvent").getAsString();
+            }
+            if (configJson.has("soundEvent") && !ConfigData.isValidSoundEventId(rawSoundEvent)) {
+                config.setSoundEvent(defaultConfig.getSoundEvent());
+                needsUpdate = true;
+                Areashint.LOGGER.warn("配置项 'soundEvent' 无效，已补全为默认值: " + defaultConfig.getSoundEvent());
+            }
+
+            // 检查并补全 soundPitch
+            boolean soundPitchValid = false;
+            if (configJson.has("soundPitch") && !configJson.get("soundPitch").isJsonNull()
+                    && configJson.get("soundPitch").isJsonPrimitive()
+                    && configJson.get("soundPitch").getAsJsonPrimitive().isNumber()) {
+                float rawSoundPitch = configJson.get("soundPitch").getAsFloat();
+                soundPitchValid = Float.isFinite(rawSoundPitch)
+                        && rawSoundPitch >= ConfigData.SOUND_PITCH_MIN
+                        && rawSoundPitch <= ConfigData.SOUND_PITCH_MAX;
+            }
+            if (configJson.has("soundPitch") && !soundPitchValid) {
+                config.setSoundPitch(defaultConfig.getSoundPitch());
+                needsUpdate = true;
+                Areashint.LOGGER.warn("配置项 'soundPitch' 无效，已补全为默认值: " + defaultConfig.getSoundPitch());
+            }
+
             // 如果字段值被修正，立即保存更新后的配置。
             if (needsUpdate) {
                 Areashint.LOGGER.info("检测到配置值无效，正在保存修正后的配置...");
@@ -321,6 +357,8 @@ public class FileManager {
         if (!json.has("language")) { config.setLanguage(defaults.getLanguage()); changed = true; }
         if (!json.has("languageLocked")) { config.setLanguageLocked(defaults.isLanguageLocked()); changed = true; }
         if (!json.has("teleportFormat")) { config.setTeleportFormat(defaults.getTeleportFormat()); changed = true; }
+        if (!json.has("soundEvent")) { config.setSoundEvent(defaults.getSoundEvent()); changed = true; }
+        if (!json.has("soundPitch")) { config.setSoundPitch(defaults.getSoundPitch()); changed = true; }
         if (changed) {
             Areashint.LOGGER.info("检测到旧版个人配置，已保留现有设置并补充缺失字段: " + json.keySet());
         }
@@ -371,7 +409,14 @@ public class FileManager {
                     "  // false: 进入世界时自动跟随当前游戏语言, true: 使用 /areahint language 后锁定当前模组语言\n" +
                     "  \"languageLocked\": " + config.isLanguageLocked() + ",\n\n" +
                     "  // TeleportFormat: 传送命令头，默认 tp\n" +
-                    "  \"teleportFormat\": \"" + config.getTeleportFormat() + "\"\n" +
+                    "  \"teleportFormat\": \"" + config.getTeleportFormat() + "\",\n\n" +
+
+                    "  // SoundEvent: 域名进入或离开时播放的声音事件 ID\n" +
+                    "  // none: 不播放声音；也可以填写客户端声音注册表中的 namespace:path\n" +
+                    "  \"soundEvent\": \"" + config.getSoundEvent() + "\",\n\n" +
+
+                    "  // SoundPitch: 声音播放音高，范围为 0.5 到 2.0\n" +
+                    "  \"soundPitch\": " + config.getSoundPitch() + "\n" +
                     "}";
 
             Files.write(path, jsonWithComments.getBytes(StandardCharsets.UTF_8));

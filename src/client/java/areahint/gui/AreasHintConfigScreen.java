@@ -76,6 +76,11 @@ public class AreasHintConfigScreen extends Screen {
         this.frequencyInput = createFrequencyInput();
         this.list.addButton("screen.areahint.config.frequency", List.of(this.frequencySlider, this.frequencyInput));
 
+        this.list.addGroup("screen.areahint.config.group.sound");
+        this.list.addButton("screen.areahint.config.sound_event", cycleButton(soundEventText(), button ->
+                areahint.soundevent.SoundEventVisualController.openForConfig(
+                        this, this.draft, () -> button.setMessage(soundEventText()))));
+
         this.list.addGroup("screen.areahint.config.group.title");
         this.list.addButton("screen.areahint.config.hint_render", cycleButton(renderText(draft.getHintRender()), button -> {
             draft.setHintRender(nextRenderMode(draft.getHintRender()));
@@ -396,6 +401,12 @@ public class AreasHintConfigScreen extends Screen {
 
     private Text recordKeyText() {
         return InputUtil.Type.KEYSYM.createFromCode(draft.getRecordKey()).getLocalizedText();
+    }
+
+    private Text soundEventText() {
+        areahint.soundevent.SoundEventSelection selection = areahint.soundevent.SoundEventCatalog.fromConfig(
+                draft.getSoundEvent(), draft.getSoundPitch());
+        return Text.literal(areahint.soundevent.SoundEventManager.getDisplayText(selection));
     }
 
     private String nextRenderMode(String current) {

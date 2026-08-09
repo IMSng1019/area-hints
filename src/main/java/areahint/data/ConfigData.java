@@ -3,6 +3,7 @@ package areahint.data;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * 配置数据模型类
@@ -11,7 +12,11 @@ import java.util.Locale;
 public class ConfigData {
     public static final float CUSTOM_SIZE_MIN = 0.1f;
     public static final float CUSTOM_SIZE_MAX = 8.0f;
+    public static final float SOUND_PITCH_MIN = 0.5f;
+    public static final float SOUND_PITCH_MAX = 2.0f;
+    public static final String SOUND_EVENT_NONE = "none";
     private static final String CUSTOM_SIZE_PREFIX = "custom:";
+    private static final Pattern SOUND_EVENT_ID_PATTERN = Pattern.compile("[a-z0-9_.-]+:[a-z0-9_./-]+");
 
     // 检测频率，每秒检测的最大次数，支持小数以便在配置界面做更细调节
     private double frequency;
@@ -53,6 +58,12 @@ public class ConfigData {
     // 传送命令头
     private String teleportFormat;
 
+    // 域名切换时播放的声音事件 ID，none 表示关闭声音
+    private String soundEvent;
+
+    // 域名切换声音的播放音高，音符盒使用 0.5 到 2.0 的原版范围
+    private float soundPitch;
+
     /**
      * 默认构造方法，使用默认配置
      */
@@ -71,6 +82,8 @@ public class ConfigData {
         this.language = "zh_cn"; // 默认中文
         this.languageLocked = false; // 默认不上锁
         this.teleportFormat = "tp"; // 默认传送命令头
+        this.soundEvent = SOUND_EVENT_NONE; // 默认不播放域名切换声音
+        this.soundPitch = 1.0f; // 默认音高
     }
     
     /**
@@ -93,6 +106,8 @@ public class ConfigData {
         this.language = "zh_cn"; // 默认中文
         this.languageLocked = false; // 默认不上锁
         this.teleportFormat = "tp"; // 默认传送命令头
+        this.soundEvent = SOUND_EVENT_NONE; // 默认不播放域名切换声音
+        this.soundPitch = 1.0f; // 默认音高
     }
 
     /**
@@ -116,6 +131,8 @@ public class ConfigData {
         this.language = "zh_cn"; // 默认中文
         this.languageLocked = false; // 默认不上锁
         this.teleportFormat = "tp"; // 默认传送命令头
+        this.soundEvent = SOUND_EVENT_NONE; // 默认不播放域名切换声音
+        this.soundPitch = 1.0f; // 默认音高
     }
     
     /**
@@ -137,6 +154,8 @@ public class ConfigData {
         copy.setLanguage(this.language != null && !this.language.isEmpty() ? this.language : "zh_cn");
         copy.setLanguageLocked(this.languageLocked);
         copy.setTeleportFormat(this.teleportFormat);
+        copy.setSoundEvent(this.soundEvent);
+        copy.setSoundPitch(this.soundPitch);
         return copy;
     }
 
@@ -335,6 +354,70 @@ public class ConfigData {
 
     public void setTeleportFormat(String teleportFormat) {
         this.teleportFormat = isValidTeleportFormat(teleportFormat) ? teleportFormat.trim() : "tp";
+    }
+
+    /**
+     * 获取域名切换声音事件 ID。
+     * @return 声音事件 ID，未配置时返回 none
+     */
+    public String getSoundEvent() {
+        return isValidSoundEventId(soundEvent)
+                ? soundEvent.trim().toLowerCase(Locale.ROOT)
+                : SOUND_EVENT_NONE;
+    }
+
+    /**
+     * 设置域名切换声音事件 ID。
+     * @param soundEvent 声音事件 ID，none 表示关闭
+     */
+    public void setSoundEvent(String soundEvent) {
+        if (isValidSoundEventId(soundEvent)) {
+            String normalized = soundEvent.trim().toLowerCase(Locale.ROOT);
+            this.soundEvent = normalized;
+        } else {
+            this.soundEvent = SOUND_EVENT_NONE;
+        }
+    }
+
+    /**
+     * 获取域名切换声音音高。
+     * @return 规范化后的音高
+     */
+    public float getSoundPitch() {
+        return clampSoundPitch(soundPitch);
+    }
+
+    /**
+     * 设置域名切换声音音高。
+     * @param soundPitch 音高，限制在原版音符盒范围内
+     */
+    public void setSoundPitch(float soundPitch) {
+        this.soundPitch = clampSoundPitch(soundPitch);
+    }
+
+    /**
+     * 验证声音事件 ID 是否符合命名空间格式。
+     * @param soundEvent 声音事件 ID
+     * @return 是否有效
+     */
+    public static boolean isValidSoundEventId(String soundEvent) {
+        if (soundEvent == null) {
+            return false;
+        }
+        String normalized = soundEvent.trim().toLowerCase(Locale.ROOT);
+        return SOUND_EVENT_NONE.equals(normalized) || SOUND_EVENT_ID_PATTERN.matcher(normalized).matches();
+    }
+
+    /**
+     * 将声音音高限制在原版音符盒支持的范围内。
+     * @param soundPitch 原始音高
+     * @return 限制后的音高
+     */
+    public static float clampSoundPitch(float soundPitch) {
+        if (!Float.isFinite(soundPitch)) {
+            return 1.0f;
+        }
+        return Math.max(SOUND_PITCH_MIN, Math.min(SOUND_PITCH_MAX, soundPitch));
     }
 
     public static boolean isValidTeleportFormat(String teleportFormat) {

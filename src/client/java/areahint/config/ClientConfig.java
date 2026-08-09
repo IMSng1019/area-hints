@@ -314,4 +314,31 @@ public class ClientConfig {
         config.setTeleportFormat(teleportFormat);
         save();
     }
+
+    /**
+     * 获取域名切换声音事件 ID。
+     * @return 声音事件 ID，none 表示关闭
+     */
+    public static String getSoundEvent() {
+        return config.getSoundEvent();
+    }
+
+    /**
+     * 获取域名切换声音音高。
+     * @return 声音音高
+     */
+    public static float getSoundPitch() {
+        return config.getSoundPitch();
+    }
+
+    /**
+     * 一次性保存声音事件和音高，避免选择音效时写入两次配置文件。
+     * @param soundEvent 声音事件 ID
+     * @param soundPitch 声音音高
+     */
+    public static void setSoundSelection(String soundEvent, float soundPitch) {
+        config.setSoundEvent(soundEvent);
+        config.setSoundPitch(soundPitch);
+        save();
+    }
 }

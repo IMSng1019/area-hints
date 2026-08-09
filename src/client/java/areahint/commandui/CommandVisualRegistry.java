@@ -61,6 +61,8 @@ public final class CommandVisualRegistry {
             areahint.titlestyle.TitleStyleVisualController::openFromCommandUi));
         handlers.add(visual("titlesize", "areahint titlesize", "help.command.titlesize", CATEGORY_DISPLAY,
             areahint.titlesize.TitleSizeVisualController::openFromCommandUi));
+        handlers.add(visual("replacesoundevent", "areahint replacesoundevent", "help.command.replacesoundevent", CATEGORY_DISPLAY,
+            areahint.soundevent.SoundEventVisualController::openFromCommandUi));
         handlers.add(visual("addsubtitle", "areahint addsubtitle", "help.command.addsubtitle", CATEGORY_TEXT,
             areahint.subtitle.AddSubtitleVisualController::openFromCommandUi));
         handlers.add(visual("replacesubtitle", "areahint replacesubtitle", "help.command.replacesubtitle", CATEGORY_TEXT,

@@ -178,6 +178,9 @@ public class AreaChangeTracker {
             return;
         }
         detectionState = new DetectionState(areaName, dimensionId, previous.revision() + 1L);
+
+        // 域名状态只在这里统一通知声音追踪器，避免同步和异步检测分别播放重复声音。
+        areahint.soundevent.DomainSoundTracker.update(area, dimension);
     }
 
     /**

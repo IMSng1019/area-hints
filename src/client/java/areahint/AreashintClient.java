@@ -140,6 +140,9 @@ public class AreashintClient implements ClientModInitializer {
 		// 初始化i18n系统
 		areahint.i18n.I18nManager.init();
 
+		// 注册纯客户端域名切换声音指令，分类和选择过程不会发送到服务端。
+		areahint.soundevent.ReplaceSoundEventClientCommand.register();
+
 		// 初始化 Xaero 可选兼容与世界地图域名管理协议
 		areahint.management.client.AreaManagementClient.register();
 		areahint.xaero.XaeroCompat.initialize();
@@ -425,6 +428,8 @@ public class AreashintClient implements ClientModInitializer {
 				firstNameTimeoutTicks = 0;
 
 				areahint.log.AreaChangeTracker.reset();
+				areahint.soundevent.DomainSoundTracker.reset();
+				areahint.soundevent.SoundEventManager.resetWarnings();
 				areahint.description.DescriptionManager.getInstance().reset();
 				asyncAreaDetector.reset();
 				areahint.xaero.AreaOverlayRepository.getInstance().clear();

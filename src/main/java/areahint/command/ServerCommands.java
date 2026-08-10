@@ -16,6 +16,7 @@ import areahint.subtitle.SubtitleCommand;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -25,6 +26,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.command.argument.IdentifierArgumentType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -582,6 +584,9 @@ public class ServerCommands {
                 .then(literal("cancel")
                     .executes(ServerCommands::executeReplaceButtonCancel)))
 
+            // 同步纯客户端声音选择指令的语法，避免聊天框只按服务端命令树解析时将有效指令标红。
+            .then(createReplaceSoundEventCommand())
+
             // language 命令（交互式语言选择）
             .then(literal("language")
                 .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.LANGUAGE, 0))
@@ -642,6 +647,44 @@ public class ServerCommands {
                     .executes(context -> executeEasyAddColor(context, StringArgumentType.getString(context, "colorValue")))))
             .then(literal("save")
                 .executes(ServerCommands::executeEasyAddSave));
+    }
+
+    /**
+     * 创建域名切换声音指令的服务端语法镜像。
+     * <p>
+     * 实际执行会被Fabric客户端命令分发器优先拦截；这里仅把同构节点同步给聊天输入框，
+     * 防止共享的 /areahint 根节点缺少客户端子命令时出现“参数错误”的红色提示。
+     *
+     * @return 不处理声音配置、仅用于命令语法同步的节点
+     */
+    private static LiteralArgumentBuilder<ServerCommandSource> createReplaceSoundEventCommand() {
+        return literal("replacesoundevent")
+            .executes(ServerCommands::executeClientOnlyCommandPlaceholder)
+            .then(literal("category")
+                .then(argument("category", StringArgumentType.word())
+                    .executes(ServerCommands::executeClientOnlyCommandPlaceholder)
+                    .then(argument("page", IntegerArgumentType.integer(0))
+                        .executes(ServerCommands::executeClientOnlyCommandPlaceholder))))
+            .then(literal("instrument")
+                .then(argument("soundId", IdentifierArgumentType.identifier())
+                    .executes(ServerCommands::executeClientOnlyCommandPlaceholder)
+                    .then(argument("page", IntegerArgumentType.integer(0))
+                        .executes(ServerCommands::executeClientOnlyCommandPlaceholder))))
+            .then(literal("select")
+                .then(argument("soundId", IdentifierArgumentType.identifier())
+                    .then(argument("pitch", FloatArgumentType.floatArg(0.5f, 2.0f))
+                        .executes(ServerCommands::executeClientOnlyCommandPlaceholder))))
+            .then(literal("none")
+                .executes(ServerCommands::executeClientOnlyCommandPlaceholder))
+            .then(literal("cancel")
+                .executes(ServerCommands::executeClientOnlyCommandPlaceholder));
+    }
+
+    /**
+     * 为服务端语法镜像提供可执行终点，正常安装客户端模组时不会实际进入此方法。
+     */
+    private static int executeClientOnlyCommandPlaceholder(CommandContext<ServerCommandSource> context) {
+        return Command.SINGLE_SUCCESS;
     }
 
     /**

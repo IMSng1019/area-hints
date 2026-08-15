@@ -587,6 +587,9 @@ public class ServerCommands {
             // 同步纯客户端声音选择指令的语法，避免聊天框只按服务端命令树解析时将有效指令标红。
             .then(createReplaceSoundEventCommand())
 
+            // 同步纯客户端声音音量指令的语法，使 soundlevel 能参与聊天预选和语法着色。
+            .then(createSoundLevelCommand())
+
             // language 命令（交互式语言选择）
             .then(literal("language")
                 .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.LANGUAGE, 0))
@@ -677,6 +680,22 @@ public class ServerCommands {
             .then(literal("none")
                 .executes(ServerCommands::executeClientOnlyCommandPlaceholder))
             .then(literal("cancel")
+                .executes(ServerCommands::executeClientOnlyCommandPlaceholder));
+    }
+
+    /**
+     * 创建域名切换声音音量指令的服务端语法镜像。
+     * <p>
+     * 实际音量设置仍由Fabric客户端命令分发器处理；服务端节点只向聊天输入框同步同构语法，
+     * 使 soundlevel 字面量能够显示在预选列表中，并让完整指令通过语法着色检查。
+     *
+     * @return 不处理声音音量、仅用于命令语法同步的节点
+     */
+    private static LiteralArgumentBuilder<ServerCommandSource> createSoundLevelCommand() {
+        return literal("soundlevel")
+            .executes(ServerCommands::executeClientOnlyCommandPlaceholder)
+            .then(argument("level", FloatArgumentType.floatArg(
+                    ConfigData.SOUND_LEVEL_MIN, ConfigData.SOUND_LEVEL_MAX))
                 .executes(ServerCommands::executeClientOnlyCommandPlaceholder));
     }
 

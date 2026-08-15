@@ -4,7 +4,7 @@
 
 **Goal:** 为域名切换音效增加 `0.0–1.0` 独立音量配置，并接入聊天指令、配置面板滑条和指令可视化。
 
-**Architecture:** 在共享 `ConfigData` 中保存 `soundLevel`，由客户端 `soundevent` 包统一完成设置、格式化与试听；现有声音选择和域名变化播放都读取该值。聊天指令、配置草稿和指令可视化分别复用同一校验与播放入口，不增加服务端协议。
+**Architecture:** 在共享 `ConfigData` 中保存 `soundLevel`，由客户端 `soundevent` 包统一完成设置、格式化与试听；现有声音选择和域名变化播放都读取该值。聊天指令、配置草稿和指令可视化分别复用同一校验与播放入口；服务端只提供同构命令语法镜像以支持聊天补全和着色，不增加音量处理协议。
 
 **Tech Stack:** Java 17、Fabric API 客户端指令、Minecraft 1.20.4 Screen/SliderWidget/TextFieldWidget、Gson 注释配置、现有 I18nManager。
 
@@ -116,4 +116,29 @@
 
 **Step 3:** 运行 `.\gradlew.bat build`，预期编译、资源处理、现有测试任务和 remapJar 全部成功；不新增测试文件。
 
-**Step 4:** 检查 `git diff --stat`、`git status --short` 和相关完整差异，确认没有修改 `build/`、`run/`、服务端命令、权限、网络协议或域名 JSON。
+**Step 4:** 检查 `git diff --stat`、`git status --short` 和相关完整差异，确认没有修改 `build/`、`run/`、权限、网络协议或域名 JSON；服务端命令只允许增加客户端指令的同构语法镜像。
+
+### Task 8: 修复 soundlevel 聊天补全与语法着色
+
+**Files:**
+- Modify: `src/main/java/areahint/command/ServerCommands.java`
+
+**Step 1:** 按 `@superpowers:systematic-debugging` 对照已正常工作的 `replacesoundevent`，确认客户端执行正常但服务端同步树缺少 `soundlevel` 是唯一差异。
+
+**Step 2:** 在 `/areahint` 根节点中紧邻 `createReplaceSoundEventCommand()` 接入 `createSoundLevelCommand()`，使输入 `/areahint ` 时能获得 `soundlevel` 字面量。
+
+**Step 3:** 增加与客户端树同构的最小语法镜像：
+
+```java
+private static LiteralArgumentBuilder<ServerCommandSource> createSoundLevelCommand() {
+    return literal("soundlevel")
+        .executes(ServerCommands::executeClientOnlyCommandPlaceholder)
+        .then(argument("level", FloatArgumentType.floatArg(
+                ConfigData.SOUND_LEVEL_MIN, ConfigData.SOUND_LEVEL_MAX))
+            .executes(ServerCommands::executeClientOnlyCommandPlaceholder));
+}
+```
+
+该方法只复用现有占位执行器，不增加权限、网络包、固定数值建议或服务端配置写入。
+
+**Step 4:** 运行 `git diff --check`、`.\gradlew.bat build` 和最终差异复查；遵照仓库要求不新增测试文件、不创建 worktree、不提交。

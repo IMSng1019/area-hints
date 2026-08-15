@@ -332,6 +332,23 @@ public class ClientConfig {
     }
 
     /**
+     * 获取域名切换声音音量。
+     * @return 规范化后的声音音量
+     */
+    public static float getSoundLevel() {
+        return config.getSoundLevel();
+    }
+
+    /**
+     * 设置并立即保存域名切换声音音量。
+     * @param soundLevel 声音音量，限制在 0.0 到 1.0 的有效范围内
+     */
+    public static void setSoundLevel(float soundLevel) {
+        config.setSoundLevel(soundLevel);
+        save();
+    }
+
+    /**
      * 一次性保存声音事件和音高，避免选择音效时写入两次配置文件。
      * @param soundEvent 声音事件 ID
      * @param soundPitch 声音音高

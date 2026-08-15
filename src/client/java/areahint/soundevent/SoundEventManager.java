@@ -30,9 +30,26 @@ public final class SoundEventManager {
     }
 
     /**
-     * 试听声音但不修改配置。
+     * 使用当前持久配置中的音量试听声音，但不修改配置。
      */
     public static boolean preview(SoundEventSelection selection) {
+        return preview(selection, ClientConfig.getSoundLevel());
+    }
+
+    /**
+     * 使用明确音量试听声音但不修改配置，供持久配置和配置草稿共用同一播放入口。
+     * @param selection 要试听的声音选择
+     * @param soundLevel 要使用的声音音量
+     * @return 声音是否成功开始播放
+     */
+    public static boolean preview(SoundEventSelection selection, float soundLevel) {
+        return preview(selection, soundLevel, true);
+    }
+
+    /**
+     * 以指定音量试听，并允许调用方决定声音缺失时是否沿用常规警告语义。
+     */
+    private static boolean preview(SoundEventSelection selection, float soundLevel, boolean warnOnMissing) {
         if (selection == null || selection.isNone()) {
             return false;
         }
@@ -45,11 +62,13 @@ public final class SoundEventManager {
 
         Optional<SoundEvent> soundEvent = SoundEventCatalog.resolve(selection.soundId());
         if (soundEvent.isEmpty()) {
-            warnMissing(selection.soundId());
+            if (warnOnMissing) {
+                warnMissing(selection.soundId());
+            }
             return false;
         }
 
-        player.playSound(soundEvent.get(), SoundCategory.PLAYERS, 1.0f,
+        player.playSound(soundEvent.get(), SoundCategory.PLAYERS, ConfigData.normalizeSoundLevel(soundLevel),
                 ConfigData.clampSoundPitch(selection.pitch()));
         return true;
     }
@@ -68,7 +87,7 @@ public final class SoundEventManager {
 
         ClientConfig.setSoundSelection(selection.soundId(), selection.pitch());
         if (!selection.isNone()) {
-            preview(selection);
+            preview(selection, ClientConfig.getSoundLevel());
         }
         return true;
     }
@@ -88,8 +107,30 @@ public final class SoundEventManager {
         draft.setSoundEvent(selection.soundId());
         draft.setSoundPitch(selection.pitch());
         if (!selection.isNone()) {
-            preview(selection);
+            preview(selection, draft.getSoundLevel());
         }
+        return true;
+    }
+
+    /**
+     * 保存声音音量，并在当前配置了有效声音时尽力按新音量试听。
+     * @param soundLevel 要保存的声音音量
+     * @return 音量完成规范化并写入配置后返回 true，试听结果不影响保存结果
+     */
+    public static boolean applySoundLevel(float soundLevel) {
+        float normalizedSoundLevel = ConfigData.normalizeSoundLevel(soundLevel);
+        // 先保存规范化音量，确保当前声音缺失或客户端暂不可播放时仍保留玩家设置。
+        ClientConfig.setSoundLevel(normalizedSoundLevel);
+
+        String soundId = ClientConfig.getSoundEvent();
+        if (ConfigData.SOUND_EVENT_NONE.equals(soundId)) {
+            return true;
+        }
+        // 直接保留配置中的音高，避免普通声音经目录模型恢复时被固定为 1.0。
+        SoundEventSelection currentSelection = new SoundEventSelection(soundId, ClientConfig.getSoundPitch(),
+                "configured", null, SoundEventSelection.NO_NOTE);
+        // 音量已经保存，缺失声音或暂时没有玩家时均静默跳过试听。
+        preview(currentSelection, normalizedSoundLevel, false);
         return true;
     }
 

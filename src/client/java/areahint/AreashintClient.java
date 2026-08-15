@@ -143,6 +143,9 @@ public class AreashintClient implements ClientModInitializer {
 		// 注册纯客户端域名切换声音指令，分类和选择过程不会发送到服务端。
 		areahint.soundevent.ReplaceSoundEventClientCommand.register();
 
+		// 注册纯客户端声音音量指令，菜单和设置过程不会发送到服务端。
+		areahint.soundevent.SoundLevelClientCommand.register();
+
 		// 初始化 Xaero 可选兼容与世界地图域名管理协议
 		areahint.management.client.AreaManagementClient.register();
 		areahint.xaero.XaeroCompat.initialize();

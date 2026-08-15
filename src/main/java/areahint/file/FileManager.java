@@ -157,7 +157,10 @@ public class FileManager {
                     "  \"soundEvent\": \"" + defaultConfig.getSoundEvent() + "\",\n\n" +
 
                     "  // SoundPitch: 声音播放音高，范围为 0.5 到 2.0\n" +
-                    "  \"soundPitch\": " + defaultConfig.getSoundPitch() + "\n" +
+                    "  \"soundPitch\": " + defaultConfig.getSoundPitch() + ",\n\n" +
+
+                    "  // SoundLevel: 声音播放音量，范围为 0.0 到 1.0\n" +
+                    "  \"soundLevel\": " + ConfigData.formatSoundLevel(defaultConfig.getSoundLevel()) + "\n" +
                     "}";
 
             Files.write(path, jsonWithComments.getBytes(StandardCharsets.UTF_8));
@@ -229,7 +232,29 @@ public class FileManager {
             JsonObject configJson = JsonParser.parseString(normalizedJson).getAsJsonObject();
             ConfigData defaultConfig = new ConfigData();
 
-            ConfigData config = GSON.fromJson(normalizedJson, ConfigData.class);
+            // 在 Gson 映射前区分无效值与有限数值，避免把可钳制的越界音量误恢复为默认值。
+            boolean soundLevelPresent = configJson.has("soundLevel");
+            boolean soundLevelFiniteNumber = false;
+            double rawSoundLevel = defaultConfig.getSoundLevel();
+            float normalizedSoundLevel = defaultConfig.getSoundLevel();
+            if (soundLevelPresent && !configJson.get("soundLevel").isJsonNull()
+                    && configJson.get("soundLevel").isJsonPrimitive()
+                    && configJson.get("soundLevel").getAsJsonPrimitive().isNumber()) {
+                rawSoundLevel = configJson.get("soundLevel").getAsDouble();
+                soundLevelFiniteNumber = Double.isFinite(rawSoundLevel);
+                if (soundLevelFiniteNumber) {
+                    normalizedSoundLevel = ConfigData.normalizeSoundLevel(rawSoundLevel);
+                }
+            }
+            if (soundLevelPresent) {
+                configJson.addProperty("soundLevel", soundLevelFiniteNumber
+                        ? normalizedSoundLevel : defaultConfig.getSoundLevel());
+            }
+            boolean soundLevelNeedsNormalization = soundLevelFiniteNumber
+                    && Double.compare(rawSoundLevel, Double.parseDouble(
+                            ConfigData.formatSoundLevel(normalizedSoundLevel))) != 0;
+
+            ConfigData config = GSON.fromJson(configJson, ConfigData.class);
             // 如果解析失败，返回默认配置
             if (config == null) {
                 return new ConfigData();
@@ -329,6 +354,21 @@ public class FileManager {
                 Areashint.LOGGER.warn("配置项 'soundPitch' 无效，已补全为默认值: " + defaultConfig.getSoundPitch());
             }
 
+            // 非数字或非有限音量恢复默认值；有限越界值和多余精度则按统一规则钳制、量化并回写。
+            if (soundLevelPresent && !soundLevelFiniteNumber) {
+                config.setSoundLevel(defaultConfig.getSoundLevel());
+                needsUpdate = true;
+                Areashint.LOGGER.warn("配置项 'soundLevel' 无效，已补全为默认值: "
+                        + ConfigData.formatSoundLevel(defaultConfig.getSoundLevel()));
+            } else if (soundLevelPresent) {
+                config.setSoundLevel(normalizedSoundLevel);
+                if (soundLevelNeedsNormalization) {
+                    needsUpdate = true;
+                    Areashint.LOGGER.warn("配置项 'soundLevel' 已按有效范围和 0.01 精度规范化为: "
+                            + ConfigData.formatSoundLevel(normalizedSoundLevel));
+                }
+            }
+
             // 如果字段值被修正，立即保存更新后的配置。
             if (needsUpdate) {
                 Areashint.LOGGER.info("检测到配置值无效，正在保存修正后的配置...");
@@ -359,6 +399,7 @@ public class FileManager {
         if (!json.has("teleportFormat")) { config.setTeleportFormat(defaults.getTeleportFormat()); changed = true; }
         if (!json.has("soundEvent")) { config.setSoundEvent(defaults.getSoundEvent()); changed = true; }
         if (!json.has("soundPitch")) { config.setSoundPitch(defaults.getSoundPitch()); changed = true; }
+        if (!json.has("soundLevel")) { config.setSoundLevel(defaults.getSoundLevel()); changed = true; }
         if (changed) {
             Areashint.LOGGER.info("检测到旧版个人配置，已保留现有设置并补充缺失字段: " + json.keySet());
         }
@@ -416,7 +457,10 @@ public class FileManager {
                     "  \"soundEvent\": \"" + config.getSoundEvent() + "\",\n\n" +
 
                     "  // SoundPitch: 声音播放音高，范围为 0.5 到 2.0\n" +
-                    "  \"soundPitch\": " + config.getSoundPitch() + "\n" +
+                    "  \"soundPitch\": " + config.getSoundPitch() + ",\n\n" +
+
+                    "  // SoundLevel: 声音播放音量，范围为 0.0 到 1.0\n" +
+                    "  \"soundLevel\": " + ConfigData.formatSoundLevel(config.getSoundLevel()) + "\n" +
                     "}";
 
             Files.write(path, jsonWithComments.getBytes(StandardCharsets.UTF_8));

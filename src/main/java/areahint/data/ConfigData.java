@@ -2,6 +2,8 @@ package areahint.data;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -14,6 +16,8 @@ public class ConfigData {
     public static final float CUSTOM_SIZE_MAX = 8.0f;
     public static final float SOUND_PITCH_MIN = 0.5f;
     public static final float SOUND_PITCH_MAX = 2.0f;
+    public static final float SOUND_LEVEL_MIN = 0.0f;
+    public static final float SOUND_LEVEL_MAX = 1.0f;
     public static final String SOUND_EVENT_NONE = "none";
     private static final String CUSTOM_SIZE_PREFIX = "custom:";
     private static final Pattern SOUND_EVENT_ID_PATTERN = Pattern.compile("[a-z0-9_.-]+:[a-z0-9_./-]+");
@@ -64,6 +68,9 @@ public class ConfigData {
     // 域名切换声音的播放音高，音符盒使用 0.5 到 2.0 的原版范围
     private float soundPitch;
 
+    // 域名切换声音的播放音量，使用 0.0 到 1.0 的有效范围
+    private float soundLevel;
+
     /**
      * 默认构造方法，使用默认配置
      */
@@ -84,6 +91,7 @@ public class ConfigData {
         this.teleportFormat = "tp"; // 默认传送命令头
         this.soundEvent = SOUND_EVENT_NONE; // 默认不播放域名切换声音
         this.soundPitch = 1.0f; // 默认音高
+        this.soundLevel = 1.0f; // 默认使用完整音量
     }
     
     /**
@@ -108,6 +116,7 @@ public class ConfigData {
         this.teleportFormat = "tp"; // 默认传送命令头
         this.soundEvent = SOUND_EVENT_NONE; // 默认不播放域名切换声音
         this.soundPitch = 1.0f; // 默认音高
+        this.soundLevel = 1.0f; // 默认使用完整音量
     }
 
     /**
@@ -133,6 +142,7 @@ public class ConfigData {
         this.teleportFormat = "tp"; // 默认传送命令头
         this.soundEvent = SOUND_EVENT_NONE; // 默认不播放域名切换声音
         this.soundPitch = 1.0f; // 默认音高
+        this.soundLevel = 1.0f; // 默认使用完整音量
     }
     
     /**
@@ -156,6 +166,7 @@ public class ConfigData {
         copy.setTeleportFormat(this.teleportFormat);
         copy.setSoundEvent(this.soundEvent);
         copy.setSoundPitch(this.soundPitch);
+        copy.setSoundLevel(this.soundLevel);
         return copy;
     }
 
@@ -396,6 +407,22 @@ public class ConfigData {
     }
 
     /**
+     * 获取域名切换声音音量。
+     * @return 规范化后的音量
+     */
+    public float getSoundLevel() {
+        return normalizeSoundLevel(soundLevel);
+    }
+
+    /**
+     * 设置域名切换声音音量。
+     * @param soundLevel 音量，按 0.01 精度规范化到 0.0 到 1.0 的有效范围内
+     */
+    public void setSoundLevel(float soundLevel) {
+        this.soundLevel = normalizeSoundLevel(soundLevel);
+    }
+
+    /**
      * 验证声音事件 ID 是否符合命名空间格式。
      * @param soundEvent 声音事件 ID
      * @return 是否有效
@@ -418,6 +445,57 @@ public class ConfigData {
             return 1.0f;
         }
         return Math.max(SOUND_PITCH_MIN, Math.min(SOUND_PITCH_MAX, soundPitch));
+    }
+
+    /**
+     * 将声音音量限制在有效范围内，仅负责范围钳制。
+     * @param soundLevel 原始音量
+     * @return 限制后的音量
+     */
+    public static float clampSoundLevel(float soundLevel) {
+        return Math.max(SOUND_LEVEL_MIN, Math.min(SOUND_LEVEL_MAX, soundLevel));
+    }
+
+    /**
+     * 将 double 音量恢复默认值或限制范围后，再按 0.01 精度四舍五入。
+     * @param soundLevel 原始音量
+     * @return 规范化后的音量
+     */
+    public static float normalizeSoundLevel(double soundLevel) {
+        if (!Double.isFinite(soundLevel)) {
+            return 1.0f;
+        }
+        double clamped = Math.max(SOUND_LEVEL_MIN, Math.min(SOUND_LEVEL_MAX, soundLevel));
+        // 使用十进制半入舍入，避免 0.145 等边界值受 double 二进制尾差影响而向下量化。
+        return BigDecimal.valueOf(clamped).setScale(2, RoundingMode.HALF_UP).floatValue();
+    }
+
+    /**
+     * 将 float 音量按其十进制文本语义规范化，避免二进制尾差改变半入舍入结果。
+     * @param soundLevel 原始音量
+     * @return 规范化后的音量
+     */
+    public static float normalizeSoundLevel(float soundLevel) {
+        if (!Float.isFinite(soundLevel)) {
+            return 1.0f;
+        }
+        return normalizeSoundLevel(Double.parseDouble(Float.toString(soundLevel)));
+    }
+
+    /**
+     * 将声音音量稳定格式化为最多两位小数，避免界面和配置文件出现浮点尾数。
+     * @param soundLevel 原始音量
+     * @return 去除多余尾零后的音量文本
+     */
+    public static String formatSoundLevel(float soundLevel) {
+        String formatted = String.format(Locale.ROOT, "%.2f", normalizeSoundLevel(soundLevel));
+        while (formatted.contains(".") && formatted.endsWith("0")) {
+            formatted = formatted.substring(0, formatted.length() - 1);
+        }
+        if (formatted.endsWith(".")) {
+            formatted = formatted.substring(0, formatted.length() - 1);
+        }
+        return formatted;
     }
 
     public static boolean isValidTeleportFormat(String teleportFormat) {

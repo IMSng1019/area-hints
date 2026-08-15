@@ -20,6 +20,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class AreasHintConfigScreen extends Screen {
     private static final int BUTTON_WIDTH = 150;
@@ -31,6 +32,9 @@ public class AreasHintConfigScreen extends Screen {
     private static final int LIST_SCROLLBAR_GAP = 10;
     private static final int FREQUENCY_MIN = 1;
     private static final int FREQUENCY_MAX = 60;
+    // 仅保留无符号、无额外前导零且最多两位小数的普通十进制输入状态。
+    private static final Pattern PLAIN_SOUND_LEVEL_PATTERN = Pattern.compile(
+            "(?:0(?:\\.\\d{0,2})?|1(?:\\.0{0,2})?|\\.\\d{1,2})");
     private static final String[] RENDER_MODES = {"CPU", "OpenGL", "Vulkan"};
     private static final String[] STYLE_MODES = {"full", "simple", "mixed"};
     private static final String[] SIZE_MODES = {"extra_large", "large", "medium_large", "medium", "medium_small", "small", "extra_small"};
@@ -45,6 +49,8 @@ public class AreasHintConfigScreen extends Screen {
     private boolean syncingTextField;
     private FrequencySlider frequencySlider;
     private TextFieldWidget frequencyInput;
+    private SoundLevelSlider soundLevelSlider;
+    private TextFieldWidget soundLevelInput;
     private ButtonWidget titleSizeButton;
     private TextFieldWidget titleSizeInput;
     private ButtonWidget subtitleSizeButton;
@@ -77,9 +83,14 @@ public class AreasHintConfigScreen extends Screen {
         this.list.addButton("screen.areahint.config.frequency", List.of(this.frequencySlider, this.frequencyInput));
 
         this.list.addGroup("screen.areahint.config.group.sound");
+        // 重建控件前先把草稿量化到界面的 0.01 精度，避免显示值与最终保存值不一致。
+        this.draft.setSoundLevel(ConfigData.normalizeSoundLevel(this.draft.getSoundLevel()));
         this.list.addButton("screen.areahint.config.sound_event", cycleButton(soundEventText(), button ->
                 areahint.soundevent.SoundEventVisualController.openForConfig(
                         this, this.draft, () -> button.setMessage(soundEventText()))));
+        this.soundLevelSlider = new SoundLevelSlider(0, 0, COMPACT_BUTTON_WIDTH, BUTTON_HEIGHT);
+        this.soundLevelInput = createSoundLevelInput();
+        this.list.addButton("screen.areahint.config.sound_level", List.of(this.soundLevelSlider, this.soundLevelInput));
 
         this.list.addGroup("screen.areahint.config.group.title");
         this.list.addButton("screen.areahint.config.hint_render", cycleButton(renderText(draft.getHintRender()), button -> {
@@ -245,6 +256,15 @@ public class AreasHintConfigScreen extends Screen {
         return input;
     }
 
+    private TextFieldWidget createSoundLevelInput() {
+        TextFieldWidget input = new TextFieldWidget(this.textRenderer, 0, 0, INPUT_WIDTH, BUTTON_HEIGHT, Text.empty());
+        input.setMaxLength(5);
+        input.setText(ConfigData.formatSoundLevel(draft.getSoundLevel()));
+        input.setPlaceholder(Text.literal(t("screen.areahint.config.custom.placeholder")));
+        input.setChangedListener(value -> applySoundLevelInput(input, value));
+        return input;
+    }
+
     private TextFieldWidget createSizeInput(boolean subtitle) {
         TextFieldWidget input = new TextFieldWidget(this.textRenderer, 0, 0, INPUT_WIDTH, BUTTON_HEIGHT, Text.empty());
         input.setMaxLength(5);
@@ -278,6 +298,40 @@ public class AreasHintConfigScreen extends Screen {
             String formattedFrequency = formatFrequency(frequency);
             if (!trimmed.endsWith(".") && !formattedFrequency.equals(trimmed)) {
                 setTextFieldSilently(input, formattedFrequency);
+            }
+        } catch (NumberFormatException ignored) {
+            // 允许用户临时输入小数点等未完成内容，等内容成为合法数字后再同步草稿。
+        }
+    }
+
+    private void applySoundLevelInput(TextFieldWidget input, String value) {
+        if (syncingTextField) {
+            return;
+        }
+
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return;
+        }
+
+        try {
+            double parsedSoundLevel = Double.parseDouble(trimmed);
+            if (!Double.isFinite(parsedSoundLevel)
+                    || parsedSoundLevel < ConfigData.SOUND_LEVEL_MIN
+                    || parsedSoundLevel > ConfigData.SOUND_LEVEL_MAX) {
+                // 非有限值和越界值仅保留在输入框供继续修改，不能钳制后写入配置草稿。
+                return;
+            }
+            // 输入先按滑条的 0.01 精度规范化，确保草稿、滑条与文本显示始终对应同一个值。
+            float soundLevel = ConfigData.normalizeSoundLevel(parsedSoundLevel);
+            draft.setSoundLevel(soundLevel);
+            if (soundLevelSlider != null) {
+                soundLevelSlider.setSoundLevel(soundLevel);
+            }
+            String formattedSoundLevel = ConfigData.formatSoundLevel(soundLevel);
+            // 普通十进制输入态暂时保留，其余合法写法立即同步为统一的 0.01 精度文本。
+            if (!isPlainSoundLevelInput(value)) {
+                setTextFieldSilently(input, formattedSoundLevel);
             }
         } catch (NumberFormatException ignored) {
             // 允许用户临时输入小数点等未完成内容，等内容成为合法数字后再同步草稿。
@@ -478,6 +532,53 @@ public class AreasHintConfigScreen extends Screen {
     private double toSliderValue(double frequency) {
         double clamped = Math.max(FREQUENCY_MIN, Math.min(FREQUENCY_MAX, frequency));
         return (clamped - FREQUENCY_MIN) / (double) (FREQUENCY_MAX - FREQUENCY_MIN);
+    }
+
+    private static boolean isPlainSoundLevelInput(String value) {
+        return PLAIN_SOUND_LEVEL_PATTERN.matcher(value).matches();
+    }
+
+    private double toSoundLevelSliderValue(float soundLevel) {
+        float clamped = ConfigData.clampSoundLevel(soundLevel);
+        return (clamped - ConfigData.SOUND_LEVEL_MIN)
+                / (double) (ConfigData.SOUND_LEVEL_MAX - ConfigData.SOUND_LEVEL_MIN);
+    }
+
+    private class SoundLevelSlider extends SliderWidget {
+        SoundLevelSlider(int x, int y, int width, int height) {
+            super(x, y, width, height, Text.empty(),
+                    AreasHintConfigScreen.this.toSoundLevelSliderValue(draft.getSoundLevel()));
+            updateMessage();
+        }
+
+        @Override
+        protected void updateMessage() {
+            this.setMessage(Text.literal(ConfigData.formatSoundLevel(getSoundLevelValue())));
+        }
+
+        @Override
+        protected void applyValue() {
+            float soundLevel = getSoundLevelValue();
+            this.value = AreasHintConfigScreen.this.toSoundLevelSliderValue(soundLevel);
+            // 拖动仅同步配置草稿和输入框，试听与持久化仍由原有交互和完成按钮负责。
+            draft.setSoundLevel(soundLevel);
+            if (soundLevelInput != null) {
+                setTextFieldSilently(soundLevelInput, ConfigData.formatSoundLevel(soundLevel));
+            }
+            updateMessage();
+        }
+
+        private float getSoundLevelValue() {
+            double soundLevel = ConfigData.SOUND_LEVEL_MIN
+                    + this.value * (ConfigData.SOUND_LEVEL_MAX - ConfigData.SOUND_LEVEL_MIN);
+            return ConfigData.normalizeSoundLevel(soundLevel);
+        }
+
+        private void setSoundLevel(float soundLevel) {
+            this.value = AreasHintConfigScreen.this.toSoundLevelSliderValue(
+                    ConfigData.normalizeSoundLevel(soundLevel));
+            updateMessage();
+        }
     }
 
     private class ConfigListWidget extends ElementListWidget<ConfigListWidget.Entry> {

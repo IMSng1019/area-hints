@@ -4,6 +4,7 @@ import areahint.Areashint;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.network.ServerPlayerEntity;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
@@ -26,9 +27,20 @@ public final class LuckPermsCompat {
     private LuckPermsCompat() {
     }
 
-    public static void initialize() {
+    /**
+     * 在服务端完成启动后初始化 LuckPerms API。
+     */
+    public static synchronized void initialize() {
         initialized = true;
         resolveApi(true);
+    }
+
+    /**
+     * 清理当前服务器的 API 引用，支持集成服务器重复启动。
+     */
+    public static synchronized void shutdown() {
+        initialized = false;
+        clearApi();
     }
 
     public static boolean isAvailable() {
@@ -40,9 +52,11 @@ public final class LuckPermsCompat {
             return Result.UNDEFINED;
         }
 
+        // 服务端生命周期完成前不触碰 LuckPermsProvider，避免 API 尚未注册时触发异常。
         if (!initialized) {
-            initialize();
-        } else if (!available && FabricLoader.getInstance().isModLoaded("luckperms")) {
+            return Result.UNDEFINED;
+        }
+        if (!available && FabricLoader.getInstance().isModLoaded("luckperms")) {
             resolveApi(false);
         }
 
@@ -77,7 +91,7 @@ public final class LuckPermsCompat {
         return Result.UNDEFINED;
     }
 
-    private static void resolveApi(boolean logState) {
+    private static synchronized void resolveApi(boolean logState) {
         if (!FabricLoader.getInstance().isModLoaded("luckperms")) {
             clearApi();
             if (logState) {
@@ -86,6 +100,7 @@ public final class LuckPermsCompat {
             return;
         }
 
+        boolean wasAvailable = isAvailable();
         try {
             Class<?> providerClass = Class.forName("net.luckperms.api.LuckPermsProvider");
             Method getMethod = providerClass.getMethod("get");
@@ -99,13 +114,19 @@ public final class LuckPermsCompat {
             getUserMethod = userMethod;
             available = true;
 
-            if (logState) {
+            if (logState || !wasAvailable) {
                 Areashint.LOGGER.info("LuckPerms 已检测到，Areas Hint 权限节点联动已启用。");
             }
         } catch (Exception e) {
             clearApi();
             if (logState) {
-                Areashint.LOGGER.warn("LuckPerms 已安装但 API 不可用，Areas Hint 将回退到原有权限规则。", e);
+                Throwable cause = e instanceof InvocationTargetException invocation
+                    && invocation.getCause() != null ? invocation.getCause() : e;
+                if ("net.luckperms.api.LuckPermsProvider$NotLoadedException".equals(cause.getClass().getName())) {
+                    Areashint.LOGGER.info("LuckPerms API 尚未就绪，Areas Hint 将在后续权限查询时重试。");
+                } else {
+                    Areashint.LOGGER.warn("LuckPerms 已安装但 API 不可用，Areas Hint 将回退到原有权限规则。", e);
+                }
             }
         }
     }

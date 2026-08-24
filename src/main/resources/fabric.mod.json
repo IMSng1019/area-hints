@@ -44,10 +44,12 @@
 	"suggests": {
 		"sodium": "*",
 		"modmenu": "*",
-		"luckperms": "*",
 		"bluemap": "*",
 		"xaerominimap": "=25.2.0",
 		"xaeroworldmap": "=1.39.2",
 		"vulkanmod": "*"
+	},
+	"recommends": {
+		"luckperms": "*"
 	}
 }

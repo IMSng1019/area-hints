@@ -54,9 +54,6 @@ public class Areashint implements ModInitializer {
 		// 初始化服务端国际化
 		ServerI18nManager.init();
 
-		// 初始化权限兼容层
-		LuckPermsCompat.initialize();
-
 		// 初始化 BlueMap 兼容层
 		BlueMapCompat.init();
 
@@ -78,10 +75,15 @@ public class Areashint implements ModInitializer {
 		// 初始化服务端世界网络处理
 		areahint.network.ServerWorldNetworking.init();
 		
+		// LuckPerms 必须等所有模组初始化完成后再获取 API。
+		ServerLifecycleEvents.SERVER_STARTED.register(server -> LuckPermsCompat.initialize());
 		// 注册服务器启动事件监听器
 		ServerLifecycleEvents.SERVER_STARTING.register(this::onServerStarting);
 		// 注册服务器停止事件监听器
-		ServerLifecycleEvents.SERVER_STOPPED.register(this::onServerStopped);
+		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+			LuckPermsCompat.shutdown();
+			onServerStopped(server);
+		});
 		ServerTickEvents.END_SERVER_TICK.register(server -> BlueMapCompat.onServerTick(System.currentTimeMillis()));
 
 		// 初始化服务端网络处理

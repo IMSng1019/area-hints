@@ -75,8 +75,8 @@ public class Areashint implements ModInitializer {
 		// 初始化服务端世界网络处理
 		areahint.network.ServerWorldNetworking.init();
 		
-		// LuckPerms 必须等所有模组初始化完成后再获取 API。
-		ServerLifecycleEvents.SERVER_STARTED.register(server -> LuckPermsCompat.initialize());
+		// 服务端完成启动后主动登记全部权限节点，确保 LuckPerms editor 不依赖玩家先触发命令。
+		ServerLifecycleEvents.SERVER_STARTED.register(LuckPermsCompat::registerPermissionNodes);
 		// 注册服务器启动事件监听器
 		ServerLifecycleEvents.SERVER_STARTING.register(this::onServerStarting);
 		// 注册服务器停止事件监听器

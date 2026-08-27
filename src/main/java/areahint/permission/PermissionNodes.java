@@ -1,5 +1,7 @@
 package areahint.permission;
 
+import java.util.List;
+
 /**
  * Areas Hint 权限节点常量。
  */
@@ -49,6 +51,55 @@ public final class PermissionNodes {
     public static final String BOUND_VIZ = "areahint.command.boundviz";
     public static final String SERVER_LANGUAGE = "areahint.command.serverlanguage";
 
+    // 启动时按此清单主动登记节点，避免 LuckPerms editor 依赖玩家逐个触发权限检查。
+    private static final List<String> ALL = List.of(
+        HELP,
+        CHECK,
+        RELOAD,
+        DEBUG,
+        ON,
+        OFF,
+        DIMENSIONALITY_NAME,
+        DIMENSIONALITY_COLOR,
+        FIRST_DIM_NAME,
+        FIRST_DIM_NAME_SKIP,
+        ADD,
+        DELETE,
+        EASYADD,
+        EXPANDAREA,
+        SHRINKAREA,
+        DIVIDEAREA,
+        RECOLOR,
+        RENAME,
+        SETHIGH,
+        TELEPORT,
+        SETTP,
+        ADDHINT,
+        DELETEHINT,
+        ADD_DESCRIPTION,
+        DELETE_DESCRIPTION,
+        ADD_DIMENSIONALITY_DESCRIPTION,
+        DELETE_DIMENSIONALITY_DESCRIPTION,
+        ADDSIGNATURE,
+        DELETESIGNATURE,
+        FREQUENCY,
+        HINT_RENDER,
+        TITLE_STYLE,
+        TITLE_SIZE,
+        ADD_SUBTITLE,
+        DELETE_SUBTITLE,
+        REPLACE_SUBTITLE_COLOR,
+        REPLACE_SUBTITLE_SIZE,
+        REPLACE_BUTTON,
+        LANGUAGE,
+        BOUND_VIZ,
+        SERVER_LANGUAGE
+    );
+
     private PermissionNodes() {
+    }
+
+    public static List<String> all() {
+        return ALL;
     }
 }

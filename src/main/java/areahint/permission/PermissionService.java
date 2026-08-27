@@ -16,32 +16,31 @@ public final class PermissionService {
         if (source == null) {
             return false;
         }
-        return resolve(node, source.getPlayer(), () -> source.hasPermissionLevel(fallbackLevel));
+        return resolve(LuckPermsCompat.checkPermission(source, node), () -> source.hasPermissionLevel(fallbackLevel));
     }
 
     public static boolean hasCommandPermission(ServerPlayerEntity player, String node, int fallbackLevel) {
         if (player == null) {
             return false;
         }
-        return resolve(node, player, () -> player.hasPermissionLevel(fallbackLevel));
+        return resolve(LuckPermsCompat.checkPermission(player, node), () -> player.hasPermissionLevel(fallbackLevel));
     }
 
     public static boolean hasNodeOr(ServerPlayerEntity player, String node, BooleanSupplier fallbackRule) {
         if (player == null) {
             return false;
         }
-        return resolve(node, player, fallbackRule);
+        return resolve(LuckPermsCompat.checkPermission(player, node), fallbackRule);
     }
 
     public static boolean hasNodeOr(ServerCommandSource source, String node, BooleanSupplier fallbackRule) {
         if (source == null) {
             return false;
         }
-        return resolve(node, source.getPlayer(), fallbackRule);
+        return resolve(LuckPermsCompat.checkPermission(source, node), fallbackRule);
     }
 
-    private static boolean resolve(String node, ServerPlayerEntity player, BooleanSupplier fallbackRule) {
-        LuckPermsCompat.Result result = LuckPermsCompat.checkPermission(player, node);
+    private static boolean resolve(LuckPermsCompat.Result result, BooleanSupplier fallbackRule) {
         if (result == LuckPermsCompat.Result.TRUE) {
             return true;
         }

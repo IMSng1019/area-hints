@@ -2,6 +2,9 @@ package areahint.permission;
 
 import areahint.Areashint;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.command.CommandSource;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.lang.reflect.InvocationTargetException;
@@ -23,6 +26,8 @@ public final class LuckPermsCompat {
     private static volatile Object luckPerms;
     private static volatile Object userManager;
     private static volatile Method getUserMethod;
+    private static volatile boolean fabricPermissionsResolved;
+    private static volatile Method getPermissionValueMethod;
 
     private LuckPermsCompat() {
     }
@@ -41,14 +46,122 @@ public final class LuckPermsCompat {
     public static synchronized void shutdown() {
         initialized = false;
         clearApi();
+        fabricPermissionsResolved = false;
+        getPermissionValueMethod = null;
     }
 
     public static boolean isAvailable() {
         return available && luckPerms != null && userManager != null && getUserMethod != null;
     }
 
+    /**
+     * 优先通过 Fabric 权限桥接查询命令源，使 LuckPerms 能记录控制台和玩家触发的节点。
+     */
+    public static Result checkPermission(ServerCommandSource source, String node) {
+        if (source == null || node == null || node.isBlank()) {
+            return Result.UNDEFINED;
+        }
+
+        Result fabricResult = checkFabricPermission(source, node);
+        if (fabricResult != Result.UNDEFINED) {
+            return fabricResult;
+        }
+
+        return checkLuckPermsPermission(source.getPlayer(), node);
+    }
+
+    /**
+     * 玩家权限查询保留 LuckPerms 公共 API 回退，兼容未暴露 Fabric 权限桥接的服务端环境。
+     */
     public static Result checkPermission(ServerPlayerEntity player, String node) {
         if (player == null || node == null || node.isBlank()) {
+            return Result.UNDEFINED;
+        }
+
+        Result fabricResult = checkFabricPermission(player.getCommandSource(), node);
+        if (fabricResult != Result.UNDEFINED) {
+            return fabricResult;
+        }
+
+        return checkLuckPermsPermission(player, node);
+    }
+
+    /**
+     * 使用控制台命令源提交全部节点，LuckPerms editor 随后即可从运行时注册表读取完整清单。
+     */
+    public static void registerPermissionNodes(MinecraftServer server) {
+        initialize();
+        if (server == null || !FabricLoader.getInstance().isModLoaded("luckperms")) {
+            return;
+        }
+        if (!resolveFabricPermissionsApi(true)) {
+            Areashint.LOGGER.warn("无法登记 Areas Hint 权限节点: Fabric Permissions API 不可用。");
+            return;
+        }
+
+        ServerCommandSource source = server.getCommandSource();
+        int registered = 0;
+        for (String node : PermissionNodes.all()) {
+            if (invokeFabricPermissionCheck(source, node)) {
+                registered++;
+            }
+        }
+
+        Areashint.LOGGER.info("已向 LuckPerms 提交 {} 个 Areas Hint 权限节点。", registered);
+    }
+
+    private static Result checkFabricPermission(CommandSource source, String node) {
+        if (source == null || !resolveFabricPermissionsApi(false)) {
+            return Result.UNDEFINED;
+        }
+
+        try {
+            Object result = getPermissionValueMethod.invoke(null, source, node);
+            return convertEnumResult(result);
+        } catch (Exception e) {
+            Areashint.LOGGER.warn("通过 Fabric Permissions API 查询权限节点失败: {}", node, e);
+            return Result.UNDEFINED;
+        }
+    }
+
+    private static boolean invokeFabricPermissionCheck(CommandSource source, String node) {
+        try {
+            getPermissionValueMethod.invoke(null, source, node);
+            return true;
+        } catch (Exception e) {
+            Areashint.LOGGER.warn("向 LuckPerms 登记权限节点失败: {}", node, e);
+            return false;
+        }
+    }
+
+    private static synchronized boolean resolveFabricPermissionsApi(boolean logState) {
+        if (fabricPermissionsResolved) {
+            return getPermissionValueMethod != null;
+        }
+
+        fabricPermissionsResolved = true;
+        if (!FabricLoader.getInstance().isModLoaded("fabric-permissions-api-v0")) {
+            return false;
+        }
+
+        try {
+            Class<?> permissionsClass = Class.forName("me.lucko.fabric.api.permissions.v0.Permissions");
+            getPermissionValueMethod = permissionsClass.getMethod("getPermissionValue", CommandSource.class, String.class);
+            if (logState) {
+                Areashint.LOGGER.info("Fabric Permissions API 已检测到，开始登记 Areas Hint 权限节点。");
+            }
+            return true;
+        } catch (Exception e) {
+            getPermissionValueMethod = null;
+            if (logState) {
+                Areashint.LOGGER.warn("Fabric Permissions API 已安装但无法调用。", e);
+            }
+            return false;
+        }
+    }
+
+    private static Result checkLuckPermsPermission(ServerPlayerEntity player, String node) {
+        if (player == null) {
             return Result.UNDEFINED;
         }
 
@@ -76,18 +189,22 @@ public final class LuckPermsCompat {
             Object permissionData = getPermissionDataMethod.invoke(cachedData);
             Method checkPermissionMethod = permissionData.getClass().getMethod("checkPermission", String.class);
             Object result = checkPermissionMethod.invoke(permissionData, node);
-
-            if (result instanceof Enum<?> enumResult) {
-                return switch (enumResult.name()) {
-                    case "TRUE" -> Result.TRUE;
-                    case "FALSE" -> Result.FALSE;
-                    default -> Result.UNDEFINED;
-                };
-            }
+            return convertEnumResult(result);
         } catch (Exception e) {
             Areashint.LOGGER.warn("查询 LuckPerms 权限节点失败: {} for {}", node, player.getName().getString(), e);
         }
 
+        return Result.UNDEFINED;
+    }
+
+    private static Result convertEnumResult(Object result) {
+        if (result instanceof Enum<?> enumResult) {
+            return switch (enumResult.name()) {
+                case "TRUE" -> Result.TRUE;
+                case "FALSE" -> Result.FALSE;
+                default -> Result.UNDEFINED;
+            };
+        }
         return Result.UNDEFINED;
     }
 

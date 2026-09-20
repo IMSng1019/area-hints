@@ -6,10 +6,12 @@ import areahint.xaero.AreaOverlayColorResolver;
 import areahint.xaero.AreaOverlayRepository;
 import areahint.xaero.AreaOverlayRepository.OverlayArea;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 import xaero.map.element.MapElementReader;
 import xaero.map.element.MapElementRenderLocation;
 import xaero.map.gui.CursorBox;
+import xaero.map.gui.GuiMap;
 import xaero.map.gui.IRightClickableElement;
 import xaero.map.gui.dropdown.rightclick.RightClickOption;
 
@@ -19,6 +21,8 @@ import java.util.StringJoiner;
 
 final class AreaWorldMapReader extends MapElementReader<OverlayArea, AreaWorldMapRenderContext, AreaWorldMapRenderer> {
     private final AreaWorldMapRenderContext context;
+    // 上一次右键菜单是否交还了 Xaero 原版地图菜单，标题底色需要跟随同一个来源
+    private boolean originalRightClickMenu;
 
     AreaWorldMapReader(AreaWorldMapRenderContext context) {
         this.context = context;
@@ -101,7 +105,11 @@ final class AreaWorldMapReader extends MapElementReader<OverlayArea, AreaWorldMa
 
     @Override
     public int getRightClickTitleBackgroundColor(OverlayArea area) {
-        return 0xFF000000 | AreaOverlayColorResolver.resolve(area, System.currentTimeMillis());
+        // 原版菜单沿用 Xaero 的标题底色，只有域名管理菜单才使用域名颜色
+        GuiMap map = originalRightClickMenu ? currentMap() : null;
+        return map == null
+            ? 0xFF000000 | AreaOverlayColorResolver.resolve(area, System.currentTimeMillis())
+            : map.getRightClickTitleBackgroundColor();
     }
 
     @Override
@@ -154,13 +162,39 @@ final class AreaWorldMapReader extends MapElementReader<OverlayArea, AreaWorldMa
         if (hits.isEmpty()) {
             return options;
         }
-        options.add(new RightClickOption(I18nManager.translate("xaero.areahint.manage"), 0, target) {
+        GuiMap map = currentMap();
+        if (map == null) {
+            return options;
+        }
+        if (AreaWorldMapRightClick.isDoubleRightClick()) {
+            // 双击：本 tick 结束后关闭 Xaero 菜单并直接进入域名管理，避免在鼠标事件里切换界面
+            originalRightClickMenu = false;
+            AreaWorldMapRightClick.openLater(map, dimensionId, hits);
+            options.add(manageOption(dimensionId, hits, target));
+            return options;
+        }
+        // 单击：完整交还 Xaero 原版地图右键菜单，模组的域名管理只保留双击入口
+        originalRightClickMenu = true;
+        AreaWorldMapRightClick.recordDomainClick(dimensionId, hits);
+        ArrayList<RightClickOption> original = map.getRightClickOptions();
+        return original == null ? options : original;
+    }
+
+    /** 构造域名管理菜单项，作为双击延迟打开被放弃时的回退入口。 */
+    private static RightClickOption manageOption(String dimensionId, List<OverlayArea> hits,
+                                                 IRightClickableElement target) {
+        return new RightClickOption(I18nManager.translate("xaero.areahint.manage"), 0, target) {
             @Override
-            public void onAction(net.minecraft.client.gui.screen.Screen screen) {
+            public void onAction(Screen screen) {
                 AreaManagementClient.openForHits(screen, dimensionId, hits);
             }
-        });
-        return options;
+        };
+    }
+
+    /** 当前打开的 Xaero 世界地图界面，未打开时为 null。 */
+    private static GuiMap currentMap() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        return client != null && client.currentScreen instanceof GuiMap map ? map : null;
     }
 
     @Override
@@ -188,7 +222,8 @@ final class AreaWorldMapReader extends MapElementReader<OverlayArea, AreaWorldMa
             I18nManager.translate("xaero.areahint.tooltip.altitude", altitude),
             I18nManager.translate("xaero.areahint.tooltip.color", area.color())
         );
-        return new CursorBox(Text.literal(String.join("\n", lines)));
+        // Xaero 按空格分词来识别换行，单独嵌入的换行符会被当成普通字形画成方框，因此两侧必须带空格
+        return new CursorBox(Text.literal(String.join(" \n ", lines)));
     }
 
     private static String formatAltitude(OverlayArea area) {

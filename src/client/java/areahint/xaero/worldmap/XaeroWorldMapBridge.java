@@ -2,6 +2,7 @@ package areahint.xaero.worldmap;
 
 import areahint.AreashintClient;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.world.World;
@@ -26,7 +27,17 @@ public final class XaeroWorldMapBridge {
 
     public static void initialize() {
         resolveReflection();
-        ClientTickEvents.END_CLIENT_TICK.register(client -> tryRegister());
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            // 先处理右键双击安排好的域名管理打开，再补齐渲染器注册
+            AreaWorldMapRightClick.tick();
+            tryRegister();
+        });
+        // Xaero 菜单会吞掉落在菜单上的右击，双击判定必须借助界面级的抬起回调
+        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+            if (screen instanceof GuiMap map) {
+                AreaWorldMapRightClick.register(map);
+            }
+        });
         tryRegister();
     }
 

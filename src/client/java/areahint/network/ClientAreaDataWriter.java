@@ -8,6 +8,7 @@ import net.minecraft.client.MinecraftClient;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -82,16 +83,37 @@ public final class ClientAreaDataWriter {
 
     /**
      * 写出单个待写快照，成功后才释放登记（失败保留登记，等待下一次同步覆盖）。
+     * <p>
+     * 写盘前先把旧文件备份为 overworld.json.bak：服务端一旦在“世界文件被重建/清空”等异常状态下
+     * 推送空数据，本地原本的域名也会被覆盖，备份是这种情况下唯一的找回入口。
      */
     private static void writeSnapshot(PendingWrite write, String dimensionName) {
         try {
             FileManager.checkFolderExist();
-            Files.writeString(ClientWorldFolderManager.getWorldDimensionFile(write.fileName()),
-                write.content(), StandardCharsets.UTF_8,
+            Path target = ClientWorldFolderManager.getWorldDimensionFile(write.fileName());
+            backupExistingFile(target);
+
+            Files.writeString(target, write.content(), StandardCharsets.UTF_8,
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             PENDING_WRITES.remove(dimensionName, write);
         } catch (Exception e) {
             AreashintClient.LOGGER.error("写入区域数据失败: {}（维度 {}）", e.getMessage(), dimensionName);
+        }
+    }
+
+    /**
+     * 覆盖前把已存在的域名文件复制一份 .bak，避免一次异常同步就把本地域名永久覆盖掉。
+     */
+    private static void backupExistingFile(Path target) {
+        try {
+            if (Files.notExists(target)) {
+                return;
+            }
+            Path backup = target.resolveSibling(target.getFileName() + ".bak");
+            Files.copy(target, backup, StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
+            // 备份失败不能影响正常同步流程，只记录一次
+            AreashintClient.LOGGER.warn("域名文件备份失败: {}（{}）", target, e.getMessage());
         }
     }
 

@@ -14,7 +14,9 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ServerInfo;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.util.Identifier;
+import net.minecraft.world.dimension.DimensionType;
 
 import areahint.i18n.I18nManager;
 import org.slf4j.Logger;
@@ -45,6 +47,12 @@ public class AreashintClient implements ClientModInitializer {
 	private static String currentAreaName = null;
 	// 当前服务器地址（用于检测服务器变化）
 	private static String currentServerAddress = null;
+	// 服务器地址按 tick 读取的缓存：同一个 ServerInfo 实例只解析一次，避免每 tick 重复截取字符串
+	private static ServerInfo cachedServerInfo = null;
+	private static String cachedServerInfoAddress = null;
+	// 维度标识符缓存：同一个 RegistryKey 实例只转换一次，避免每 tick 分配新的 Identifier
+	private static RegistryKey<DimensionType> cachedDimensionKey = null;
+	private static Identifier cachedDimensionIdentifier = null;
 	// 上一次tick时玩家是否为null（用于检测进入世界）
 	private static boolean wasPlayerNull = true;
 	private static boolean hasShownDimensionalName = false; // 是否已经显示过维度域名
@@ -382,15 +390,20 @@ public class AreashintClient implements ClientModInitializer {
 				return "localhost";
 			}
 			
-			// 多人游戏
+			// 多人游戏：同一个 ServerInfo 与同一份地址字符串直接复用上次结果
 			ServerInfo serverInfo = client.getCurrentServerEntry();
 			if (serverInfo != null && serverInfo.address != null) {
+				if (serverInfo == cachedServerInfo && serverInfo.address.equals(cachedServerInfoAddress)) {
+					return cachedServerInfoAddress;
+				}
 				// 移除端口号（如果有的话）
 				String address = serverInfo.address;
 				int colonIndex = address.lastIndexOf(':');
 				if (colonIndex > 0) {
 					address = address.substring(0, colonIndex);
 				}
+				cachedServerInfo = serverInfo;
+				cachedServerInfoAddress = address;
 				return address;
 			}
 			
@@ -404,6 +417,20 @@ public class AreashintClient implements ClientModInitializer {
 	}
 
 	/**
+	 * 解析当前维度标识符：同一个 RegistryKey 实例重复出现时复用上次结果，避免每 tick 分配新对象。
+	 */
+	private static Identifier resolveDimensionIdentifier(MinecraftClient client) {
+		RegistryKey<DimensionType> dimensionKey = client.world.getDimensionKey();
+		if (dimensionKey == cachedDimensionKey && cachedDimensionIdentifier != null) {
+			return cachedDimensionIdentifier;
+		}
+		Identifier identifier = dimensionKey.getValue();
+		cachedDimensionKey = dimensionKey;
+		cachedDimensionIdentifier = identifier;
+		return identifier;
+	}
+
+	/**
 	 * 注册断开连接事件监听器
 	 * 在玩家退出世界/服务器时清理状态
 	 */
@@ -411,6 +438,9 @@ public class AreashintClient implements ClientModInitializer {
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			// 先在线程安全缓存中使旧连接失效，阻止已经排队的数据包任务重新写入
 			areahint.network.ClientNetworking.invalidateAreaDataConnection(handler);
+
+			// 断开连接时把还在异步队列里的域名文件补齐，避免最后一次同步内容丢失
+			areahint.network.ClientAreaDataWriter.flushPendingWrites();
 
 			// Fabric 可能从网络线程触发断开事件，其余客户端状态统一回到主线程清理
 			client.execute(() -> {
@@ -425,6 +455,10 @@ public class AreashintClient implements ClientModInitializer {
 				currentDimension = null;
 				currentAreaName = null;
 				currentServerAddress = null;
+				cachedServerInfo = null;
+				cachedServerInfoAddress = null;
+				cachedDimensionKey = null;
+				cachedDimensionIdentifier = null;
 				wasPlayerNull = true;
 				hasShownDimensionalName = false;
 				pendingFirstNameDimId = null;
@@ -465,7 +499,7 @@ public class AreashintClient implements ClientModInitializer {
 			}
 			
 			// 检查当前维度和服务器地址，如果改变则重新加载区域数据
-			Identifier dimension = client.world.getDimensionKey().getValue();
+			Identifier dimension = resolveDimensionIdentifier(client);
 			String serverAddress = getCurrentServerAddress(client);
 			
 			boolean dimensionChanged = currentDimension == null || !currentDimension.equals(dimension);
@@ -585,9 +619,9 @@ public class AreashintClient implements ClientModInitializer {
 				}
 			}
 
-			// 异步检测：提交检测任务（移动阈值在AsyncAreaDetector内部判断）
+			// 异步检测：频率仍是上限，位置门控负责跳过“站着不动时重复检测同一位置”的空转
 			if (ClientConfig.isEnabled() && areaDetector.shouldDetect()) {
-				asyncAreaDetector.submitDetection(player.getX(), player.getY(), player.getZ());
+				asyncAreaDetector.trySubmitDetection(player.getX(), player.getY(), player.getZ());
 			}
 
 			// 主线程消费异步检测结果
@@ -821,18 +855,17 @@ public class AreashintClient implements ClientModInitializer {
 		String dimensionFileName = getDimensionFileName(currentDimension);
 		LOGGER.info("重新加载维度{}的区域文件：{}", currentDimension.toString(), dimensionFileName);
 
-		// 获取文件路径并检查是否存在
+		// 获取文件路径并检查是否存在：这里只用文件大小做日志，不再为日志整份读取文件（loadAreaData 会读取一次）
 		Path areaFile = areahint.world.ClientWorldFolderManager.getWorldDimensionFile(dimensionFileName);
 		LOGGER.info("[调试] 重新加载区域文件路径: {}", areaFile.toAbsolutePath());
-		if (java.nio.file.Files.exists(areaFile)) {
-			try {
-				String content = java.nio.file.Files.readString(areaFile);
-				LOGGER.info("[调试] 区域文件大小: {} 字节", content.length());
-			} catch (Exception e) {
-				LOGGER.error("读取区域文件失败", e);
+		try {
+			if (java.nio.file.Files.exists(areaFile)) {
+				LOGGER.info("[调试] 区域文件大小: {} 字节", java.nio.file.Files.size(areaFile));
+			} else {
+				LOGGER.warn("[调试] 区域文件不存在: {}", areaFile.toAbsolutePath());
 			}
-		} else {
-			LOGGER.warn("[调试] 区域文件不存在: {}", areaFile.toAbsolutePath());
+		} catch (java.io.IOException e) {
+			LOGGER.error("读取区域文件信息失败", e);
 		}
 
 		areaDetector.loadAreaData(dimensionFileName);

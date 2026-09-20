@@ -11,7 +11,8 @@ import java.nio.file.Path;
  * 负责管理客户端日志的写入和清理
  */
 public class ClientLogManager {
-    private static AsyncLogManager logManager;
+    // 可能被客户端线程与其他回调线程同时访问，保持可见性
+    private static volatile AsyncLogManager logManager;
     private static final String LOG_FOLDER_NAME = "client_log";
     private static final int RETENTION_DAYS = 3; // 客户端日志保留3天
 
@@ -22,6 +23,11 @@ public class ClientLogManager {
      * 初始化客户端日志管理器
      */
     public static void init() {
+        // 已初始化时直接复用，避免重复创建写入通道
+        if (logManager != null) {
+            return;
+        }
+
         try {
             Path configFolder = FileManager.getConfigFolder();
             Path logFolder = configFolder.resolve(LOG_FOLDER_NAME);
@@ -38,8 +44,10 @@ public class ClientLogManager {
      */
     public static void onWorldEnter() {
         worldEntryCount++;
-        if (logManager != null) {
-            logManager.log("玩家进入世界（第" + worldEntryCount + "次）");
+        // 先取局部引用，避免关闭时出现空指针
+        AsyncLogManager manager = logManager;
+        if (manager != null) {
+            manager.log("玩家进入世界（第" + worldEntryCount + "次）");
         }
     }
 
@@ -51,7 +59,9 @@ public class ClientLogManager {
      * @param dimensionalName 维度域名名称
      */
     public static void logEnterArea(int areaLevel, String surfaceName, String areaName, String dimensionalName) {
-        if (logManager == null) {
+        // 先取局部引用，避免关闭时出现空指针
+        AsyncLogManager manager = logManager;
+        if (manager == null) {
             return;
         }
 
@@ -66,7 +76,7 @@ public class ClientLogManager {
                 dimensionalName != null ? dimensionalName : "", levelText, areaName);
         }
 
-        logManager.log(message);
+        manager.log(message);
     }
 
     /**
@@ -77,7 +87,9 @@ public class ClientLogManager {
      * @param dimensionalName 维度域名名称
      */
     public static void logLeaveArea(int areaLevel, String surfaceName, String areaName, String dimensionalName) {
-        if (logManager == null) {
+        // 先取局部引用，避免关闭时出现空指针
+        AsyncLogManager manager = logManager;
+        if (manager == null) {
             return;
         }
 
@@ -92,7 +104,7 @@ public class ClientLogManager {
                 dimensionalName != null ? dimensionalName : "", levelText, areaName);
         }
 
-        logManager.log(message);
+        manager.log(message);
     }
 
     /**
@@ -117,8 +129,9 @@ public class ClientLogManager {
      * @param message 日志消息
      */
     public static void log(String message) {
-        if (logManager != null) {
-            logManager.log(message);
+        AsyncLogManager manager = logManager;
+        if (manager != null) {
+            manager.log(message);
         }
     }
 

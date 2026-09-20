@@ -7,7 +7,10 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 
+import java.lang.ref.WeakReference;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -20,6 +23,10 @@ public final class TitleRenderHelper {
     private static final String[] SIZE_ORDER = {
         "extra_large", "large", "medium_large", "medium", "medium_small", "small", "extra_small"
     };
+    /** 副字幕分行缓存上限，只保留最近使用的四组键，避免长时间游玩时无界增长。 */
+    private static final int SUBTITLE_LINE_CACHE_LIMIT = 4;
+    private static final Object SUBTITLE_LINE_CACHE_LOCK = new Object();
+    private static final ArrayDeque<SubtitleLineCacheEntry> SUBTITLE_LINE_CACHE = new ArrayDeque<>();
 
     private TitleRenderHelper() {
     }
@@ -58,6 +65,15 @@ public final class TitleRenderHelper {
     }
 
     /**
+     * 判断已经归一化的副字幕是否还有可显示内容。
+     * <p>
+     * 渲染器保存的 currentSubtitle 就是 normalizeSubtitleText 的结果，直接复用它可以省掉每帧的 replace 开销。
+     */
+    public static boolean hasNormalizedSubtitle(String normalizedSubtitle) {
+        return normalizedSubtitle != null && !normalizedSubtitle.isEmpty();
+    }
+
+    /**
      * 统一副字幕换行写法。
      * <p>
      * 玩家按需求输入的 /n 会转换成真正换行；同时兼容 \n，便于 JSON 手动编辑。
@@ -77,35 +93,65 @@ public final class TitleRenderHelper {
      * 并保持每一行独立居中。
      */
     public static List<String> buildSubtitleLines(String subtitle, TextRenderer textRenderer, int screenWidth, float subtitleScale) {
-        List<String> lines = new ArrayList<>();
         String normalized = normalizeSubtitleText(subtitle);
         if (normalized == null) {
-            return lines;
+            return List.of();
         }
+        return buildSubtitleLinesNormalized(normalized, textRenderer, screenWidth, subtitleScale);
+    }
 
+    /**
+     * 计算已经归一化的副字幕行。
+     * <p>
+     * 渲染器保存的 currentSubtitle 就是归一化结果，直接传入可以省掉每帧的 replace；
+     * 结果按（文本 + 副字幕缩放 + 屏幕宽度 + 字体）缓存，输入不变时直接复用上一帧的分行。
+     */
+    public static List<String> buildSubtitleLinesNormalized(String normalizedSubtitle, TextRenderer textRenderer,
+                                                            int screenWidth, float subtitleScale) {
+        if (!hasNormalizedSubtitle(normalizedSubtitle)) {
+            return List.of();
+        }
+        List<String> cached = findCachedSubtitleLines(textRenderer, normalizedSubtitle, screenWidth, subtitleScale);
+        if (cached != null) {
+            return cached;
+        }
+        List<String> lines = wrapSubtitleLines(normalizedSubtitle, textRenderer, screenWidth, subtitleScale);
+        storeCachedSubtitleLines(textRenderer, normalizedSubtitle, screenWidth, subtitleScale, lines);
+        return lines;
+    }
+
+    /**
+     * 真正的分行计算，分行规则与原实现逐字保持一致。
+     */
+    private static List<String> wrapSubtitleLines(String normalized, TextRenderer textRenderer,
+                                                   int screenWidth, float subtitleScale) {
         if (normalized.contains("\n")) {
+            List<String> lines = new ArrayList<>();
             for (String line : normalized.split("\\R", -1)) {
                 String cleanedLine = line.trim();
                 if (!cleanedLine.isEmpty()) {
                     lines.add(cleanedLine);
                 }
             }
-            return lines;
+            return List.copyOf(lines);
         }
 
+        List<String> lines = new ArrayList<>();
         int maxUnscaledWidth = Math.max(80, (int) (screenWidth * 0.70f / Math.max(subtitleScale, 0.1f)));
         StringBuilder currentLine = new StringBuilder();
 
         for (int i = 0; i < normalized.length(); i++) {
             char ch = normalized.charAt(i);
-            String candidate = currentLine.toString() + ch;
+            int lengthBeforeChar = currentLine.length();
+            currentLine.append(ch);
 
-            if (currentLine.length() > 0 && textRenderer.getWidth(candidate) > maxUnscaledWidth) {
+            // 先追加再测量，等价于原来的 currentLine + ch，但省掉每字符一次临时拼接
+            if (lengthBeforeChar > 0 && textRenderer.getWidth(currentLine.toString()) > maxUnscaledWidth) {
+                currentLine.setLength(lengthBeforeChar);
                 lines.add(currentLine.toString().trim());
                 currentLine.setLength(0);
+                currentLine.append(ch);
             }
-
-            currentLine.append(ch);
         }
 
         String tail = currentLine.toString().trim();
@@ -113,7 +159,52 @@ public final class TitleRenderHelper {
             lines.add(tail);
         }
 
-        return lines;
+        return List.copyOf(lines);
+    }
+
+    /**
+     * 读取分行缓存，命中后把条目移到队首（最近使用）。
+     */
+    private static List<String> findCachedSubtitleLines(TextRenderer textRenderer, String normalizedText,
+                                                        int screenWidth, float subtitleScale) {
+        synchronized (SUBTITLE_LINE_CACHE_LOCK) {
+            Iterator<SubtitleLineCacheEntry> iterator = SUBTITLE_LINE_CACHE.iterator();
+            while (iterator.hasNext()) {
+                SubtitleLineCacheEntry entry = iterator.next();
+                if (!entry.matches(textRenderer, normalizedText, screenWidth, subtitleScale)) {
+                    continue;
+                }
+                iterator.remove();
+                SUBTITLE_LINE_CACHE.addFirst(entry);
+                return entry.lines();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 写入分行缓存并淘汰最久未使用的条目，保证缓存容量有上限。
+     */
+    private static void storeCachedSubtitleLines(TextRenderer textRenderer, String normalizedText,
+                                                 int screenWidth, float subtitleScale, List<String> lines) {
+        synchronized (SUBTITLE_LINE_CACHE_LOCK) {
+            SUBTITLE_LINE_CACHE.addFirst(new SubtitleLineCacheEntry(
+                new WeakReference<>(textRenderer), normalizedText, screenWidth, subtitleScale, lines));
+            while (SUBTITLE_LINE_CACHE.size() > SUBTITLE_LINE_CACHE_LIMIT) {
+                SUBTITLE_LINE_CACHE.removeLast();
+            }
+        }
+    }
+
+    /**
+     * 分行缓存条目；字体渲染器只弱引用，资源重载后不会被缓存长期持有。
+     */
+    private record SubtitleLineCacheEntry(WeakReference<TextRenderer> textRenderer, String text,
+                                          int screenWidth, float subtitleScale, List<String> lines) {
+        private boolean matches(TextRenderer renderer, String candidateText, int candidateWidth, float candidateScale) {
+            return renderer != null && textRenderer.get() == renderer && screenWidth == candidateWidth
+                && Float.compare(subtitleScale, candidateScale) == 0 && text.equals(candidateText);
+        }
     }
 
     /**

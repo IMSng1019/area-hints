@@ -51,7 +51,7 @@ public final class AreaOverlayFillResolver {
     public synchronized FillPlan resolve(OverlaySnapshot snapshot, MinecraftClient client) {
         OverlaySnapshot safeSnapshot = snapshot == null ? OverlaySnapshot.empty("") : snapshot;
         String playerDimensionId = client == null || client.world == null
-            ? null : client.world.getRegistryKey().getValue().toString();
+            ? null : areahint.util.DimensionIdCache.getId(client.world.getRegistryKey().getValue());
         String normalizedPlayerDimension = AreaOverlayRepository.normalizeDimensionId(playerDimensionId);
         ActiveAreaState activeState = resolveActiveAreaState(safeSnapshot, client,
             playerDimensionId, normalizedPlayerDimension);

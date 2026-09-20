@@ -58,7 +58,27 @@ public class ColorUtil {
         if (color == null) {
             return false;
         }
-        return isFlashColor(color) || color.matches("^#[0-9A-Fa-f]{6}$");
+        return isFlashColor(color) || isHexColor(color);
+    }
+    
+    /**
+     * 判断是否为#RRGGBB格式的十六进制颜色
+     * 手写校验等价于正则"^#[0-9A-Fa-f]{6}$"，避免热路径反复编译正则
+     * @param color 颜色字符串
+     * @return 是否符合#RRGGBB格式
+     */
+    private static boolean isHexColor(String color) {
+        if (color == null || color.length() != 7 || color.charAt(0) != '#') {
+            return false;
+        }
+        for (int i = 1; i < 7; i++) {
+            char c = color.charAt(i);
+            boolean hexDigit = (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
+            if (!hexDigit) {
+                return false;
+            }
+        }
+        return true;
     }
     
     /**
@@ -122,7 +142,15 @@ public class ColorUtil {
         if (!isValidColor(hexColor)) {
             return "§f"; // 默认白色
         }
-        
+        return mapToMinecraftColorCode(hexColor);
+    }
+    
+    /**
+     * 将已通过校验的颜色转换为Minecraft颜色代码
+     * @param hexColor 已通过校验的颜色
+     * @return Minecraft颜色代码
+     */
+    private static String mapToMinecraftColorCode(String hexColor) {
         // 简化的颜色映射（可以根据需要扩展）
         switch (hexColor.toUpperCase()) {
             case "#000000": return "§0"; // 黑色
@@ -177,17 +205,39 @@ public class ColorUtil {
      * @return 带颜色代码的文本
      */
     public static String colorText(String text, String hexColor) {
-        // 如果颜色为null或空字符串，使用默认白色
-        if (hexColor == null || hexColor.trim().isEmpty()) {
-            return "§f" + text + "§r";
-        }
-        // 闪烁颜色由渲染器动态处理，不嵌入§颜色代码
+        // 闪烁颜色直接返回原文本（可能为null），与旧实现完全一致
         if (isFlashColor(hexColor)) {
             return text;
         }
-        return hexToMinecraftColor(hexColor) + text + "§r";
+        StringBuilder builder = new StringBuilder();
+        appendColorText(builder, text, hexColor);
+        return builder.toString();
     }
-
+    
+    /**
+     * 将带颜色的文本追加到StringBuilder
+     * 输出与colorText逐字符一致，供渲染热路径避免中间字符串拼接
+     * @param builder 目标StringBuilder
+     * @param text 文本内容
+     * @param hexColor 十六进制颜色（可以为null，默认使用白色）
+     */
+    public static void appendColorText(StringBuilder builder, String text, String hexColor) {
+        // 如果颜色为null或空字符串，使用默认白色
+        if (hexColor == null || hexColor.trim().isEmpty()) {
+            builder.append("§f").append(text).append("§r");
+            return;
+        }
+        // 闪烁颜色由渲染器动态处理，不嵌入§颜色代码（null文本不追加任何内容）
+        if (isFlashColor(hexColor)) {
+            if (text != null) {
+                builder.append(text);
+            }
+            return;
+        }
+        // 此处已排除闪烁颜色，isValidColor等同于isHexColor，直接复用判定结果避免重复解析
+        builder.append(isHexColor(hexColor) ? mapToMinecraftColorCode(hexColor) : "§f").append(text).append("§r");
+    }
+    
     /**
      * 解析十六进制颜色为RGB数组
      * @param hexColor 十六进制颜色（如 #FF0000）

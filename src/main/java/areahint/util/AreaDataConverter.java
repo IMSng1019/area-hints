@@ -168,7 +168,8 @@ public class AreaDataConverter {
     }
     
     /**
-     * 获取域名的显示名称（使用SurfaceNameHandler）
+     * 获取域名的显示名称（优先surfacename，否则name）
+     * 直接解析AreaData字段，避免为读取两个字符串而重建整个JSON对象树
      * @param areaData AreaData对象
      * @return 显示名称
      */
@@ -177,8 +178,19 @@ public class AreaDataConverter {
             return "未知域名";
         }
         
-        JsonObject jsonObject = toJsonObject(areaData);
-        return SurfaceNameHandler.getDisplayName(jsonObject);
+        // 语义与SurfaceNameHandler.getDisplayName(JsonObject)一致：surfacename非空白时返回其原值
+        String surfaceName = areaData.getSurfacename();
+        if (surfaceName != null && !surfaceName.trim().isEmpty()) {
+            return surfaceName;
+        }
+        
+        // surfacename缺失或空白时回退到name
+        String name = areaData.getName();
+        if (name != null) {
+            return name;
+        }
+        
+        return "未知域名";
     }
     
     /**

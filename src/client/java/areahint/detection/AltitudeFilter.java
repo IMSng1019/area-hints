@@ -28,48 +28,57 @@ public class AltitudeFilter {
 
         // 记录筛选前的区域数量
         int originalCount = allAreas.size();
-        
-        // 进行高度筛选（使用for循环避免Stream对象分配）
+
+        // 是否输出调试信息：关闭debug时筛选路径不产生任何调试相关的分配
+        boolean debugEnabled = ClientDebugManager.isDebugEnabled();
+
+        // 进行高度筛选（使用for循环避免Stream对象分配，每个域名的高度只判定一次）
         List<AreaData> filteredAreas = new ArrayList<>(allAreas.size());
+        List<String> debugDetails = debugEnabled ? new ArrayList<>(allAreas.size()) : null;
         for (AreaData area : allAreas) {
-            if (isPlayerInAltitudeRange(playerY, area)) {
+            boolean inRange = isPlayerInAltitudeRange(playerY, area);
+            if (inRange) {
                 filteredAreas.add(area);
             }
-        }
-        
-        // 记录筛选后的区域数量
-        int filteredCount = filteredAreas.size();
-        
-        // 输出调试信息
-        if (ClientDebugManager.isDebugEnabled()) {
-            ClientDebugManager.sendDebugInfo(ClientDebugManager.DebugCategory.AREA_DETECTION, String.format(
-                "高度预筛选: 玩家高度=%.1f, 原始区域数=%d, 筛选后区域数=%d", 
-                playerY, originalCount, filteredCount));
-            
-            // 详细记录每个区域的筛选结果
-            for (AreaData area : allAreas) {
-                boolean inRange = isPlayerInAltitudeRange(playerY, area);
-                String altitudeInfo = getAltitudeInfo(area.getAltitude());
-                ClientDebugManager.sendDebugInfo(ClientDebugManager.DebugCategory.AREA_DETECTION, String.format(
-                    "  区域[%s] 高度范围=%s, 符合条件=%s", 
-                    area.getName(), altitudeInfo, inRange ? "是" : "否"));
+            // 调试明细在同一遍循环里记录，避免为了打印日志再遍历一次重复计算高度
+            if (debugEnabled) {
+                debugDetails.add(String.format("  区域[%s] 高度范围=%s, 符合条件=%s",
+                    area.getName(), getAltitudeInfo(area.getAltitude()), inRange ? "是" : "否"));
             }
         }
-        
-        // 记录日志
-        AreashintClient.LOGGER.debug("高度预筛选完成: 玩家高度={}, 筛选前={}, 筛选后={}", 
-            playerY, originalCount, filteredCount);
-        
+
+        // 记录筛选后的区域数量
+        int filteredCount = filteredAreas.size();
+
+        // 输出调试信息
+        if (debugEnabled) {
+            ClientDebugManager.sendDebugInfo(ClientDebugManager.DebugCategory.AREA_DETECTION, String.format(
+                "高度预筛选: 玩家高度=%.1f, 原始区域数=%d, 筛选后区域数=%d",
+                playerY, originalCount, filteredCount));
+
+            // 详细记录每个区域的筛选结果（结果已在上面同一遍循环里算好）
+            for (String detail : debugDetails) {
+                ClientDebugManager.sendDebugInfo(ClientDebugManager.DebugCategory.AREA_DETECTION, detail);
+            }
+        }
+
+        // 记录日志（加debug守卫，关闭时不做参数装箱与varargs数组分配）
+        if (AreashintClient.LOGGER.isDebugEnabled()) {
+            AreashintClient.LOGGER.debug("高度预筛选完成: 玩家高度={}, 筛选前={}, 筛选后={}",
+                playerY, originalCount, filteredCount);
+        }
+
         return filteredAreas;
     }
 
     /**
      * 检查玩家是否在指定区域的高度范围内
+     * 只做判定、不产生任何列表分配，供检测热路径直接调用
      * @param playerY 玩家的Y坐标
      * @param area 要检查的区域
      * @return 是否在高度范围内
      */
-    private static boolean isPlayerInAltitudeRange(double playerY, AreaData area) {
+    public static boolean isPlayerInAltitudeRange(double playerY, AreaData area) {
         AltitudeData altitude = area.getAltitude();
         
         // 如果区域没有设置高度限制，则认为符合条件
@@ -150,4 +159,4 @@ public class AltitudeFilter {
             return String.format("ValidationResult{valid=%s, message='%s'}", valid, message);
         }
     }
-} 
+}

@@ -17,7 +17,6 @@ import xaero.map.element.MapElementRenderLocation;
 import xaero.map.element.MapElementRenderer;
 import xaero.map.graphics.renderer.multitexture.MultiTextureRenderTypeRendererProvider;
 
-import java.util.ArrayList;
 import java.util.List;
 
 final class AreaWorldMapRenderer extends MapElementRenderer<OverlayArea, AreaWorldMapRenderContext, AreaWorldMapRenderer> {
@@ -79,26 +78,37 @@ final class AreaWorldMapRenderer extends MapElementRenderer<OverlayArea, AreaWor
         Matrix4f matrix = matrices.peek().getPositionMatrix();
         double coordinateScale = context.coordinateScale <= 0.0D ? 1.0D : context.coordinateScale;
 
-        List<float[]> triangles = new ArrayList<>();
+        // 域名中心与坐标比例在循环外只读一次，坐标数组由上下文缓冲复用
+        context.resetScratch();
+        List<float[]> triangles = context.triangles;
+        double centerX = area.centerX();
+        double centerZ = area.centerZ();
         for (FillTriangle triangle : context.fillPlan.trianglesFor(area)) {
             Point first = triangle.first();
             Point second = triangle.second();
             Point third = triangle.third();
-            triangles.add(new float[]{
-                relativeX(area, first, coordinateScale), relativeZ(area, first, coordinateScale),
-                relativeX(area, second, coordinateScale), relativeZ(area, second, coordinateScale),
-                relativeX(area, third, coordinateScale), relativeZ(area, third, coordinateScale)
-            });
+            float[] slot = context.nextTriangle();
+            slot[0] = relativeX(first.x(), centerX, coordinateScale);
+            slot[1] = relativeZ(first.z(), centerZ, coordinateScale);
+            slot[2] = relativeX(second.x(), centerX, coordinateScale);
+            slot[3] = relativeZ(second.z(), centerZ, coordinateScale);
+            slot[4] = relativeX(third.x(), centerX, coordinateScale);
+            slot[5] = relativeZ(third.z(), centerZ, coordinateScale);
+            triangles.add(slot);
         }
 
-        List<float[]> lines = new ArrayList<>();
-        for (int i = 0; i < area.vertices().size(); i++) {
-            Point first = area.vertices().get(i);
-            Point second = area.vertices().get((i + 1) % area.vertices().size());
-            lines.add(new float[]{
-                relativeX(area, first, coordinateScale), relativeZ(area, first, coordinateScale),
-                relativeX(area, second, coordinateScale), relativeZ(area, second, coordinateScale)
-            });
+        List<float[]> lines = context.lines;
+        List<Point> vertices = area.vertices();
+        int vertexCount = vertices.size();
+        for (int i = 0; i < vertexCount; i++) {
+            Point first = vertices.get(i);
+            Point second = vertices.get((i + 1) % vertexCount);
+            float[] slot = context.nextLine();
+            slot[0] = relativeX(first.x(), centerX, coordinateScale);
+            slot[1] = relativeZ(first.z(), centerZ, coordinateScale);
+            slot[2] = relativeX(second.x(), centerX, coordinateScale);
+            slot[3] = relativeZ(second.z(), centerZ, coordinateScale);
+            lines.add(slot);
         }
 
         int color = AreaOverlayColorResolver.resolve(area, System.currentTimeMillis());
@@ -126,8 +136,9 @@ final class AreaWorldMapRenderer extends MapElementRenderer<OverlayArea, AreaWor
 
     private void renderName(DrawContext drawContext, TextRenderer textRenderer, OverlayArea area,
                             double coordinateScale, int color) {
-        double screenWidth = (area.maxX() - area.minX()) / coordinateScale * context.mapScale;
-        double screenHeight = (area.maxZ() - area.minZ()) / coordinateScale * context.mapScale;
+        double mapScale = context.mapScale;
+        double screenWidth = (area.maxX() - area.minX()) / coordinateScale * mapScale;
+        double screenHeight = (area.maxZ() - area.minZ()) / coordinateScale * mapScale;
         String name = area.displayName();
         int textWidth = textRenderer.getWidth(name);
         if (Math.max(screenWidth, screenHeight) < Math.max(36.0D, textWidth + 8.0D)) {
@@ -137,17 +148,17 @@ final class AreaWorldMapRenderer extends MapElementRenderer<OverlayArea, AreaWor
         MatrixStack matrices = drawContext.getMatrices();
         matrices.push();
         float nameScale = (float) (OverlayRenderHelper.AREA_NAME_SCALE
-            / Math.max(0.0001D, context.mapScale));
+            / Math.max(0.0001D, mapScale));
         matrices.scale(nameScale, nameScale, 1.0F);
         drawContext.drawTextWithShadow(textRenderer, Text.literal(name), -textWidth / 2, -4, 0xFF000000 | color);
         matrices.pop();
     }
 
-    private static float relativeX(OverlayArea area, Point point, double coordinateScale) {
-        return (float) ((point.x() - area.centerX()) / coordinateScale);
+    private static float relativeX(double pointX, double centerX, double coordinateScale) {
+        return (float) ((pointX - centerX) / coordinateScale);
     }
 
-    private static float relativeZ(OverlayArea area, Point point, double coordinateScale) {
-        return (float) ((point.z() - area.centerZ()) / coordinateScale);
+    private static float relativeZ(double pointZ, double centerZ, double coordinateScale) {
+        return (float) ((pointZ - centerZ) / coordinateScale);
     }
 }

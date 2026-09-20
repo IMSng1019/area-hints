@@ -22,31 +22,52 @@ public class DomainRenderer {
      * @return 带颜色的域名字符串
      */
     public static String buildDomainDisplayText(AreaData currentArea, List<AreaData> allAreas) {
+        // 旧调用点无需自建索引，此处按需建表后委托给Map版本
+        return buildDomainDisplayText(currentArea, buildAreaIndex(allAreas));
+    }
+    
+    /**
+     * 构建完整的域名显示文本（复用调用方已有的名称索引）
+     * @param currentArea 当前区域
+     * @param areaIndex name到区域的索引（可由buildAreaIndex构建）
+     * @return 带颜色的域名字符串
+     */
+    public static String buildDomainDisplayText(AreaData currentArea, Map<String, AreaData> areaIndex) {
         if (currentArea == null) {
             return "";
         }
         
         // 构建域名层级链
-        List<AreaData> domainChain = buildDomainChain(currentArea, allAreas);
+        List<AreaData> domainChain = buildDomainChain(currentArea, areaIndex);
         
         // 生成带颜色的显示文本
         return buildColoredDisplayText(domainChain);
     }
     
     /**
-     * 构建域名层级链（从顶级域名到当前域名）
-     * @param currentArea 当前区域
+     * 构建name到AreaData的索引（供需要反复构建显示文本的调用方复用）
      * @param allAreas 所有区域数据
-     * @return 域名链列表
+     * @return 名称索引
      */
-    private static List<AreaData> buildDomainChain(AreaData currentArea, List<AreaData> allAreas) {
-        List<AreaData> chain = new ArrayList<>();
+    public static Map<String, AreaData> buildAreaIndex(List<AreaData> allAreas) {
         Map<String, AreaData> areaMap = new HashMap<>();
         
-        // 建立名称到区域的映射
+        // 建立名称到区域的映射（同名时后出现的覆盖先出现的，与原逻辑一致）
         for (AreaData area : allAreas) {
             areaMap.put(area.getName(), area);
         }
+        
+        return areaMap;
+    }
+    
+    /**
+     * 构建域名层级链（从顶级域名到当前域名）
+     * @param currentArea 当前区域
+     * @param areaIndex name到区域的索引（可由buildAreaIndex构建）
+     * @return 域名链列表
+     */
+    private static List<AreaData> buildDomainChain(AreaData currentArea, Map<String, AreaData> areaIndex) {
+        List<AreaData> chain = new ArrayList<>();
         
         // 从当前区域向上追溯
         AreaData current = currentArea;
@@ -59,7 +80,7 @@ public class DomainRenderer {
                 break;
             }
             
-            current = areaMap.get(baseName);
+            current = areaIndex.get(baseName);
             
             // 防止循环引用
             if (chain.contains(current)) {
@@ -85,10 +106,8 @@ public class DomainRenderer {
         for (int i = 0; i < domainChain.size(); i++) {
             AreaData area = domainChain.get(i);
             
-            // 添加域名（带颜色，优先显示surfacename）
-            String displayName = AreaDataConverter.getDisplayName(area);
-            String domainText = ColorUtil.colorText(displayName, area.getColor());
-            result.append(domainText);
+            // 直接追加域名（带颜色，优先显示surfacename），避免中间字符串
+            ColorUtil.appendColorText(result, AreaDataConverter.getDisplayName(area), area.getColor());
             
             // 如果不是最后一个域名，添加分隔符
             if (i < domainChain.size() - 1) {
@@ -109,8 +128,10 @@ public class DomainRenderer {
             return "";
         }
         
-        String displayName = AreaDataConverter.getDisplayName(area);
-        return ColorUtil.colorText(displayName, area.getColor());
+        // 直接追加到StringBuilder，避免"前缀+名称+后缀"的中间字符串
+        StringBuilder result = new StringBuilder();
+        ColorUtil.appendColorText(result, AreaDataConverter.getDisplayName(area), area.getColor());
+        return result.toString();
     }
     
     /**

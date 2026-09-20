@@ -7,12 +7,16 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.Heightmap;
 
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class SafeLandingFinder {
     private static final int UDP_MAX_ATTEMPTS = 4096;
+    // 连续失败上限：区域里长时间找不到可行柱时提前收手，避免主线程一直空转
+    // 取 2048 是为了不改变原来的成功率语义：原实现允许 4096 次尝试，512 次提前退出在可行柱稀疏时会把成功率压到六成左右
+    private static final int UDP_MAX_CONSECUTIVE_FAILURES = 2048;
 
     public Optional<Vec3d> findCenterLanding(ServerWorld world, AreaData area) {
         if (world == null || area == null || !area.isValid()) {
@@ -63,12 +67,18 @@ public class SafeLandingFinder {
         }
 
         ThreadLocalRandom random = ThreadLocalRandom.current();
+        int consecutiveFailures = 0;
         for (int attempt = 0; attempt < UDP_MAX_ATTEMPTS; attempt++) {
             int x = random.nextInt(bounds.minX, bounds.maxX + 1);
             int z = random.nextInt(bounds.minZ, bounds.maxZ + 1);
             Optional<Vec3d> landing = scanColumn(world, area, x, z);
             if (landing.isPresent()) {
                 return landing;
+            }
+            // 找到落点会直接返回，所以这里统计的就是连续失败次数
+            consecutiveFailures++;
+            if (consecutiveFailures >= UDP_MAX_CONSECUTIVE_FAILURES) {
+                break;
             }
         }
 
@@ -91,7 +101,7 @@ public class SafeLandingFinder {
         }
 
         int minY = getMinSearchY(world, area);
-        int maxY = getMaxSearchY(world, area);
+        int maxY = getMaxSearchY(world, area, minY, x, z);
         for (int y = maxY; y >= minY; y--) {
             if (ServerAreaGeometry.isWithinAltitude(area, y) && isSafeLanding(world, x, y, z)) {
                 return Optional.of(new Vec3d(pointX, y, pointZ));
@@ -108,10 +118,22 @@ public class SafeLandingFinder {
         return min;
     }
 
-    private int getMaxSearchY(ServerWorld world, AreaData area) {
+    private int getMaxSearchY(ServerWorld world, AreaData area, int minY, int x, int z) {
         int max = world.getTopY() - 2;
         if (area.getAltitude() != null && area.getAltitude().getMax() != null) {
             max = Math.min(max, (int) Math.floor(area.getAltitude().getMax()));
+        }
+        if (max < minY) {
+            // 高度区间为空，保持原样返回，连区块都不必加载
+            return max;
+        }
+        // 先确保该柱所在区块已加载，否则高度图取不到真实地表
+        world.getChunk(x >> 4, z >> 4);
+        // 用世界高度图收紧上界：落点地面必须是非空气方块，所以落点不会高于该柱最高的非空气方块
+        // 用 WORLD_SURFACE 而非 MOTION_BLOCKING：后者按 blocksMovement 判定，会漏掉雪层、紫颂花这类非固体实心块的顶部落点
+        int surfaceTop = world.getTopY(Heightmap.Type.WORLD_SURFACE, x, z);
+        if (surfaceTop != 0) {
+            max = Math.min(max, surfaceTop);
         }
         return max;
     }

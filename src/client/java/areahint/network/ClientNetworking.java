@@ -4,7 +4,6 @@ import areahint.Areashint;
 import areahint.AreashintClient;
 import areahint.config.ClientConfig;
 import areahint.data.ConfigData;
-import areahint.file.FileManager;
 import areahint.i18n.I18nManager;
 import areahint.render.VulkanModCompat;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -15,10 +14,6 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.Identifier;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -243,41 +238,17 @@ public class ClientNetworking {
     }
 
     /**
-     * 将单个维度的数据写入当前正式世界目录，并刷新所有依赖该文件的客户端组件。
+     * 处理单个维度的域名数据：主线程只登记待写内容，真实写盘交给异步管线。
+     * 写盘完成后的快照刷新与检测数据重载由 ClientAreaDataWriter 回到主线程执行。
      */
     private static boolean processAreaData(MinecraftClient client, String dimensionName, String fileContent) {
-        try {
-            String fileName = Packets.getFileNameForDimension(dimensionName);
-            if (fileName == null) {
-                AreashintClient.LOGGER.warn("接收到未知维度的区域数据: " + dimensionName);
-                return true;
-            }
-
-            Path filePath = areahint.world.ClientWorldFolderManager.getWorldDimensionFile(fileName);
-            AreashintClient.LOGGER.info("[调试] 客户端保存区域数据到文件: " + filePath.toAbsolutePath());
-            FileManager.checkFolderExist();
-            Files.writeString(filePath, fileContent, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-
-            AreashintClient.LOGGER.info("已接收并保存 " + dimensionName + " 的区域数据");
-            areahint.xaero.AreaOverlayRepository.getInstance().refreshDimension(dimensionName);
-            AreashintClient.LOGGER.info("[调试] 区域数据内容长度: " + fileContent.length() + " 字节");
-            if (fileContent.length() < 100) {
-                AreashintClient.LOGGER.info("[调试] 区域数据内容预览: " + fileContent);
-            } else {
-                AreashintClient.LOGGER.info("[调试] 区域数据内容预览: " + fileContent.substring(0, 100) + "...");
-            }
-
-            if (client.world != null &&
-                    dimensionName.equals(Packets.convertDimensionPathToType(client.world.getDimensionKey().getValue().getPath()))) {
-                AreashintClient.LOGGER.info("[调试] 重新加载当前维度的区域数据: " + fileName);
-                AreashintClient.getAreaDetector().loadAreaData(fileName);
-                areahint.boundviz.BoundVizManager.getInstance().reload();
-            }
+        if (Packets.getFileNameForDimension(dimensionName) == null) {
+            AreashintClient.LOGGER.warn("接收到未知维度的区域数据: {}", dimensionName);
             return true;
-        } catch (IOException e) {
-            AreashintClient.LOGGER.error("保存接收到的区域数据时出错: " + e.getMessage());
-            return false;
         }
+
+        ClientAreaDataWriter.submit(client, dimensionName, fileContent);
+        return true;
     }
     
     /**

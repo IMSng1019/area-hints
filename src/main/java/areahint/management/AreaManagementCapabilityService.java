@@ -8,8 +8,10 @@ import areahint.util.AreaPermissionUtil;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * 域名管理操作的统一能力判断，列表查询与实际写入都必须调用这里。
@@ -51,9 +53,11 @@ public final class AreaManagementCapabilityService {
     }
 
     public static List<String> getAllowedOperations(ServerPlayerEntity player, AreaData area, List<AreaData> allAreas) {
+        // 21 个操作共用同一份局部索引，避免每个操作内部反复全表扫描
+        AreaIndex index = AreaIndex.of(allAreas);
         List<String> allowed = new ArrayList<>();
         for (String operation : ORDERED_OPERATIONS) {
-            if (canPerform(player, operation, area, allAreas)) {
+            if (canPerform(player, operation, area, index)) {
                 allowed.add(operation);
             }
         }
@@ -74,10 +78,14 @@ public final class AreaManagementCapabilityService {
     }
 
     public static boolean canPerform(ServerPlayerEntity player, String operation, AreaData area, List<AreaData> allAreas) {
+        // 单次判断同样走索引：索引只存活于本次调用，allAreas 变化后不会读到旧数据
+        return canPerform(player, operation, area, AreaIndex.of(allAreas));
+    }
+
+    private static boolean canPerform(ServerPlayerEntity player, String operation, AreaData area, AreaIndex index) {
         if (player == null || operation == null || area == null) {
             return false;
         }
-        List<AreaData> areas = allAreas == null ? List.of() : allAreas;
         String playerName = player.getGameProfile().getName();
 
         return switch (operation) {
@@ -86,38 +94,38 @@ public final class AreaManagementCapabilityService {
                 () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
             case RECOLOR -> PermissionService.hasNodeOr(player, PermissionNodes.RECOLOR,
                 () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
-            case SET_HIGH -> canSetHigh(player, area, areas, playerName);
+            case SET_HIGH -> canSetHigh(player, area, index, playerName);
             case ADD_DESCRIPTION, REPLACE_DESCRIPTION ->
                 PermissionService.hasCommandPermission(player, PermissionNodes.ADD_DESCRIPTION, 0)
-                    && AreaPermissionUtil.canModifyArea(player, area, areas);
+                    && index.canModifyArea(player, area, playerName);
             case DELETE_DESCRIPTION ->
                 PermissionService.hasCommandPermission(player, PermissionNodes.DELETE_DESCRIPTION, 0)
-                    && AreaPermissionUtil.canModifyArea(player, area, areas);
+                    && index.canModifyArea(player, area, playerName);
             case ADD_SUBTITLE, REPLACE_SUBTITLE -> PermissionService.hasNodeOr(player, PermissionNodes.ADD_SUBTITLE,
-                () -> AreaPermissionUtil.canModifyArea(player, area, areas));
+                () -> index.canModifyArea(player, area, playerName));
             case DELETE_SUBTITLE -> area.hasSubtitle()
                 && PermissionService.hasNodeOr(player, PermissionNodes.DELETE_SUBTITLE,
                     () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
             case REPLACE_SUBTITLE_COLOR -> area.hasSubtitle()
                 && PermissionService.hasNodeOr(player, PermissionNodes.REPLACE_SUBTITLE_COLOR,
-                    () -> AreaPermissionUtil.canModifyArea(player, area, areas));
+                    () -> index.canModifyArea(player, area, playerName));
             case REPLACE_SUBTITLE_SIZE ->
                 PermissionService.hasCommandPermission(player, PermissionNodes.REPLACE_SUBTITLE_SIZE, 0);
-            case ADD_SIGNATURE -> canModifySignature(player, area, areas, PermissionNodes.ADDSIGNATURE);
+            case ADD_SIGNATURE -> canModifySignature(player, area, index, PermissionNodes.ADDSIGNATURE);
             case DELETE_SIGNATURE -> !area.getSignatures().isEmpty()
-                && canModifySignature(player, area, areas, PermissionNodes.DELETESIGNATURE);
+                && canModifySignature(player, area, index, PermissionNodes.DELETESIGNATURE);
             case EXPAND_AREA -> PermissionService.hasNodeOr(player, PermissionNodes.EXPANDAREA,
-                () -> AreaPermissionUtil.canModifyArea(player, area, areas));
+                () -> index.canModifyArea(player, area, playerName));
             case SHRINK_AREA -> PermissionService.hasNodeOr(player, PermissionNodes.SHRINKAREA,
                 () -> player.hasPermissionLevel(2)
-                    || AreaPermissionUtil.isBaseSignedByPlayer(area.getBaseName(), areas, playerName));
+                    || index.isBaseSignedByPlayer(area.getBaseName(), playerName));
             case DIVIDE_AREA -> PermissionService.hasNodeOr(player, PermissionNodes.DIVIDEAREA,
-                () -> AreaPermissionUtil.canModifyArea(player, area, areas));
+                () -> index.canModifyArea(player, area, playerName));
             case ADD_HINT -> PermissionService.hasNodeOr(player, PermissionNodes.ADDHINT,
-                () -> AreaPermissionUtil.canModifyArea(player, area, areas));
+                () -> index.canModifyArea(player, area, playerName));
             case DELETE_HINT -> PermissionService.hasNodeOr(player, PermissionNodes.DELETEHINT,
-                () -> AreaPermissionUtil.canModifyArea(player, area, areas));
-            case DELETE -> !hasChildren(area, areas)
+                () -> index.canModifyArea(player, area, playerName));
+            case DELETE -> !index.hasChildren(area)
                 && PermissionService.hasNodeOr(player, PermissionNodes.DELETE,
                     () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
             default -> false;
@@ -125,14 +133,14 @@ public final class AreaManagementCapabilityService {
     }
 
     private static boolean canSetHigh(ServerPlayerEntity player, AreaData area,
-                                      List<AreaData> areas, String playerName) {
+                                      AreaIndex index, String playerName) {
         return PermissionService.hasNodeOr(player, PermissionNodes.SETHIGH, () -> {
             if (player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName)) {
                 return true;
             }
-            for (AreaData otherArea : areas) {
-                if (area.getName().equals(otherArea.getBaseName())
-                    && AreaPermissionUtil.isSignedBy(otherArea, playerName)) {
+            // 只遍历以本域名为上级的域名，命中顺序与原来的全表扫描一致
+            for (AreaData childArea : index.childrenOf(area.getName())) {
+                if (AreaPermissionUtil.isSignedBy(childArea, playerName)) {
                     return true;
                 }
             }
@@ -141,23 +149,107 @@ public final class AreaManagementCapabilityService {
     }
 
     private static boolean canModifySignature(ServerPlayerEntity player, AreaData area,
-                                              List<AreaData> areas, String permissionNode) {
+                                              AreaIndex index, String permissionNode) {
         return PermissionService.hasNodeOr(player, permissionNode, () -> {
             if (player.hasPermissionLevel(2)) {
                 return true;
             }
-            return AreaPermissionUtil.isBaseSignedByPlayer(area.getBaseName(), areas,
-                player.getGameProfile().getName());
+            return index.isBaseSignedByPlayer(area.getBaseName(), player.getGameProfile().getName());
         });
     }
 
-    private static boolean hasChildren(AreaData area, List<AreaData> areas) {
-        for (AreaData candidate : areas) {
-            if (candidate != null && area.getName().equals(candidate.getBaseName())) {
+    /**
+     * 单次能力判断内复用的局部索引：父域名 -> 子域名、域名 -> 域名数据。
+     * 只在当前调用内构建，allAreas 变化后不会残留旧数据。
+     */
+    private static final class AreaIndex {
+        private final List<AreaData> areas;
+        private Map<String, List<AreaData>> childrenByBaseName;
+        private Map<String, AreaData> areasByName;
+
+        private AreaIndex(List<AreaData> areas) {
+            this.areas = areas;
+        }
+
+        private static AreaIndex of(List<AreaData> allAreas) {
+            return new AreaIndex(allAreas == null ? List.of() : allAreas);
+        }
+
+        // 按需构建：只做权限节点判断的操作不会触发任何遍历
+        private Map<String, List<AreaData>> childrenIndex() {
+            if (childrenByBaseName == null) {
+                Map<String, List<AreaData>> index = new HashMap<>();
+                for (AreaData candidate : areas) {
+                    if (candidate == null || candidate.getBaseName() == null) {
+                        continue;
+                    }
+                    index.computeIfAbsent(candidate.getBaseName(), key -> new ArrayList<>()).add(candidate);
+                }
+                childrenByBaseName = index;
+            }
+            return childrenByBaseName;
+        }
+
+        // 同名域名取先出现的那个，与 AreaPermissionUtil.findByName 的语义一致
+        private Map<String, AreaData> nameIndex() {
+            if (areasByName == null) {
+                Map<String, AreaData> index = new HashMap<>();
+                for (AreaData candidate : areas) {
+                    if (candidate != null && candidate.getName() != null) {
+                        index.putIfAbsent(candidate.getName(), candidate);
+                    }
+                }
+                areasByName = index;
+            }
+            return areasByName;
+        }
+
+        private List<AreaData> childrenOf(String baseName) {
+            if (baseName == null) {
+                return List.of();
+            }
+            List<AreaData> children = childrenIndex().get(baseName);
+            return children == null ? List.of() : children;
+        }
+
+        // 与原来的 hasChildren 全表扫描等价；域名为空时视为没有子域名
+        private boolean hasChildren(AreaData area) {
+            String name = area.getName();
+            return name != null && childrenIndex().containsKey(name);
+        }
+
+        // 与 AreaPermissionUtil.canModifyArea 等价，只把上级域名查找换成索引
+        private boolean canModifyArea(ServerPlayerEntity player, AreaData area, String playerName) {
+            if (player.hasPermissionLevel(2)) {
                 return true;
             }
+            if (AreaPermissionUtil.isSignedBy(area, playerName)) {
+                return true;
+            }
+            return isBaseSignedByPlayer(area.getBaseName(), playerName);
         }
-        return false;
+
+        // 与 AreaPermissionUtil.isBaseSignedByPlayer 等价：先查同名域名签名，再查维度域名签名
+        private boolean isBaseSignedByPlayer(String baseName, String playerName) {
+            String cleanedBaseName = cleanName(baseName);
+            if (cleanedBaseName == null || playerName == null) {
+                return false;
+            }
+            AreaData baseArea = nameIndex().get(cleanedBaseName);
+            if (AreaPermissionUtil.isSignedBy(baseArea, playerName)) {
+                return true;
+            }
+            return AreaPermissionUtil.isDimensionalNameSignedBy(cleanedBaseName, playerName);
+        }
+
+        // 复刻 AreaPermissionUtil 内部的文本清洗规则，保证判断结果一致
+        private static String cleanName(String value) {
+            if (value == null) {
+                return null;
+            }
+            String cleaned = value.trim();
+            return cleaned.isEmpty() ? null : cleaned;
+        }
     }
 
     private static String normalizeDimensionType(String dimension) {

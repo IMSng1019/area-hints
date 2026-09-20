@@ -33,7 +33,8 @@ public class AreaChangeTracker {
         // 获取维度域名
         String dimensionalName = null;
         if (currentDimension != null) {
-            dimensionalName = areahint.dimensional.ClientDimensionalNameManager.getDimensionalName(currentDimension.toString());
+            dimensionalName = areahint.dimensional.ClientDimensionalNameManager.getDimensionalName(
+                areahint.util.DimensionIdCache.getId(currentDimension));
         }
 
         // 检测区域变化
@@ -111,7 +112,8 @@ public class AreaChangeTracker {
     public static boolean handlePrecomputedChange(AreaData newAreaData, Identifier currentDimension) {
         String dimensionalName = null;
         if (currentDimension != null) {
-            dimensionalName = areahint.dimensional.ClientDimensionalNameManager.getDimensionalName(currentDimension.toString());
+            dimensionalName = areahint.dimensional.ClientDimensionalNameManager.getDimensionalName(
+                areahint.util.DimensionIdCache.getId(currentDimension));
         }
 
         boolean areaChanged = false;
@@ -171,7 +173,7 @@ public class AreaChangeTracker {
      */
     private static synchronized void publishDetectionState(AreaData area, Identifier dimension) {
         String areaName = area == null ? null : area.getName();
-        String dimensionId = dimension == null ? null : dimension.toString();
+        String dimensionId = areahint.util.DimensionIdCache.getId(dimension);
         DetectionState previous = detectionState;
         if (Objects.equals(previous.areaName(), areaName)
                 && Objects.equals(previous.dimensionId(), dimensionId)) {

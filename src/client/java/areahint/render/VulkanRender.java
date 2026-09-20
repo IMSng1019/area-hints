@@ -138,11 +138,11 @@ public class VulkanRender implements RenderManager.IRender {
         float titleScale = TitleRenderHelper.getTitleScale();
         TitleRenderHelper.drawCenteredLine(drawContext, textRenderer, matrixStack, currentText, currentColor, alpha, titleScale, 0, false);
 
-        if (TitleRenderHelper.hasSubtitle(currentSubtitle)) {
+        if (TitleRenderHelper.hasNormalizedSubtitle(currentSubtitle)) {
             float subtitleScale = TitleRenderHelper.getSubtitleScale();
             int subtitleY = TitleRenderHelper.getSubtitleStartY(textRenderer, titleScale);
             int lineHeight = TitleRenderHelper.getLineHeight(textRenderer, subtitleScale);
-            java.util.List<String> subtitleLines = TitleRenderHelper.buildSubtitleLines(currentSubtitle, textRenderer, screenWidth, subtitleScale);
+            java.util.List<String> subtitleLines = TitleRenderHelper.buildSubtitleLinesNormalized(currentSubtitle, textRenderer, screenWidth, subtitleScale);
 
             for (int i = 0; i < subtitleLines.size(); i++) {
                 TitleRenderHelper.drawCenteredLine(drawContext, textRenderer, matrixStack,

@@ -115,8 +115,9 @@ public final class TeleportService {
         if (areas == null) {
             return null;
         }
+        // 单次遍历：先比对域名，命中后才做较昂贵的 isValid 校验（内含颜色正则），返回结果与原来一致
         for (AreaData area : areas) {
-            if (area != null && area.isValid() && areaName.equals(area.getName())) {
+            if (area != null && areaName.equals(area.getName()) && area.isValid()) {
                 return area;
             }
         }

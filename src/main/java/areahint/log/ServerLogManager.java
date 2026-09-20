@@ -11,7 +11,8 @@ import java.nio.file.Path;
  * 负责管理服务端日志的写入和清理
  */
 public class ServerLogManager {
-    private static AsyncLogManager logManager;
+    // 可能被主线程与网络线程同时访问，保持可见性
+    private static volatile AsyncLogManager logManager;
     private static final String LOG_FOLDER_NAME = "server_log";
     private static final int RETENTION_DAYS = 7; // 服务端日志保留7天
 
@@ -19,6 +20,11 @@ public class ServerLogManager {
      * 初始化服务端日志管理器
      */
     public static void init() {
+        // 已初始化时直接复用，避免重复创建写入通道
+        if (logManager != null) {
+            return;
+        }
+
         try {
             Path configFolder = FileManager.getConfigFolder();
             Path logFolder = configFolder.resolve(LOG_FOLDER_NAME);
@@ -39,7 +45,9 @@ public class ServerLogManager {
      * @param dimensionalName 维度域名名称
      */
     public static void logPlayerEnterArea(String playerName, int areaLevel, String surfaceName, String areaName, String dimensionalName) {
-        if (logManager == null) {
+        // 先取局部引用，避免关闭时出现空指针
+        AsyncLogManager manager = logManager;
+        if (manager == null) {
             return;
         }
 
@@ -53,7 +61,7 @@ public class ServerLogManager {
             message = ServerI18nManager.translate("server.log.enter", dim, playerName, levelText, areaName);
         }
 
-        logManager.log(message);
+        manager.log(message);
         Areashint.LOGGER.info(message);
     }
 
@@ -66,7 +74,9 @@ public class ServerLogManager {
      * @param dimensionalName 维度域名名称
      */
     public static void logPlayerLeaveArea(String playerName, int areaLevel, String surfaceName, String areaName, String dimensionalName) {
-        if (logManager == null) {
+        // 先取局部引用，避免关闭时出现空指针
+        AsyncLogManager manager = logManager;
+        if (manager == null) {
             return;
         }
 
@@ -80,7 +90,7 @@ public class ServerLogManager {
             message = ServerI18nManager.translate("server.log.leave", dim, playerName, levelText, areaName);
         }
 
-        logManager.log(message);
+        manager.log(message);
         Areashint.LOGGER.info(message);
     }
 
@@ -101,8 +111,9 @@ public class ServerLogManager {
      * @param message 日志消息
      */
     public static void log(String message) {
-        if (logManager != null) {
-            logManager.log(message);
+        AsyncLogManager manager = logManager;
+        if (manager != null) {
+            manager.log(message);
         }
     }
 

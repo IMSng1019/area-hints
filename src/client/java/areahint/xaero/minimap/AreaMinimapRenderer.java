@@ -27,6 +27,10 @@ import java.util.List;
 final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElement, AreaMinimapContext> {
     private static final int CIRCLE_CLIP_SEGMENTS = 64;
     private static final float VIEW_LINE_INSET = 0.75F;
+    // 剔除容差略大于裁剪本身使用的 1.0E-4，保证不会剔除掉仍然可见的几何
+    private static final float CULL_EPSILON = 1.0E-3F;
+    /** 线段裁剪复用的参数区间，避免每条边都新建 double[]。 */
+    private final double[] lineClipRange = {0.0D, 1.0D};
 
     AreaMinimapRenderer() {
         this(new AreaMinimapContext());
@@ -49,8 +53,9 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
             return;
         }
 
-        context.dimensionId = renderInfo.mapDimension.getValue().toString();
-        if (!context.dimensionId.equals(client.world.getRegistryKey().getValue().toString())) {
+        context.dimensionId = areahint.util.DimensionIdCache.getId(renderInfo.mapDimension.getValue());
+        if (!context.dimensionId.equals(
+                areahint.util.DimensionIdCache.getId(client.world.getRegistryKey().getValue()))) {
             return;
         }
 
@@ -135,39 +140,59 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
     }
 
     private void drawAreaFill(Matrix4f matrix, List<FillTriangle> fillMesh, int color) {
-        List<float[]> triangles = new ArrayList<>();
+        context.resetFillScratch();
+        List<float[]> triangles = context.fillTriangles;
+        boolean circle = context.transform.circle();
+        float halfWidth = context.transform.halfViewW();
+        float halfHeight = context.transform.halfViewH();
         for (FillTriangle triangle : fillMesh) {
-            float[] first = transform(triangle.first());
-            float[] second = transform(triangle.second());
-            float[] third = transform(triangle.third());
-            if (context.transform.circle()) {
-                addCircleClippedTriangle(triangles, first, second, third, context.transform.halfViewW());
+            float[] first = transformInto(context.fillFirst, triangle.first());
+            float[] second = transformInto(context.fillSecond, triangle.second());
+            float[] third = transformInto(context.fillThird, triangle.third());
+            if (circle) {
+                // 包围盒完全落在可见圆外的三角形裁剪结果必为空，直接跳过 64 次半平面裁剪
+                if (isTriangleOutsideCircle(first, second, third, halfWidth)) {
+                    continue;
+                }
+                addCircleClippedTriangle(triangles, first, second, third, halfWidth);
             } else {
-                addRectangleClippedTriangle(triangles, first, second, third,
-                    context.transform.halfViewW(), context.transform.halfViewH());
+                if (isTriangleOutsideRectangle(first, second, third, halfWidth, halfHeight)) {
+                    continue;
+                }
+                addRectangleClippedTriangle(triangles, first, second, third, halfWidth, halfHeight);
             }
         }
         OverlayRenderHelper.drawTriangles(matrix, triangles, color, 0.23F, 0.0F);
     }
 
     private void drawAreaBoundary(Matrix4f matrix, OverlayArea area, int color) {
-        List<float[]> lines = new ArrayList<>();
-        for (int i = 0; i < area.vertices().size(); i++) {
-            float[] first = transform(area.vertices().get(i));
-            float[] second = transform(area.vertices().get((i + 1) % area.vertices().size()));
-            if (context.transform.circle()) {
-                float radius = Math.max(0.0F, context.transform.halfViewW() - VIEW_LINE_INSET);
-                float[] clipped = clipLineToCircle(first, second, radius);
-                if (clipped != null) {
+        context.resetBoundaryScratch();
+        List<float[]> lines = context.boundaryLines;
+        List<Point> vertices = area.vertices();
+        int vertexCount = vertices.size();
+        if (vertexCount == 0) {
+            return;
+        }
+
+        // 每个顶点只做一次屏幕变换，后续两条相邻边直接复用同一份坐标
+        for (int i = 0; i < vertexCount; i++) {
+            transformInto(context.boundaryVertex(i), vertices.get(i));
+        }
+
+        // 圆半径与矩形半宽在原实现里取的是同一个值，这里只算一次
+        boolean circle = context.transform.circle();
+        float halfWidth = Math.max(0.0F, context.transform.halfViewW() - VIEW_LINE_INSET);
+        float halfHeight = Math.max(0.0F, context.transform.halfViewH() - VIEW_LINE_INSET);
+        for (int i = 0; i < vertexCount; i++) {
+            float[] first = context.boundaryVertex(i);
+            float[] second = context.boundaryVertex((i + 1) % vertexCount);
+            float[] clipped = context.nextBoundaryLine();
+            if (circle) {
+                if (clipLineToCircle(first, second, halfWidth, clipped)) {
                     lines.add(clipped);
                 }
-            } else {
-                float halfWidth = Math.max(0.0F, context.transform.halfViewW() - VIEW_LINE_INSET);
-                float halfHeight = Math.max(0.0F, context.transform.halfViewH() - VIEW_LINE_INSET);
-                float[] clipped = clipLineToRectangle(first, second, halfWidth, halfHeight);
-                if (clipped != null) {
-                    lines.add(clipped);
-                }
+            } else if (clipLineToRectangle(first, second, halfWidth, halfHeight, clipped)) {
+                lines.add(clipped);
             }
         }
         OverlayRenderHelper.drawLines(matrix, lines, color, 0.9F, 0.01F);
@@ -180,16 +205,18 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
         }
         if (isInsideCircle(first, radius) && isInsideCircle(second, radius)
             && isInsideCircle(third, radius)) {
-            output.add(new float[]{first[0], first[1], second[0], second[1], third[0], third[1]});
+            addFillTriangle(output, first, second, third);
             return;
         }
 
-        List<float[]> polygon = new ArrayList<>(List.of(first, second, third));
-        double apothem = radius * Math.cos(Math.PI / CIRCLE_CLIP_SEGMENTS);
+        context.resetClipPoints();
+        List<float[]> polygon = beginClipPolygon(first, second, third);
+        double apothem = circleClipLimit(radius);
         // 使用内接正六十四边形逐边裁剪，每个输出三角形都严格留在 Xaero 的可见圆内。
         for (int edge = 0; edge < CIRCLE_CLIP_SEGMENTS && !polygon.isEmpty(); edge++) {
             double angle = Math.PI * 2.0D * (edge + 0.5D) / CIRCLE_CLIP_SEGMENTS;
-            polygon = clipAgainstHalfPlane(polygon, Math.cos(angle), Math.sin(angle), apothem);
+            polygon = clipAgainstHalfPlane(polygon, otherClipPolygon(polygon),
+                Math.cos(angle), Math.sin(angle), apothem);
         }
         addTriangleFan(output, polygon);
     }
@@ -202,36 +229,64 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
         if (isInsideRectangle(first, halfWidth, halfHeight)
             && isInsideRectangle(second, halfWidth, halfHeight)
             && isInsideRectangle(third, halfWidth, halfHeight)) {
-            output.add(new float[]{first[0], first[1], second[0], second[1], third[0], third[1]});
+            addFillTriangle(output, first, second, third);
             return;
         }
 
-        List<float[]> polygon = new ArrayList<>(List.of(first, second, third));
-        polygon = clipAgainstHalfPlane(polygon, 1.0D, 0.0D, halfWidth);
+        context.resetClipPoints();
+        List<float[]> polygon = beginClipPolygon(first, second, third);
+        polygon = clipAgainstHalfPlane(polygon, otherClipPolygon(polygon), 1.0D, 0.0D, halfWidth);
         if (!polygon.isEmpty()) {
-            polygon = clipAgainstHalfPlane(polygon, -1.0D, 0.0D, halfWidth);
+            polygon = clipAgainstHalfPlane(polygon, otherClipPolygon(polygon), -1.0D, 0.0D, halfWidth);
         }
         if (!polygon.isEmpty()) {
-            polygon = clipAgainstHalfPlane(polygon, 0.0D, 1.0D, halfHeight);
+            polygon = clipAgainstHalfPlane(polygon, otherClipPolygon(polygon), 0.0D, 1.0D, halfHeight);
         }
         if (!polygon.isEmpty()) {
-            polygon = clipAgainstHalfPlane(polygon, 0.0D, -1.0D, halfHeight);
+            polygon = clipAgainstHalfPlane(polygon, otherClipPolygon(polygon), 0.0D, -1.0D, halfHeight);
         }
         addTriangleFan(output, polygon);
     }
 
     private void addTriangleFan(List<float[]> output, List<float[]> polygon) {
+        if (polygon.size() < 3) {
+            return;
+        }
+        float[] origin = polygon.get(0);
         for (int i = 1; i + 1 < polygon.size(); i++) {
-            float[] point = polygon.get(i);
-            float[] next = polygon.get(i + 1);
-            output.add(new float[]{polygon.get(0)[0], polygon.get(0)[1],
-                point[0], point[1], next[0], next[1]});
+            addFillTriangle(output, origin, polygon.get(i), polygon.get(i + 1));
         }
     }
 
-    private List<float[]> clipAgainstHalfPlane(List<float[]> polygon, double normalX,
-                                                double normalY, double limit) {
-        List<float[]> clipped = new ArrayList<>(polygon.size() + 1);
+    /** 把三角形写进复用的输出数组，坐标顺序与原实现一致。 */
+    private void addFillTriangle(List<float[]> output, float[] first, float[] second, float[] third) {
+        float[] slot = context.nextFillTriangle();
+        slot[0] = first[0];
+        slot[1] = first[1];
+        slot[2] = second[0];
+        slot[3] = second[1];
+        slot[4] = third[0];
+        slot[5] = third[1];
+        output.add(slot);
+    }
+
+    /** 用传入的三个顶点初始化当前裁剪多边形，缓冲由上下文复用。 */
+    private List<float[]> beginClipPolygon(float[] first, float[] second, float[] third) {
+        context.clipPolygonA.clear();
+        context.clipPolygonA.add(first);
+        context.clipPolygonA.add(second);
+        context.clipPolygonA.add(third);
+        return context.clipPolygonA;
+    }
+
+    /** 返回与当前多边形缓冲配对的另一个缓冲，裁剪时输入输出交替使用。 */
+    private List<float[]> otherClipPolygon(List<float[]> polygon) {
+        return polygon == context.clipPolygonA ? context.clipPolygonB : context.clipPolygonA;
+    }
+
+    private List<float[]> clipAgainstHalfPlane(List<float[]> polygon, List<float[]> output, double normalX,
+                                               double normalY, double limit) {
+        output.clear();
         float[] previous = polygon.get(polygon.size() - 1);
         double previousDistance = previous[0] * normalX + previous[1] * normalY - limit;
         boolean previousInside = previousDistance <= 1.0E-4D;
@@ -242,40 +297,43 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
                 double denominator = previousDistance - currentDistance;
                 if (Math.abs(denominator) > 1.0E-8D) {
                     double ratio = previousDistance / denominator;
-                    clipped.add(new float[]{
-                        (float) (previous[0] + (current[0] - previous[0]) * ratio),
-                        (float) (previous[1] + (current[1] - previous[1]) * ratio)
-                    });
+                    float[] intersection = context.nextClipPoint();
+                    intersection[0] = (float) (previous[0] + (current[0] - previous[0]) * ratio);
+                    intersection[1] = (float) (previous[1] + (current[1] - previous[1]) * ratio);
+                    output.add(intersection);
                 }
             }
             if (currentInside) {
-                clipped.add(current);
+                output.add(current);
             }
             previous = current;
             previousDistance = currentDistance;
             previousInside = currentInside;
         }
-        return clipped;
+        return output;
     }
 
-    private float[] clipLineToRectangle(float[] first, float[] second, float halfWidth, float halfHeight) {
+    private boolean clipLineToRectangle(float[] first, float[] second, float halfWidth, float halfHeight,
+                                        float[] output) {
         if (halfWidth <= 0.0F || halfHeight <= 0.0F) {
-            return null;
+            return false;
         }
         double deltaX = second[0] - first[0];
         double deltaY = second[1] - first[1];
-        double[] range = {0.0D, 1.0D};
+        lineClipRange[0] = 0.0D;
+        lineClipRange[1] = 1.0D;
         // Liang-Barsky 参数裁剪同时覆盖线段两端都位于视口外但中部穿过视口的情况。
-        if (!updateClipRange(-deltaX, first[0] + halfWidth, range)
-            || !updateClipRange(deltaX, halfWidth - first[0], range)
-            || !updateClipRange(-deltaY, first[1] + halfHeight, range)
-            || !updateClipRange(deltaY, halfHeight - first[1], range)) {
-            return null;
+        if (!updateClipRange(-deltaX, first[0] + halfWidth, lineClipRange)
+            || !updateClipRange(deltaX, halfWidth - first[0], lineClipRange)
+            || !updateClipRange(-deltaY, first[1] + halfHeight, lineClipRange)
+            || !updateClipRange(deltaY, halfHeight - first[1], lineClipRange)) {
+            return false;
         }
-        return new float[]{
-            (float) (first[0] + deltaX * range[0]), (float) (first[1] + deltaY * range[0]),
-            (float) (first[0] + deltaX * range[1]), (float) (first[1] + deltaY * range[1])
-        };
+        output[0] = (float) (first[0] + deltaX * lineClipRange[0]);
+        output[1] = (float) (first[1] + deltaY * lineClipRange[0]);
+        output[2] = (float) (first[0] + deltaX * lineClipRange[1]);
+        output[3] = (float) (first[1] + deltaY * lineClipRange[1]);
+        return true;
     }
 
     private boolean updateClipRange(double direction, double distance, double[] range) {
@@ -297,36 +355,41 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
         return true;
     }
 
-    private float[] clipLineToCircle(float[] first, float[] second, float radius) {
+    private boolean clipLineToCircle(float[] first, float[] second, float radius, float[] output) {
         if (radius <= 0.0F) {
-            return null;
+            return false;
         }
         if (isInsideCircle(first, radius) && isInsideCircle(second, radius)) {
-            return new float[]{first[0], first[1], second[0], second[1]};
+            output[0] = first[0];
+            output[1] = first[1];
+            output[2] = second[0];
+            output[3] = second[1];
+            return true;
         }
 
         double deltaX = second[0] - first[0];
         double deltaY = second[1] - first[1];
         double quadratic = deltaX * deltaX + deltaY * deltaY;
         if (quadratic < 1.0E-8D) {
-            return null;
+            return false;
         }
         double linear = 2.0D * (first[0] * deltaX + first[1] * deltaY);
         double constant = first[0] * first[0] + first[1] * first[1] - radius * radius;
         double discriminant = linear * linear - 4.0D * quadratic * constant;
         if (discriminant < 0.0D) {
-            return null;
+            return false;
         }
         double root = Math.sqrt(discriminant);
         double enter = Math.max(0.0D, (-linear - root) / (2.0D * quadratic));
         double exit = Math.min(1.0D, (-linear + root) / (2.0D * quadratic));
         if (enter > exit) {
-            return null;
+            return false;
         }
-        return new float[]{
-            (float) (first[0] + deltaX * enter), (float) (first[1] + deltaY * enter),
-            (float) (first[0] + deltaX * exit), (float) (first[1] + deltaY * exit)
-        };
+        output[0] = (float) (first[0] + deltaX * enter);
+        output[1] = (float) (first[1] + deltaY * enter);
+        output[2] = (float) (first[0] + deltaX * exit);
+        output[3] = (float) (first[1] + deltaY * exit);
+        return true;
     }
 
     private boolean isInsideCircle(float[] point, float radius) {
@@ -338,12 +401,63 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
             && point[1] >= -halfHeight - 1.0E-3F && point[1] <= halfHeight + 1.0E-3F;
     }
 
-    private float[] transform(Point point) {
+    private float[] transformInto(float[] output, Point point) {
         double deltaX = point.x() - context.renderX;
         double deltaZ = point.z() - context.renderZ;
         // 与 Xaero 25.2.0 的 translatePosition 保持完全相同的旋转和缩放顺序。
         double screenX = (deltaX * context.transform.ps() - deltaZ * context.transform.pc()) * context.transform.zoom();
         double screenY = (deltaX * context.transform.pc() + deltaZ * context.transform.ps()) * context.transform.zoom();
-        return new float[]{(float) screenX, (float) screenY};
+        output[0] = (float) screenX;
+        output[1] = (float) screenY;
+        return output;
+    }
+
+    /**
+     * 三角形包围盒是否完全落在可见圆外。
+     * <p>
+     * 完全在外时逐边裁剪的结果必然为空，直接整块跳过；容差取 CULL_EPSILON，不会剔除仍然可见的三角形。
+     */
+    /**
+     * 可见圆裁剪使用的内切圆半径（内接正六十四边形的边心距）。
+     * <p>
+     * 裁剪与剔除必须共用同一个边界，剔除侧否则会丢掉仍有一段落在内接多边形内部的三角形。
+     */
+    private static float circleClipLimit(float radius) {
+        return (float) (radius * Math.cos(Math.PI / CIRCLE_CLIP_SEGMENTS));
+    }
+
+    private boolean isTriangleOutsideCircle(float[] first, float[] second, float[] third, float radius) {
+        if (radius <= 0.0F) {
+            return true;
+        }
+        float minX = Math.min(first[0], Math.min(second[0], third[0]));
+        float maxX = Math.max(first[0], Math.max(second[0], third[0]));
+        float minY = Math.min(first[1], Math.min(second[1], third[1]));
+        float maxY = Math.max(first[1], Math.max(second[1], third[1]));
+        // 圆心在原点，取包围盒上离圆心最近的点与半径比较
+        float nearestX = Math.max(minX, Math.min(0.0F, maxX));
+        float nearestY = Math.max(minY, Math.min(0.0F, maxY));
+        // 裁剪用的是内接正六十四边形（内切圆半径比 radius 小约 0.12%），剔除必须按这个更保守的边界判断，
+        // 否则恰好落在可见圆与内接多边形之间那条极窄带内的三角形会被误丢
+        float limit = circleClipLimit(radius) + CULL_EPSILON;
+        return nearestX * nearestX + nearestY * nearestY > limit * limit;
+    }
+
+    /**
+     * 三角形包围盒是否完全落在可见矩形外。
+     * <p>
+     * 四条边任一方向都已分离时裁剪结果必然为空，直接整块跳过。
+     */
+    private boolean isTriangleOutsideRectangle(float[] first, float[] second, float[] third,
+                                               float halfWidth, float halfHeight) {
+        if (halfWidth <= 0.0F || halfHeight <= 0.0F) {
+            return true;
+        }
+        float minX = Math.min(first[0], Math.min(second[0], third[0]));
+        float maxX = Math.max(first[0], Math.max(second[0], third[0]));
+        float minY = Math.min(first[1], Math.min(second[1], third[1]));
+        float maxY = Math.max(first[1], Math.max(second[1], third[1]));
+        return maxX < -halfWidth - CULL_EPSILON || minX > halfWidth + CULL_EPSILON
+            || maxY < -halfHeight - CULL_EPSILON || minY > halfHeight + CULL_EPSILON;
     }
 }

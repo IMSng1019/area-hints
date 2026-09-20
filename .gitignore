@@ -40,3 +40,6 @@ replay_*.log
 *.hprof
 *.jfr
 *.gradle-home
+# 临时调试产物与轮转日志
+_diag/
+logs/*.log.gz

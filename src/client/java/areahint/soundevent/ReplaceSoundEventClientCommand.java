@@ -1,5 +1,6 @@
 package areahint.soundevent;
 
+import areahint.command.AreasHintCommandRoot;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -23,7 +24,9 @@ public final class ReplaceSoundEventClientCommand {
     }
 
     /**
-     * 注册客户端 /areahint replacesoundevent 指令树。
+     * 注册客户端 /areahintc replacesoundevent 指令树。
+     * <p>
+     * 挂独立根指令的原因同 soundlevel：避免把 /areahint 整条根标记为客户端命令。
      */
     public static void register() {
         if (registered) {
@@ -35,7 +38,7 @@ public final class ReplaceSoundEventClientCommand {
 
     private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher,
                                          net.minecraft.command.CommandRegistryAccess registryAccess) {
-        dispatcher.register(ClientCommandManager.literal("areahint")
+        dispatcher.register(ClientCommandManager.literal(AreasHintCommandRoot.CLIENT_ROOT)
                 .then(ClientCommandManager.literal("replacesoundevent")
                         .executes(context -> start(context))
                         .then(ClientCommandManager.literal("category")

@@ -1,6 +1,7 @@
 package areahint.command;
 
 import areahint.Areashint;
+import areahint.command.AreasHintCommandRoot;
 import areahint.data.AreaData;
 import areahint.data.ConfigData;
 import areahint.file.FileManager;
@@ -64,6 +65,11 @@ public class ServerCommands {
     private static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher, 
                                         CommandRegistryAccess registryAccess, 
                                         CommandManager.RegistrationEnvironment environment) {
+        // 纯客户端子命令必须挂在独立根指令下，否则会把 /areahint 整条根标记成客户端命令
+        dispatcher.register(literal(AreasHintCommandRoot.CLIENT_ROOT)
+            .then(createReplaceSoundEventCommand())
+            .then(createSoundLevelCommand()));
+
         // 注册调试命令
         DebugCommand.register(dispatcher, registryAccess, environment);
         
@@ -584,11 +590,29 @@ public class ServerCommands {
                 .then(literal("cancel")
                     .executes(ServerCommands::executeReplaceButtonCancel)))
 
-            // 同步纯客户端声音选择指令的语法，避免聊天框只按服务端命令树解析时将有效指令标红。
-            .then(createReplaceSoundEventCommand())
-
-            // 同步纯客户端声音音量指令的语法，使 soundlevel 能参与聊天预选和语法着色。
-            .then(createSoundLevelCommand())
+            // 旧写法兼容：/areahint soundlevel、/areahint replacesoundevent 仍然能通过语法解析，
+            // 真正的执行由客户端模组完成（客户端本地命令，命令面不再挂在这个根下）
+            .then(literal("replacesoundevent")
+                .executes(ServerCommands::executeClientOnlyCommandPlaceholder)
+                .then(literal("category")
+                    .then(argument("category", StringArgumentType.word())
+                        .executes(ServerCommands::executeClientOnlyCommandPlaceholder)))
+                .then(literal("instrument")
+                    .then(argument("soundId", IdentifierArgumentType.identifier())
+                        .executes(ServerCommands::executeClientOnlyCommandPlaceholder)))
+                .then(literal("select")
+                    .then(argument("soundId", IdentifierArgumentType.identifier())
+                        .then(argument("pitch", FloatArgumentType.floatArg(0.5f, 2.0f))
+                            .executes(ServerCommands::executeClientOnlyCommandPlaceholder))))
+                .then(literal("none")
+                    .executes(ServerCommands::executeClientOnlyCommandPlaceholder))
+                .then(literal("cancel")
+                    .executes(ServerCommands::executeClientOnlyCommandPlaceholder)))
+            .then(literal("soundlevel")
+                .executes(ServerCommands::executeClientOnlyCommandPlaceholder)
+                .then(argument("level", FloatArgumentType.floatArg(
+                        ConfigData.SOUND_LEVEL_MIN, ConfigData.SOUND_LEVEL_MAX))
+                    .executes(ServerCommands::executeClientOnlyCommandPlaceholder)))
 
             // language 命令（交互式语言选择）
             .then(literal("language")
@@ -700,9 +724,30 @@ public class ServerCommands {
     }
 
     /**
-     * 为服务端语法镜像提供可执行终点，正常安装客户端模组时不会实际进入此方法。
+     * 纯客户端指令在服务端的执行终点。
+     * <p>
+     * soundlevel / replacesoundevent 的实际执行体在客户端（客户端命令树挂在独立根指令 areahintc 下）。
+     * 玩家直接手打 /areahint soundlevel 这类写法时，命令会送到服务端，这里再把它转回客户端打开对应界面，
+     * 这样“打字输入”和“命令面板按钮”两条路径的行为保持一致。
      */
     private static int executeClientOnlyCommandPlaceholder(CommandContext<ServerCommandSource> context) {
+        ServerPlayerEntity player = context.getSource().getPlayer();
+        if (player == null) {
+            return Command.SINGLE_SUCCESS;
+        }
+
+        // 从输入内容判断是哪一个纯客户端子指令（服务端只镜像语法，不解析具体参数）
+        String input = context.getInput();
+        if (input == null) {
+            return Command.SINGLE_SUCCESS;
+        }
+        if (input.startsWith(AreasHintCommandRoot.CLIENT_ROOT + " soundlevel")
+                || input.startsWith(AreasHintCommandRoot.SERVER_ROOT + " soundlevel")) {
+            ServerNetworking.sendCommandToClient(player, "areahint:soundlevel_open");
+        } else if (input.startsWith(AreasHintCommandRoot.CLIENT_ROOT + " replacesoundevent")
+                || input.startsWith(AreasHintCommandRoot.SERVER_ROOT + " replacesoundevent")) {
+            ServerNetworking.sendCommandToClient(player, "areahint:soundevent_open");
+        }
         return Command.SINGLE_SUCCESS;
     }
 

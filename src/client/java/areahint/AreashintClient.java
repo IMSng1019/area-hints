@@ -439,9 +439,6 @@ public class AreashintClient implements ClientModInitializer {
 			// 先在线程安全缓存中使旧连接失效，阻止已经排队的数据包任务重新写入
 			areahint.network.ClientNetworking.invalidateAreaDataConnection(handler);
 
-			// 断开连接时把还在异步队列里的域名文件补齐，避免最后一次同步内容丢失
-			areahint.network.ClientAreaDataWriter.flushPendingWrites();
-
 			// Fabric 可能从网络线程触发断开事件，其余客户端状态统一回到主线程清理
 			client.execute(() -> {
 				if (client.getNetworkHandler() != null && client.getNetworkHandler() != handler) {

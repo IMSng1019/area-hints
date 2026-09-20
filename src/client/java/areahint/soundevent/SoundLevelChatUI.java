@@ -58,7 +58,7 @@ public final class SoundLevelChatUI {
     private static MutableText createLevelButton(float soundLevel) {
         String formattedLevel = ConfigData.formatSoundLevel(soundLevel);
         // 指令和显示共用稳定格式，避免按钮发送包含浮点尾数的参数。
-        String command = "/areahint soundlevel " + formattedLevel;
+        String command = "/areahintc soundlevel " + formattedLevel;
         return Text.literal(t("soundlevel.button.level", formattedLevel)).setStyle(Style.EMPTY
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,

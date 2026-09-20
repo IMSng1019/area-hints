@@ -1,5 +1,6 @@
 package areahint.soundevent;
 
+import areahint.command.AreasHintCommandRoot;
 import areahint.data.ConfigData;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
@@ -18,7 +19,10 @@ public final class SoundLevelClientCommand {
     }
 
     /**
-     * 注册客户端 /areahint soundlevel 指令树。
+     * 注册客户端 /areahintc soundlevel 指令树。
+     * <p>
+     * 必须挂在独立根指令下：Fabric 会把通过 ClientCommandRegistrationCallback 注册的整条根指令
+     * 标记为客户端命令，如果挂在 /areahint 下，会导致 /areahint 的全部服务端子命令在客户端被拦截。
      */
     public static void register() {
         if (registered) {
@@ -30,7 +34,7 @@ public final class SoundLevelClientCommand {
 
     private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher,
                                          net.minecraft.command.CommandRegistryAccess registryAccess) {
-        dispatcher.register(ClientCommandManager.literal("areahint")
+        dispatcher.register(ClientCommandManager.literal(AreasHintCommandRoot.CLIENT_ROOT)
                 .then(ClientCommandManager.literal("soundlevel")
                         .executes(context -> showMenu())
                         .then(ClientCommandManager.argument("level",

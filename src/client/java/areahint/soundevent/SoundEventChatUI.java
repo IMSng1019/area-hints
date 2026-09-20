@@ -35,7 +35,7 @@ public final class SoundEventChatUI {
                 SoundEventManager.getDisplayText(SoundEventManager.getCurrentSelection()))), false);
         client.player.sendMessage(Text.literal(t("soundevent.chat.category_prompt")), false);
         client.player.sendMessage(createButton(t("soundevent.button.none"),
-                "/areahint replacesoundevent none", Formatting.GRAY,
+                "/areahintc replacesoundevent none", Formatting.GRAY,
                 t("soundevent.hover.none")), false);
 
         for (SoundEventCatalog.Category category : SoundEventCatalog.getCategories()) {
@@ -45,12 +45,12 @@ public final class SoundEventChatUI {
             }
             String label = t("soundevent.category." + category.key());
             client.player.sendMessage(createButton(t("soundevent.button.category", label, count),
-                    "/areahint replacesoundevent category " + category.key() + " 0",
+                    "/areahintc replacesoundevent category " + category.key() + " 0",
                     Formatting.AQUA, t("soundevent.hover.category", label)), false);
         }
 
         client.player.sendMessage(createButton(t("soundevent.button.cancel"),
-                "/areahint replacesoundevent cancel", Formatting.RED,
+                "/areahintc replacesoundevent cancel", Formatting.RED,
                 t("soundevent.hover.cancel")), false);
     }
 
@@ -164,7 +164,7 @@ public final class SoundEventChatUI {
         for (int index = start; index < end; index++) {
             SoundEventCatalog.InstrumentGroup instrument = instruments.get(index);
             client.player.sendMessage(createButton(t("soundevent.button.instrument", instrument.soundId()),
-                    "/areahint replacesoundevent instrument " + instrument.soundId() + " 0",
+                    "/areahintc replacesoundevent instrument " + instrument.soundId() + " 0",
                     Formatting.YELLOW, t("soundevent.hover.instrument", instrument.soundId())), false);
         }
         showNavigation(SoundEventCatalog.CATEGORY_NOTE_BLOCK, safePage, pageCount(instruments.size()), false, null);
@@ -175,7 +175,7 @@ public final class SoundEventChatUI {
                 ? t("soundevent.button.note", selection.note(), formatPitch(selection.pitch()))
                 : selection.soundId();
         // 指令参数使用 Float 的可逆字符串，避免聊天显示取整改变原版音符盒音高。
-        String command = "/areahint replacesoundevent select " + selection.soundId() + " " + Float.toString(selection.pitch());
+        String command = "/areahintc replacesoundevent select " + selection.soundId() + " " + Float.toString(selection.pitch());
         String hover = selection.isNoteBlock()
                 ? t("soundevent.hover.note", selection.soundId(), selection.note(), formatPitch(selection.pitch()))
                 : t("soundevent.hover.sound", selection.soundId());
@@ -192,27 +192,27 @@ public final class SoundEventChatUI {
         if (page > 0) {
             navigation.append(createButton(t("soundevent.button.previous"),
                     notePage
-                            ? "/areahint replacesoundevent instrument " + soundId + " " + (page - 1)
-                            : "/areahint replacesoundevent category " + categoryKey + " " + (page - 1),
+                            ? "/areahintc replacesoundevent instrument " + soundId + " " + (page - 1)
+                            : "/areahintc replacesoundevent category " + categoryKey + " " + (page - 1),
                     Formatting.LIGHT_PURPLE, t("soundevent.hover.previous")));
             navigation.append(Text.literal("  "));
         }
         if (page + 1 < pages) {
             navigation.append(createButton(t("soundevent.button.next"),
                     notePage
-                            ? "/areahint replacesoundevent instrument " + soundId + " " + (page + 1)
-                            : "/areahint replacesoundevent category " + categoryKey + " " + (page + 1),
+                            ? "/areahintc replacesoundevent instrument " + soundId + " " + (page + 1)
+                            : "/areahintc replacesoundevent category " + categoryKey + " " + (page + 1),
                     Formatting.LIGHT_PURPLE, t("soundevent.hover.next")));
             navigation.append(Text.literal("  "));
         }
         navigation.append(createButton(t("soundevent.button.back"),
                 notePage
-                        ? "/areahint replacesoundevent category " + categoryKey + " 0"
-                        : "/areahint replacesoundevent",
+                        ? "/areahintc replacesoundevent category " + categoryKey + " 0"
+                        : "/areahintc replacesoundevent",
                 Formatting.AQUA, t("soundevent.hover.back")));
         navigation.append(Text.literal("  "));
         navigation.append(createButton(t("soundevent.button.cancel"),
-                "/areahint replacesoundevent cancel", Formatting.RED, t("soundevent.hover.cancel")));
+                "/areahintc replacesoundevent cancel", Formatting.RED, t("soundevent.hover.cancel")));
         client.player.sendMessage(navigation, false);
     }
 

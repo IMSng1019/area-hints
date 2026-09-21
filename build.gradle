@@ -6,8 +6,13 @@ plugins {
 version = project.mod_version
 group = project.maven_group
 
+// 模组平台标识：默认 Fabric，移植到 Forge/NeoForge 时在 gradle.properties 里改 mod_loader
+def modLoader = (project.findProperty("mod_loader") ?: "fabric").toString().trim().toLowerCase(Locale.ROOT)
+// 产物基础名：模组名-平台-MC版本，Gradle 会再拼上 mod_version，最终形如 areas-hint-fabric-1.20.4-4.6.0.jar
+def artifactBaseName = "${project.archives_base_name}-${modLoader}-${project.minecraft_version}"
+
 base {
-	archivesName = project.archives_base_name
+	archivesName = artifactBaseName
 }
 
 repositories {
@@ -93,7 +98,8 @@ java {
 }
 
 jar {
-	inputs.property "archivesName", project.base.archivesName
+	// 许可证文件后缀只跟随模组名，避免产物命名规则变化时改动 JAR 内部结构
+	inputs.property "archivesName", project.archives_base_name
 
 	from("LICENSE") {
 		rename { "${it}_${inputs.properties.archivesName}"}

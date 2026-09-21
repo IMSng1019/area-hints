@@ -998,8 +998,8 @@ areas-hint-mod/
 ├── .vscode/                         # Visual Studio Code 配置目录
 ├── build/                           # 构建输出目录（自动生成）
 │   ├── libs/
-│   │   ├── areas-hint-4.4.5.jar     # 主模组 JAR 文件
-│   │   └── areas-hint-4.4.5-sources.jar # 源代码 JAR 文件
+│   │   ├── areas-hint-fabric-1.20.4-4.6.0.jar # 主模组 JAR 文件（模组名-平台-MC版本-模组版本）
+│   │   └── areas-hint-fabric-1.20.4-4.6.0-sources.jar # 源代码 JAR 文件
 │   └── ...                          # 其他构建产物
 ├── bin/                             # 编译输出目录（自动生成）
 ├── docs/                            # 项目文档目录
@@ -1412,6 +1412,12 @@ areas-hint-mod/
 ./gradlew runClient
 ./gradlew runServer
 ```
+
+### 构建产物命名
+
+`build/libs/` 下的文件名遵循「模组名-平台-MC版本-模组版本」格式，例如 `areas-hint-fabric-1.20.4-4.6.0.jar`。
+平台标识取自 `gradle.properties` 的 `mod_loader`（默认 `fabric`，移植 Forge/NeoForge 时改成 `forge` / `neoforge`），
+也可以临时用 `./gradlew build -Pmod_loader=forge` 覆盖。开发 JAR 与源码 JAR 会自动带上 `-dev` / `-sources` 后缀。
 
 ### 开发建议
 - 调试区域检测时可使用 `/areahint debug on`

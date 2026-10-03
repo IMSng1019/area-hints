@@ -2,11 +2,7 @@ package areahint.network;
 
 import areahint.Areashint;
 import areahint.world.WorldFolderManager;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
 
 /**
  * 服务端世界网络处理
@@ -23,10 +19,8 @@ public class ServerWorldNetworking {
      */
     public static void init() {
         // 注册世界信息请求处理器
-        ServerPlayNetworking.registerGlobalReceiver(
-            new Identifier(C2S_REQUEST_WORLD_INFO),
-            ServerWorldNetworking::handleWorldInfoRequest
-        );
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_REQUEST_WORLD_INFO,
+            ServerWorldNetworking::handleWorldInfoRequest);
         
         Areashint.LOGGER.info("服务端世界网络处理初始化完成");
     }
@@ -36,9 +30,7 @@ public class ServerWorldNetworking {
      */
     private static void handleWorldInfoRequest(net.minecraft.server.MinecraftServer server,
                                              ServerPlayerEntity player,
-                                             net.minecraft.server.network.ServerPlayNetworkHandler handler,
-                                             PacketByteBuf buf,
-                                             net.fabricmc.fabric.api.networking.v1.PacketSender responseSender) {
+                                             NetworkReader reader) {
         try {
             // 在服务器主线程中处理
             server.execute(() -> {
@@ -73,10 +65,10 @@ public class ServerWorldNetworking {
      */
     public static void sendWorldInfoToClient(ServerPlayerEntity player, String worldName) {
         try {
-            PacketByteBuf buf = PacketByteBufs.create();
+            NetworkBuf buf = NetworkCompat.get().newBuffer();
             buf.writeString(worldName);
             
-            ServerPlayNetworking.send(player, new Identifier(S2C_WORLD_INFO), buf);
+            NetworkCompat.get().sendToPlayer(player, Channel.S2C_WORLD_INFO, buf);
             
             Areashint.LOGGER.debug("世界信息发送给玩家: {} -> {}", player.getName().getString(), worldName);
             

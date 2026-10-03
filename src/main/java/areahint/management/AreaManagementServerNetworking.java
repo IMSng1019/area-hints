@@ -3,12 +3,12 @@ package areahint.management;
 import areahint.Areashint;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
+import areahint.network.Channel;
+import areahint.network.NetworkBuf;
+import areahint.network.NetworkCompat;
 import areahint.network.Packets;
 import areahint.util.AreaPermissionUtil;
 import areahint.world.WorldFolderManager;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.nio.file.Path;
@@ -22,8 +22,8 @@ public final class AreaManagementServerNetworking {
     }
 
     public static void register() {
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_AREA_MANAGEMENT_CAPABILITIES,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_AREA_MANAGEMENT_CAPABILITIES,
+            (server, player, buf) -> {
                 long requestId = buf.readLong();
                 String dimensionId = buf.readString();
                 String areaName = buf.readString();
@@ -63,7 +63,7 @@ public final class AreaManagementServerNetworking {
 
     private static void sendResponse(ServerPlayerEntity player, long requestId, String dimensionId,
                                      String areaName, boolean valid, List<String> operations) {
-        PacketByteBuf buf = PacketByteBufs.create();
+        NetworkBuf buf = NetworkCompat.get().newBuffer();
         buf.writeLong(requestId);
         buf.writeString(dimensionId == null ? "" : dimensionId);
         buf.writeString(areaName == null ? "" : areaName);
@@ -72,6 +72,6 @@ public final class AreaManagementServerNetworking {
         for (String operation : operations) {
             buf.writeString(operation);
         }
-        ServerPlayNetworking.send(player, Packets.S2C_AREA_MANAGEMENT_CAPABILITIES, buf);
+        NetworkCompat.get().sendToPlayer(player, Channel.S2C_AREA_MANAGEMENT_CAPABILITIES, buf);
     }
 }

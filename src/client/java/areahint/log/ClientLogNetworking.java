@@ -1,10 +1,9 @@
 package areahint.log;
 
 import areahint.AreashintClient;
-import areahint.network.Packets;
-import io.netty.buffer.Unpooled;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
+import areahint.network.Channel;
+import areahint.network.ClientNetworkCompat;
+import areahint.network.NetworkBuf;
 
 /**
  * 客户端日志网络处理
@@ -20,19 +19,19 @@ public class ClientLogNetworking {
      * @param dimensionalName 维度域名名称
      */
     public static void sendEnterAreaMessage(String areaName, int areaLevel, String surfaceName, String dimensionalName) {
-        if (!ClientPlayNetworking.canSend(Packets.C2S_AREA_LOG)) {
+        if (!ClientNetworkCompat.get().canSend(Channel.C2S_AREA_LOG)) {
             return;
         }
 
         try {
-            PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+            NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
             buf.writeString("enter");
             buf.writeString(areaName);
             buf.writeInt(areaLevel);
             buf.writeString(surfaceName != null ? surfaceName : "");
             buf.writeString(dimensionalName != null ? dimensionalName : "");
 
-            ClientPlayNetworking.send(Packets.C2S_AREA_LOG, buf);
+            ClientNetworkCompat.get().sendToServer(Channel.C2S_AREA_LOG, buf);
 
             // 同时记录到客户端日志
             ClientLogManager.logEnterArea(areaLevel, surfaceName, areaName, dimensionalName);
@@ -50,19 +49,19 @@ public class ClientLogNetworking {
      * @param dimensionalName 维度域名名称
      */
     public static void sendLeaveAreaMessage(String areaName, int areaLevel, String surfaceName, String dimensionalName) {
-        if (!ClientPlayNetworking.canSend(Packets.C2S_AREA_LOG)) {
+        if (!ClientNetworkCompat.get().canSend(Channel.C2S_AREA_LOG)) {
             return;
         }
 
         try {
-            PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+            NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
             buf.writeString("leave");
             buf.writeString(areaName);
             buf.writeInt(areaLevel);
             buf.writeString(surfaceName != null ? surfaceName : "");
             buf.writeString(dimensionalName != null ? dimensionalName : "");
 
-            ClientPlayNetworking.send(Packets.C2S_AREA_LOG, buf);
+            ClientNetworkCompat.get().sendToServer(Channel.C2S_AREA_LOG, buf);
 
             // 同时记录到客户端日志
             ClientLogManager.logLeaveArea(areaLevel, surfaceName, areaName, dimensionalName);

@@ -7,15 +7,15 @@ import areahint.dimensional.DimensionalNameManager;
 import areahint.file.FileManager;
 import areahint.i18n.ServerI18nManager;
 import areahint.management.AreaManagementCapabilityService;
+import areahint.network.Channel;
+import areahint.network.NetworkBuf;
+import areahint.network.NetworkCompat;
 import areahint.network.Packets;
 import areahint.permission.PermissionNodes;
 import areahint.permission.PermissionService;
 import areahint.teleport.ServerAreaGeometry;
 import areahint.util.AreaPermissionUtil;
 import areahint.world.WorldFolderManager;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.nio.file.Files;
@@ -42,19 +42,19 @@ public final class DescriptionServerNetworking {
     }
 
     public static void registerServerReceivers() {
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_QUERY,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_DESCRIPTION_QUERY,
+            (server, player, buf) -> {
                 String targetType = buf.readString();
                 String dimensionType = buf.readString();
                 String targetName = buf.readString();
                 server.execute(() -> handleQuery(player, targetType, dimensionType, targetName));
             });
 
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_CURRENT_QUERY,
-            (server, player, handler, buf, responseSender) -> server.execute(() -> handleCurrentAreaQuery(player)));
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_DESCRIPTION_CURRENT_QUERY,
+            (server, player, buf) -> server.execute(() -> handleCurrentAreaQuery(player)));
 
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_LIST_REQUEST,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_DESCRIPTION_LIST_REQUEST,
+            (server, player, buf) -> {
                 String operation = buf.readString();
                 String targetType = buf.readString();
                 String dimensionType = buf.readString();
@@ -62,16 +62,16 @@ public final class DescriptionServerNetworking {
                 server.execute(() -> handleListRequest(player, operation, targetType, dimensionType, query));
             });
 
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_EDIT_QUERY,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_DESCRIPTION_EDIT_QUERY,
+            (server, player, buf) -> {
                 String targetType = buf.readString();
                 String dimensionType = buf.readString();
                 String targetName = buf.readString();
                 server.execute(() -> handleEditQuery(player, targetType, dimensionType, targetName));
             });
 
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_WRITE,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_DESCRIPTION_WRITE,
+            (server, player, buf) -> {
                 String targetType = buf.readString();
                 String dimensionType = buf.readString();
                 String targetName = buf.readString();
@@ -79,8 +79,8 @@ public final class DescriptionServerNetworking {
                 server.execute(() -> handleWrite(player, targetType, dimensionType, targetName, description));
             });
 
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_DELETE,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_DESCRIPTION_DELETE,
+            (server, player, buf) -> {
                 String targetType = buf.readString();
                 String dimensionType = buf.readString();
                 String targetName = buf.readString();
@@ -577,16 +577,16 @@ public final class DescriptionServerNetworking {
             ? "Areas Hint"
             : data.getAuthor();
 
-        PacketByteBuf buffer = PacketByteBufs.create();
+        NetworkBuf buffer = NetworkCompat.get().newBuffer();
         buffer.writeString(clamp(title == null || title.isBlank() ? defaultTitle(player) : title));
         buffer.writeString(clamp(author));
         buffer.writeString(description);
-        ServerPlayNetworking.send(player, Packets.S2C_DESCRIPTION_QUERY_RESPONSE, buffer);
+        NetworkCompat.get().sendToPlayer(player, Channel.S2C_DESCRIPTION_QUERY_RESPONSE, buffer);
     }
 
     private static void sendEditResponse(ServerPlayerEntity player, String targetType, String dimensionType, String targetName,
                                          boolean success, String message, String title, String description) {
-        PacketByteBuf buffer = PacketByteBufs.create();
+        NetworkBuf buffer = NetworkCompat.get().newBuffer();
         buffer.writeString(clean(targetType));
         buffer.writeString(clean(dimensionType));
         buffer.writeString(clean(targetName));
@@ -594,7 +594,7 @@ public final class DescriptionServerNetworking {
         buffer.writeString(clamp(message));
         buffer.writeString(clamp(title));
         buffer.writeString(clamp(description));
-        ServerPlayNetworking.send(player, Packets.S2C_DESCRIPTION_EDIT_RESPONSE, buffer);
+        NetworkCompat.get().sendToPlayer(player, Channel.S2C_DESCRIPTION_EDIT_RESPONSE, buffer);
     }
 
     private static String defaultTitle(ServerPlayerEntity player) {
@@ -606,7 +606,7 @@ public final class DescriptionServerNetworking {
     }
 
     private static void sendListResponse(ServerPlayerEntity player, String operation, String targetType, String dimensionType, List<ListEntry> entries) {
-        PacketByteBuf buffer = PacketByteBufs.create();
+        NetworkBuf buffer = NetworkCompat.get().newBuffer();
         buffer.writeString(clean(operation));
         buffer.writeString(clean(targetType));
         buffer.writeString(clean(dimensionType));
@@ -619,14 +619,14 @@ public final class DescriptionServerNetworking {
             buffer.writeString(clean(entry.signature()));
             buffer.writeString(clean(entry.dimension()));
         }
-        ServerPlayNetworking.send(player, Packets.S2C_DESCRIPTION_AREA_LIST, buffer);
+        NetworkCompat.get().sendToPlayer(player, Channel.S2C_DESCRIPTION_AREA_LIST, buffer);
     }
 
     private static void sendMutationResponse(ServerPlayerEntity player, boolean success, String message) {
-        PacketByteBuf buffer = PacketByteBufs.create();
+        NetworkBuf buffer = NetworkCompat.get().newBuffer();
         buffer.writeBoolean(success);
         buffer.writeString(clamp(message));
-        ServerPlayNetworking.send(player, Packets.S2C_DESCRIPTION_MUTATION_RESPONSE, buffer);
+        NetworkCompat.get().sendToPlayer(player, Channel.S2C_DESCRIPTION_MUTATION_RESPONSE, buffer);
     }
 
     private static String normalizeQuery(String query) {

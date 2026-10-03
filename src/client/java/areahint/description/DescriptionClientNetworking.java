@@ -2,11 +2,10 @@ package areahint.description;
 
 import areahint.AreashintClient;
 import areahint.i18n.I18nManager;
-import areahint.network.Packets;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import areahint.network.Channel;
+import areahint.network.ClientNetworkCompat;
+import areahint.network.NetworkBuf;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -21,16 +20,16 @@ public final class DescriptionClientNetworking {
     }
 
     public static void registerClientReceivers() {
-        ClientPlayNetworking.registerGlobalReceiver(Packets.S2C_DESCRIPTION_QUERY_RESPONSE,
-            (client, handler, buf, responseSender) -> {
+        ClientNetworkCompat.get().registerClientReceiver(Channel.S2C_DESCRIPTION_QUERY_RESPONSE,
+            (client, buf) -> {
                 String title = buf.readString(32767);
                 String author = buf.readString(32767);
                 String description = buf.readString(32767);
                 client.execute(() -> BookDescriptionScreenUtil.openDescriptionBook(title, author, description));
             });
 
-        ClientPlayNetworking.registerGlobalReceiver(Packets.S2C_DESCRIPTION_AREA_LIST,
-            (client, handler, buf, responseSender) -> {
+        ClientNetworkCompat.get().registerClientReceiver(Channel.S2C_DESCRIPTION_AREA_LIST,
+            (client, buf) -> {
                 String operation = buf.readString();
                 String targetType = buf.readString();
                 String dimension = buf.readString();
@@ -49,8 +48,8 @@ public final class DescriptionClientNetworking {
                 client.execute(() -> DescriptionManager.getInstance().receiveList(operation, targetType, dimension, entries));
             });
 
-        ClientPlayNetworking.registerGlobalReceiver(Packets.S2C_DESCRIPTION_EDIT_RESPONSE,
-            (client, handler, buf, responseSender) -> {
+        ClientNetworkCompat.get().registerClientReceiver(Channel.S2C_DESCRIPTION_EDIT_RESPONSE,
+            (client, buf) -> {
                 String targetType = buf.readString(32767);
                 String dimensionType = buf.readString(32767);
                 String targetName = buf.readString(32767);
@@ -62,8 +61,8 @@ public final class DescriptionClientNetworking {
                     targetType, dimensionType, targetName, success, message, title, description));
             });
 
-        ClientPlayNetworking.registerGlobalReceiver(Packets.S2C_DESCRIPTION_MUTATION_RESPONSE,
-            (client, handler, buf, responseSender) -> {
+        ClientNetworkCompat.get().registerClientReceiver(Channel.S2C_DESCRIPTION_MUTATION_RESPONSE,
+            (client, buf) -> {
                 boolean success = buf.readBoolean();
                 String message = buf.readString(32767);
                 client.execute(() -> {
@@ -76,34 +75,34 @@ public final class DescriptionClientNetworking {
     }
 
     public static void sendQuery(String targetType, String dimensionType, String targetName) {
-        PacketByteBuf buf = PacketByteBufs.create();
+        NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
         buf.writeString(clean(targetType));
         buf.writeString(clean(dimensionType));
         buf.writeString(clean(targetName));
-        ClientPlayNetworking.send(Packets.C2S_DESCRIPTION_QUERY, buf);
+        ClientNetworkCompat.get().sendToServer(Channel.C2S_DESCRIPTION_QUERY, buf);
     }
 
     public static void sendCurrentAreaQuery() {
-        if (ClientPlayNetworking.canSend(Packets.C2S_DESCRIPTION_CURRENT_QUERY)) {
-            ClientPlayNetworking.send(Packets.C2S_DESCRIPTION_CURRENT_QUERY, PacketByteBufs.create());
+        if (ClientNetworkCompat.get().canSend(Channel.C2S_DESCRIPTION_CURRENT_QUERY)) {
+            ClientNetworkCompat.get().sendToServer(Channel.C2S_DESCRIPTION_CURRENT_QUERY, ClientNetworkCompat.get().newBuffer());
         }
     }
 
     public static void sendListRequest(String operation, String targetType, String dimensionType, String query) {
-        PacketByteBuf buf = PacketByteBufs.create();
+        NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
         buf.writeString(clean(operation));
         buf.writeString(clean(targetType));
         buf.writeString(clean(dimensionType));
         buf.writeString(clean(query));
-        ClientPlayNetworking.send(Packets.C2S_DESCRIPTION_LIST_REQUEST, buf);
+        ClientNetworkCompat.get().sendToServer(Channel.C2S_DESCRIPTION_LIST_REQUEST, buf);
     }
 
     public static void sendEditQuery(String targetType, String dimensionType, String targetName) {
-        PacketByteBuf buf = PacketByteBufs.create();
+        NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
         buf.writeString(clean(targetType));
         buf.writeString(clean(dimensionType));
         buf.writeString(clean(targetName));
-        ClientPlayNetworking.send(Packets.C2S_DESCRIPTION_EDIT_QUERY, buf);
+        ClientNetworkCompat.get().sendToServer(Channel.C2S_DESCRIPTION_EDIT_QUERY, buf);
     }
 
     public static boolean sendWrite(String targetType, String dimensionType, String targetName, String description) {
@@ -114,21 +113,21 @@ public final class DescriptionClientNetworking {
             }
             return false;
         }
-        PacketByteBuf buf = PacketByteBufs.create();
+        NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
         buf.writeString(clean(targetType));
         buf.writeString(clean(dimensionType));
         buf.writeString(clean(targetName));
         buf.writeString(description);
-        ClientPlayNetworking.send(Packets.C2S_DESCRIPTION_WRITE, buf);
+        ClientNetworkCompat.get().sendToServer(Channel.C2S_DESCRIPTION_WRITE, buf);
         return true;
     }
 
     public static void sendDelete(String targetType, String dimensionType, String targetName) {
-        PacketByteBuf buf = PacketByteBufs.create();
+        NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
         buf.writeString(clean(targetType));
         buf.writeString(clean(dimensionType));
         buf.writeString(clean(targetName));
-        ClientPlayNetworking.send(Packets.C2S_DESCRIPTION_DELETE, buf);
+        ClientNetworkCompat.get().sendToServer(Channel.C2S_DESCRIPTION_DELETE, buf);
     }
 
     private static String clean(String value) {

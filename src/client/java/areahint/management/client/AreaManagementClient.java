@@ -5,16 +5,15 @@ import areahint.commandui.CommandVisualLaunchContext;
 import areahint.commandui.CommandVisualRegistry;
 import areahint.commandui.WizardSelectionListScreen;
 import areahint.i18n.I18nManager;
-import areahint.network.Packets;
+import areahint.network.Channel;
+import areahint.network.ClientNetworkCompat;
+import areahint.network.NetworkBuf;
 import areahint.xaero.AreaOverlayRepository;
 import areahint.xaero.AreaOverlayRepository.OverlayArea;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
@@ -33,8 +32,8 @@ public final class AreaManagementClient {
     }
 
     public static void register() {
-        ClientPlayNetworking.registerGlobalReceiver(Packets.S2C_AREA_MANAGEMENT_CAPABILITIES,
-            (client, handler, buf, responseSender) -> {
+        ClientNetworkCompat.get().registerClientReceiver(Channel.S2C_AREA_MANAGEMENT_CAPABILITIES,
+            (client, buf) -> {
                 long requestId = buf.readLong();
                 String dimensionId = buf.readString();
                 String areaName = buf.readString();
@@ -100,11 +99,11 @@ public final class AreaManagementClient {
         long requestId = REQUEST_IDS.incrementAndGet();
         pending = new PendingRequest(requestId, dimensionId, area.name(), parent,
             System.currentTimeMillis() + REQUEST_TIMEOUT_MILLIS);
-        PacketByteBuf buf = PacketByteBufs.create();
+        NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
         buf.writeLong(requestId);
         buf.writeString(dimensionId);
         buf.writeString(area.name());
-        ClientPlayNetworking.send(Packets.C2S_AREA_MANAGEMENT_CAPABILITIES, buf);
+        ClientNetworkCompat.get().sendToServer(Channel.C2S_AREA_MANAGEMENT_CAPABILITIES, buf);
         client.setScreen(new LoadingScreen(parent, requestId, area.displayName()));
     }
 

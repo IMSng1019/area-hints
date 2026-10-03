@@ -3,6 +3,9 @@ package areahint.addhint;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
 import areahint.management.AreaManagementCapabilityService;
+import areahint.network.Channel;
+import areahint.network.NetworkBuf;
+import areahint.network.NetworkCompat;
 import areahint.network.Packets;
 import areahint.network.ServerNetworking;
 import areahint.network.TranslatableMessage;
@@ -11,9 +14,6 @@ import areahint.util.AreaDataConverter;
 import areahint.util.AreaPermissionUtil;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.nio.file.Path;
@@ -28,9 +28,9 @@ import static areahint.network.TranslatableMessage.lit;
 public class AddHintServerNetworking {
 
     public static void registerServerReceivers() {
-        ServerPlayNetworking.registerGlobalReceiver(
-            Packets.ADDHINT_AREA_CHANNEL,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(
+            Channel.ADDHINT_AREA_CHANNEL,
+            (server, player, buf) -> {
                 try {
                     String jsonStr = buf.readString(32767);
                     String dimension = buf.readString(32767);
@@ -129,10 +129,10 @@ public class AddHintServerNetworking {
 
     private static void sendResponse(ServerPlayerEntity player, boolean success, Part... parts) {
         try {
-            PacketByteBuf buf = PacketByteBufs.create();
+            NetworkBuf buf = NetworkCompat.get().newBuffer();
             buf.writeBoolean(success);
             TranslatableMessage.write(buf, parts);
-            ServerPlayNetworking.send(player, Packets.ADDHINT_AREA_RESPONSE_CHANNEL, buf);
+            NetworkCompat.get().sendToPlayer(player, Channel.ADDHINT_AREA_RESPONSE_CHANNEL, buf);
         } catch (Exception e) {
             e.printStackTrace();
         }

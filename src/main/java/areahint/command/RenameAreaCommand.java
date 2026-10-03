@@ -5,6 +5,9 @@ import areahint.data.AreaData;
 import areahint.file.FileManager;
 import areahint.i18n.ServerI18nManager;
 import areahint.management.AreaManagementCapabilityService;
+import areahint.network.Channel;
+import areahint.network.NetworkBuf;
+import areahint.network.NetworkCompat;
 import areahint.network.Packets;
 import areahint.network.ServerNetworking;
 import areahint.network.TranslatableMessage;
@@ -12,9 +15,6 @@ import areahint.network.TranslatableMessage.Part;
 import static areahint.network.TranslatableMessage.key;
 import static areahint.network.TranslatableMessage.lit;
 import com.mojang.brigadier.context.CommandContext;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
@@ -150,11 +150,11 @@ public class RenameAreaCommand {
             // 获取域名文件路径
             Path areaFile = areahint.world.WorldFolderManager.getWorldDimensionFile(fileName);
             if (!areaFile.toFile().exists()) {
-                PacketByteBuf buf = PacketByteBufs.create();
+                NetworkBuf buf = NetworkCompat.get().newBuffer();
                 buf.writeString("rename_list");
                 buf.writeString(dimensionId);
                 buf.writeInt(0); // 域名数量
-                ServerPlayNetworking.send(player, Packets.S2C_RENAME_RESPONSE, buf);
+                NetworkCompat.get().sendToPlayer(player, Channel.S2C_RENAME_RESPONSE, buf);
                 return;
             }
 
@@ -170,7 +170,7 @@ public class RenameAreaCommand {
             }
 
             // 发送到客户端
-            PacketByteBuf buf = PacketByteBufs.create();
+            NetworkBuf buf = NetworkCompat.get().newBuffer();
             buf.writeString("rename_list");
             buf.writeString(dimensionId);
             buf.writeInt(editableAreas.size());
@@ -180,7 +180,7 @@ public class RenameAreaCommand {
                 buf.writeString(area.getSignature() != null ? area.getSignature() : "");
             }
 
-            ServerPlayNetworking.send(player, Packets.S2C_RENAME_RESPONSE, buf);
+            NetworkCompat.get().sendToPlayer(player, Channel.S2C_RENAME_RESPONSE, buf);
 
         } catch (Exception e) {
             Areashint.LOGGER.error(ServerI18nManager.translate("command.message.area.list") + e.getMessage());
@@ -325,11 +325,11 @@ public class RenameAreaCommand {
      * @param message 消息
      */
     private static void sendRenameResponse(ServerPlayerEntity player, boolean success, Part... parts) {
-        PacketByteBuf buf = PacketByteBufs.create();
+        NetworkBuf buf = NetworkCompat.get().newBuffer();
         buf.writeString("rename_response");
         buf.writeBoolean(success);
         TranslatableMessage.write(buf, parts);
-        ServerPlayNetworking.send(player, Packets.S2C_RENAME_RESPONSE, buf);
+        NetworkCompat.get().sendToPlayer(player, Channel.S2C_RENAME_RESPONSE, buf);
     }
 
     /**
@@ -337,8 +337,8 @@ public class RenameAreaCommand {
      */
     public static void registerServerReceivers() {
         // 注册重命名请求接收器
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_RENAME_REQUEST,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_RENAME_REQUEST,
+            (server, player, buf) -> {
                 try {
                     String oldName = buf.readString();
                     String newName = buf.readString();

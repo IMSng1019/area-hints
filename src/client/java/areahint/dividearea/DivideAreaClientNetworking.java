@@ -1,11 +1,10 @@
 package areahint.dividearea;
 
 import areahint.data.AreaData;
-import areahint.network.Packets;
+import areahint.network.Channel;
+import areahint.network.ClientNetworkCompat;
+import areahint.network.NetworkBuf;
 import areahint.util.AreaDataConverter;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.network.PacketByteBuf;
 import areahint.network.TranslatableMessage;
 import com.google.gson.JsonObject;
 
@@ -16,14 +15,14 @@ public class DivideAreaClientNetworking {
      */
     public static void sendDividedAreasToServer(AreaData area1, AreaData area2, String originalAreaName, String dimension) {
         try {
-            PacketByteBuf buf = PacketByteBufs.create();
+            NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
             JsonObject json1 = AreaDataConverter.toJsonObject(area1);
             JsonObject json2 = AreaDataConverter.toJsonObject(area2);
             buf.writeString(json1.toString());
             buf.writeString(json2.toString());
             buf.writeString(originalAreaName);
             buf.writeString(dimension);
-            ClientPlayNetworking.send(Packets.DIVIDE_AREA_CHANNEL, buf);
+            ClientNetworkCompat.get().sendToServer(Channel.DIVIDE_AREA_CHANNEL, buf);
         } catch (Exception e) {
             System.err.println("发送分割域名数据失败: " + e.getMessage());
         }
@@ -33,9 +32,9 @@ public class DivideAreaClientNetworking {
      * 注册客户端网络处理器
      */
     public static void registerClientNetworking() {
-        ClientPlayNetworking.registerGlobalReceiver(
-            Packets.DIVIDE_AREA_RESPONSE_CHANNEL,
-            (client, handler, buf, responseSender) -> {
+        ClientNetworkCompat.get().registerClientReceiver(
+            Channel.DIVIDE_AREA_RESPONSE_CHANNEL,
+            (client, buf) -> {
                 try {
                     boolean success = buf.readBoolean();
                     net.minecraft.text.MutableText message = TranslatableMessage.read(buf);

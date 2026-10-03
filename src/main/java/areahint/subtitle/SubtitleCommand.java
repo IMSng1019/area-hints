@@ -6,15 +6,15 @@ import areahint.file.FileManager;
 import areahint.file.JsonHelper;
 import areahint.i18n.ServerI18nManager;
 import areahint.management.AreaManagementCapabilityService;
+import areahint.network.Channel;
+import areahint.network.NetworkBuf;
+import areahint.network.NetworkCompat;
 import areahint.network.Packets;
 import areahint.network.ServerNetworking;
 import areahint.util.AreaPermissionUtil;
 import areahint.util.ColorUtil;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
@@ -44,8 +44,8 @@ public class SubtitleCommand {
      * 注册客户端提交到服务端的副字幕修改请求。
      */
     public static void registerServerReceivers() {
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_SUBTITLE_MUTATION,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_SUBTITLE_MUTATION,
+            (server, player, buf) -> {
                 try {
                     String mutation = buf.readString();
                     String areaName = buf.readString();
@@ -230,7 +230,7 @@ public class SubtitleCommand {
 
     private static void sendAreaList(ServerPlayerEntity player, String action, String dimension, List<AreaData> areas) {
         try {
-            PacketByteBuf buf = PacketByteBufs.create();
+            NetworkBuf buf = NetworkCompat.get().newBuffer();
             buf.writeString(action);
             buf.writeString(dimension);
             buf.writeInt(areas.size());
@@ -239,7 +239,7 @@ public class SubtitleCommand {
                 buf.writeString(JsonHelper.toJsonSingle(area));
             }
 
-            ServerPlayNetworking.send(player, Packets.S2C_SUBTITLE_RESPONSE, buf);
+            NetworkCompat.get().sendToPlayer(player, Channel.S2C_SUBTITLE_RESPONSE, buf);
         } catch (Exception e) {
             Areashint.LOGGER.error("发送副字幕域名列表时发生错误", e);
             sendResponse(player, false, translate(player, "subtitle.server.error.send_area_list", e.getMessage()));
@@ -248,11 +248,11 @@ public class SubtitleCommand {
 
     private static void sendResponse(ServerPlayerEntity player, boolean success, String message) {
         try {
-            PacketByteBuf buf = PacketByteBufs.create();
+            NetworkBuf buf = NetworkCompat.get().newBuffer();
             buf.writeString("subtitle_response");
             buf.writeBoolean(success);
             buf.writeString(message);
-            ServerPlayNetworking.send(player, Packets.S2C_SUBTITLE_RESPONSE, buf);
+            NetworkCompat.get().sendToPlayer(player, Channel.S2C_SUBTITLE_RESPONSE, buf);
         } catch (Exception e) {
             Areashint.LOGGER.error("发送副字幕响应时发生错误", e);
         }

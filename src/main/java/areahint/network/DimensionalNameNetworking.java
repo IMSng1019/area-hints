@@ -4,12 +4,8 @@ import areahint.Areashint;
 import areahint.data.DimensionalNameData;
 import areahint.dimensional.DimensionalNameManager;
 import com.google.gson.Gson;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,9 +77,9 @@ public class DimensionalNameNetworking {
      */
     private static void sendDimensionalNamesToClient(ServerPlayerEntity player, String jsonData) {
         try {
-            PacketByteBuf buffer = PacketByteBufs.create();
+            NetworkBuf buffer = NetworkCompat.get().newBuffer();
             buffer.writeString(jsonData);
-            ServerPlayNetworking.send(player, new Identifier(S2C_DIMENSIONAL_NAMES), buffer);
+            NetworkCompat.get().sendToPlayer(player, Channel.DIMENSIONAL_NAMES, buffer);
                 
             Areashint.LOGGER.debug("已向客户端 {} 发送维度域名配置", player.getName().getString());
             

@@ -1,6 +1,5 @@
 package areahint.network;
 
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
@@ -16,14 +15,14 @@ public class TranslatableMessage {
     public static Part lit(String text) { return new Part(false, text); }
 
     /** 写入单个翻译键 */
-    public static void write(PacketByteBuf buf, String key) {
+    public static void write(NetworkWriter buf, String key) {
         buf.writeInt(1);
         buf.writeBoolean(true);
         buf.writeString(key);
     }
 
     /** 写入多个部分（翻译键+字面文本混合） */
-    public static void write(PacketByteBuf buf, Part... parts) {
+    public static void write(NetworkWriter buf, Part... parts) {
         buf.writeInt(parts.length);
         for (Part part : parts) {
             buf.writeBoolean(part.isKey);
@@ -32,7 +31,7 @@ public class TranslatableMessage {
     }
 
     /** 客户端读取并构建 MutableText */
-    public static MutableText read(PacketByteBuf buf) {
+    public static MutableText read(NetworkReader buf) {
         int count = buf.readInt();
         MutableText result = Text.empty();
         for (int i = 0; i < count; i++) {

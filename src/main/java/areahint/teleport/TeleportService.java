@@ -5,10 +5,12 @@ import areahint.data.AreaData;
 import areahint.file.FileManager;
 import areahint.i18n.ServerI18nManager;
 import areahint.management.AreaManagementCapabilityService;
+import areahint.network.Channel;
+import areahint.network.NetworkBuf;
+import areahint.network.NetworkCompat;
 import areahint.network.Packets;
 import areahint.permission.PermissionNodes;
 import areahint.permission.PermissionService;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
@@ -139,7 +141,7 @@ public final class TeleportService {
         return Packets.convertDimensionPathToType(dimension.getPath());
     }
 
-    public static void writeResponse(PacketByteBuf buf, boolean success, String message) {
+    public static void writeResponse(NetworkBuf buf, boolean success, String message) {
         buf.writeBoolean(success);
         buf.writeString(message == null ? "" : message);
     }
@@ -154,9 +156,9 @@ public final class TeleportService {
 
     private static void sendResponse(ServerPlayerEntity player, boolean success, String message) {
         try {
-            net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
+            NetworkBuf buf = NetworkCompat.get().newBuffer();
             writeResponse(buf, success, message);
-            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, Packets.S2C_TELEPORT_RESPONSE, buf);
+            NetworkCompat.get().sendToPlayer(player, Channel.S2C_TELEPORT_RESPONSE, buf);
         } catch (Exception e) {
             Areashint.LOGGER.error("发送传送响应时发生错误", e);
             player.sendMessage(Text.literal((success ? "§a" : "§c") + message), false);

@@ -2,13 +2,8 @@ package areahint.network;
 
 import areahint.AreashintClient;
 import areahint.world.ClientWorldFolderManager;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.Identifier;
 
 /**
  * 客户端世界网络处理
@@ -25,8 +20,8 @@ public class ClientWorldNetworking {
      */
     public static void init() {
         // 注册世界信息接收处理器
-        ClientPlayNetworking.registerGlobalReceiver(
-            new Identifier(S2C_WORLD_INFO),
+        ClientNetworkCompat.get().registerClientReceiver(
+            Channel.S2C_WORLD_INFO,
             ClientWorldNetworking::handleWorldInfo
         );
         
@@ -38,10 +33,10 @@ public class ClientWorldNetworking {
      */
     public static void requestWorldInfo() {
         try {
-            if (ClientPlayNetworking.canSend(new Identifier(C2S_REQUEST_WORLD_INFO))) {
-                PacketByteBuf buf = PacketByteBufs.create();
+            if (ClientNetworkCompat.get().canSend(Channel.C2S_REQUEST_WORLD_INFO)) {
+                NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
                 // 请求包不需要任何数据
-                ClientPlayNetworking.send(new Identifier(C2S_REQUEST_WORLD_INFO), buf);
+                ClientNetworkCompat.get().sendToServer(Channel.C2S_REQUEST_WORLD_INFO, buf);
                 
                 AreashintClient.LOGGER.info("已向服务端请求世界信息");
             } else {
@@ -55,14 +50,12 @@ public class ClientWorldNetworking {
     /**
      * 处理接收到的世界信息
      * @param client Minecraft客户端实例
-     * @param handler 网络处理器
-     * @param buf 数据包缓冲区
-     * @param responseSender 响应发送器
+     * @param buf 网络字段读取器
      */
     private static void handleWorldInfo(MinecraftClient client,
-                                       ClientPlayNetworkHandler handler,
-                                       PacketByteBuf buf,
-                                       PacketSender responseSender) {
+                                       NetworkReader buf) {
+        // 接收时捕获当前连接，替代新接口已移除的 handler 形参
+        ClientPlayNetworkHandler handler = client.getNetworkHandler();
         try {
             String worldName = buf.readString();
             

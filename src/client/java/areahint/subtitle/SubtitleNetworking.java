@@ -3,11 +3,11 @@ package areahint.subtitle;
 import areahint.AreashintClient;
 import areahint.data.AreaData;
 import areahint.file.JsonHelper;
-import areahint.network.Packets;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import areahint.network.Channel;
+import areahint.network.ClientNetworkCompat;
+import areahint.network.NetworkBuf;
+import areahint.network.NetworkReader;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
@@ -20,8 +20,8 @@ import java.util.List;
  */
 public class SubtitleNetworking {
     public static void registerClientReceivers() {
-        ClientPlayNetworking.registerGlobalReceiver(Packets.S2C_SUBTITLE_RESPONSE,
-            (client, handler, buf, responseSender) -> {
+        ClientNetworkCompat.get().registerClientReceiver(Channel.S2C_SUBTITLE_RESPONSE,
+            (client, buf) -> {
                 try {
                     String action = buf.readString();
                     if ("subtitle_response".equals(action)) {
@@ -40,16 +40,16 @@ public class SubtitleNetworking {
     }
 
     public static void sendMutation(String mutation, String areaName, String value, String dimension, String extraValue) {
-        PacketByteBuf buf = PacketByteBufs.create();
+        NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
         buf.writeString(mutation);
         buf.writeString(areaName != null ? areaName : "");
         buf.writeString(value != null ? value : "");
         buf.writeString(dimension != null ? dimension : "");
         buf.writeString(extraValue != null ? extraValue : "");
-        ClientPlayNetworking.send(Packets.C2S_SUBTITLE_MUTATION, buf);
+        ClientNetworkCompat.get().sendToServer(Channel.C2S_SUBTITLE_MUTATION, buf);
     }
 
-    private static void handleAreaList(MinecraftClient client, String action, PacketByteBuf buf) {
+    private static void handleAreaList(MinecraftClient client, String action, NetworkReader buf) {
         String dimension = buf.readString();
         int count = buf.readInt();
         List<AreaData> areas = new ArrayList<>();
@@ -80,7 +80,7 @@ public class SubtitleNetworking {
         });
     }
 
-    private static void handleMutationResponse(MinecraftClient client, PacketByteBuf buf) {
+    private static void handleMutationResponse(MinecraftClient client, NetworkReader buf) {
         boolean success = buf.readBoolean();
         String message = buf.readString();
 

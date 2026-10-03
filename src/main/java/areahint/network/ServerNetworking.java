@@ -7,13 +7,9 @@ import areahint.i18n.ServerI18nManager;
 import areahint.management.AreaManagementCapabilityService;
 import areahint.permission.PermissionNodes;
 import areahint.permission.PermissionService;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
 
 import areahint.network.TranslatableMessage;
 import areahint.network.TranslatableMessage.Part;
@@ -99,12 +95,12 @@ public class ServerNetworking {
             }
             
             // 创建数据包
-            PacketByteBuf buffer = PacketByteBufs.create();
+            NetworkBuf buffer = NetworkCompat.get().newBuffer();
             buffer.writeString(dimensionName);
             buffer.writeString(fileContent);
             
             // 发送数据包
-            ServerPlayNetworking.send(player, new Identifier(Packets.S2C_AREA_DATA), buffer);
+            NetworkCompat.get().sendToPlayer(player, Channel.S2C_AREA_DATA, buffer);
             
             Areashint.LOGGER.info(ServerI18nManager.translate("message.message.general_123") + player.getName().getString() + ServerI18nManager.translate("message.message.general_8") + dimensionName + ServerI18nManager.translate("message.message.general_19"));
             
@@ -160,11 +156,11 @@ public class ServerNetworking {
     public static void sendCommandToClient(ServerPlayerEntity player, String command) {
         try {
             // 创建数据包
-            PacketByteBuf buffer = PacketByteBufs.create();
+            NetworkBuf buffer = NetworkCompat.get().newBuffer();
             buffer.writeString(command);
             
             // 发送数据包
-            ServerPlayNetworking.send(player, new Identifier(Packets.S2C_CLIENT_COMMAND), buffer);
+            NetworkCompat.get().sendToPlayer(player, Channel.S2C_CLIENT_COMMAND, buffer);
             
             Areashint.LOGGER.info(ServerI18nManager.translate("message.message.general_123") + player.getName().getString() + ServerI18nManager.translate("message.message.general_9") + command);
         } catch (Exception e) {
@@ -189,11 +185,11 @@ public class ServerNetworking {
     public static void sendDebugCommandToClient(ServerPlayerEntity player, boolean enabled) {
         try {
             // 创建数据包
-            PacketByteBuf buffer = PacketByteBufs.create();
+            NetworkBuf buffer = NetworkCompat.get().newBuffer();
             buffer.writeBoolean(enabled);
             
             // 发送数据包
-            ServerPlayNetworking.send(player, new Identifier(Packets.S2C_DEBUG_COMMAND), buffer);
+            NetworkCompat.get().sendToPlayer(player, Channel.S2C_DEBUG_COMMAND, buffer);
             
             Areashint.LOGGER.info(ServerI18nManager.translate("message.message.general_123") + player.getName().getString() + ServerI18nManager.translate("message.message.general_11") + (enabled ? ServerI18nManager.translate("message.message.general_74") : ServerI18nManager.translate("message.message.general_213")));
         } catch (Exception e) {
@@ -233,15 +229,15 @@ public class ServerNetworking {
      */
     private static void registerNetworkHandlers() {
         // 注册语言同步处理器
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_LANGUAGE_SYNC,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_LANGUAGE_SYNC,
+            (server, player, buf) -> {
                 String lang = buf.readString();
                 server.execute(() -> ServerI18nManager.setPlayerLanguage(player.getUuid(), lang));
             });
 
         // 注册recolor请求处理器
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_RECOLOR_REQUEST,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_RECOLOR_REQUEST,
+            (server, player, buf) -> {
                 try {
                     String areaName = buf.readString();
                     String color = buf.readString();
@@ -256,8 +252,8 @@ public class ServerNetworking {
             });
 
         // 注册Teleport请求处理器
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_TELEPORT_REQUEST,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_TELEPORT_REQUEST,
+            (server, player, buf) -> {
                 try {
                     final String mode = buf.readString();
                     final String areaName = buf.readString();
@@ -269,8 +265,8 @@ public class ServerNetworking {
             });
 
         // 注册SetHigh请求处理器
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_SETHIGH_REQUEST,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_SETHIGH_REQUEST,
+            (server, player, buf) -> {
                 try {
                     final String areaName = buf.readString();
                     final boolean hasCustomHeight = buf.readBoolean();
@@ -296,8 +292,8 @@ public class ServerNetworking {
             });
 
         // 注册请求可删除域名列表处理器
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_REQUEST_DELETABLE_AREAS,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_REQUEST_DELETABLE_AREAS,
+            (server, player, buf) -> {
                 try {
                     final String dimension = buf.readString();
 
@@ -310,8 +306,8 @@ public class ServerNetworking {
             });
 
         // 注册Delete请求处理器
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DELETE_AREA,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_DELETE_AREA,
+            (server, player, buf) -> {
                 try {
                     final String areaName = buf.readString();
                     final String dimension = buf.readString();
@@ -325,8 +321,8 @@ public class ServerNetworking {
             });
 
         // 注册维度域名修改请求处理器
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DIMNAME_REQUEST,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_DIMNAME_REQUEST,
+            (server, player, buf) -> {
                 try {
                     final String dimensionId = buf.readString();
                     final String newName = buf.readString();
@@ -344,8 +340,8 @@ public class ServerNetworking {
             });
 
         // 注册维度域名颜色修改请求处理器
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DIMCOLOR_REQUEST,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_DIMCOLOR_REQUEST,
+            (server, player, buf) -> {
                 try {
                     final String dimensionId = buf.readString();
                     final String newColor = buf.readString();
@@ -363,8 +359,8 @@ public class ServerNetworking {
             });
 
         // 注册首次维度命名处理器，同时校验权限节点并限制为尚未命名的维度。
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_FIRST_DIMNAME,
-            (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_FIRST_DIMNAME,
+            (server, player, buf) -> {
                 try {
                     final String dimensionId = buf.readString();
                     final String newName = buf.readString();
@@ -432,7 +428,7 @@ public class ServerNetworking {
             Areashint.LOGGER.info(ServerI18nManager.translate("message.message.general_175") + deletableAreas.size() + ServerI18nManager.translate("message.message.area.delete_2"));
 
             // 创建数据包
-            PacketByteBuf buffer = PacketByteBufs.create();
+            NetworkBuf buffer = NetworkCompat.get().newBuffer();
             buffer.writeInt(deletableAreas.size());
 
             for (areahint.data.AreaData area : deletableAreas) {
@@ -441,7 +437,7 @@ public class ServerNetworking {
             }
 
             // 发送数据包
-            ServerPlayNetworking.send(player, Packets.S2C_DELETABLE_AREAS_LIST, buffer);
+            NetworkCompat.get().sendToPlayer(player, Channel.S2C_DELETABLE_AREAS_LIST, buffer);
 
             Areashint.LOGGER.info(ServerI18nManager.translate("message.message.general_123") + playerName + ServerI18nManager.translate("message.message.area.delete.list"));
 
@@ -457,9 +453,9 @@ public class ServerNetworking {
      */
     private static void sendEmptyDeletableAreasList(ServerPlayerEntity player) {
         try {
-            PacketByteBuf buffer = PacketByteBufs.create();
+            NetworkBuf buffer = NetworkCompat.get().newBuffer();
             buffer.writeInt(0);
-            ServerPlayNetworking.send(player, Packets.S2C_DELETABLE_AREAS_LIST, buffer);
+            NetworkCompat.get().sendToPlayer(player, Channel.S2C_DELETABLE_AREAS_LIST, buffer);
         } catch (Exception e) {
             Areashint.LOGGER.error(ServerI18nManager.translate("message.error.area.delete.list_3"), e);
         }
@@ -573,10 +569,10 @@ public class ServerNetworking {
      */
     private static void sendDeleteResponse(ServerPlayerEntity player, boolean success, Part... parts) {
         try {
-            PacketByteBuf buffer = PacketByteBufs.create();
+            NetworkBuf buffer = NetworkCompat.get().newBuffer();
             buffer.writeBoolean(success);
             TranslatableMessage.write(buffer, parts);
-            ServerPlayNetworking.send(player, Packets.S2C_DELETE_RESPONSE, buffer);
+            NetworkCompat.get().sendToPlayer(player, Channel.S2C_DELETE_RESPONSE, buffer);
         } catch (Exception e) {
             Areashint.LOGGER.error(ServerI18nManager.translate("message.message.delete_3") + e.getMessage());
         }

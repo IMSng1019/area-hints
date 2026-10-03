@@ -1,9 +1,8 @@
 package areahint.log;
 
 import areahint.Areashint;
-import areahint.network.Packets;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
+import areahint.network.Channel;
+import areahint.network.NetworkCompat;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 /**
@@ -17,7 +16,7 @@ public class ServerLogNetworking {
      */
     public static void init() {
         // 注册接收客户端日志消息的处理器
-        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_AREA_LOG, (server, player, handler, buf, responseSender) -> {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_AREA_LOG, (server, player, buf) -> {
             // 读取数据
             String action = buf.readString(); // "enter" 或 "leave"
             String areaName = buf.readString();

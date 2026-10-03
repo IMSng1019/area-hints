@@ -1,13 +1,11 @@
 package areahint.expandarea;
 
 import areahint.data.AreaData;
-import areahint.network.Packets;
+import areahint.network.Channel;
+import areahint.network.ClientNetworkCompat;
+import areahint.network.NetworkBuf;
 import areahint.network.TranslatableMessage;
 import areahint.util.AreaDataConverter;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.Identifier;
 import com.google.gson.JsonObject;
 
 public class ExpandAreaClientNetworking {
@@ -17,7 +15,7 @@ public class ExpandAreaClientNetworking {
      */
     public static void sendExpandedAreaToServer(AreaData expandedArea, String dimension) {
         try {
-            PacketByteBuf buf = PacketByteBufs.create();
+            NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
 
             // 将AreaData转换为JsonObject
             JsonObject areaJson = AreaDataConverter.toJsonObject(expandedArea);
@@ -27,7 +25,7 @@ public class ExpandAreaClientNetworking {
             buf.writeString(dimension);  // 添加维度信息
 
             // 发送到服务端
-            ClientPlayNetworking.send(Packets.EXPAND_AREA_CHANNEL, buf);
+            ClientNetworkCompat.get().sendToServer(Channel.EXPAND_AREA_CHANNEL, buf);
 
             System.out.println("已发送扩展域名数据到服务端: " + expandedArea.getName() + " (维度: " + dimension + ")");
 
@@ -42,9 +40,9 @@ public class ExpandAreaClientNetworking {
      */
     public static void registerClientNetworking() {
         // 注册接收服务端响应的处理器
-        ClientPlayNetworking.registerGlobalReceiver(
-            Packets.EXPAND_AREA_RESPONSE_CHANNEL,
-            (client, handler, buf, responseSender) -> {
+        ClientNetworkCompat.get().registerClientReceiver(
+            Channel.EXPAND_AREA_RESPONSE_CHANNEL,
+            (client, buf) -> {
                 try {
                     boolean success = buf.readBoolean();
                     net.minecraft.text.MutableText message = TranslatableMessage.read(buf);

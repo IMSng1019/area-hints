@@ -2,12 +2,7 @@ package areahint.network;
 
 import areahint.AreashintClient;
 import areahint.dimensional.ClientDimensionalNameManager;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.Identifier;
 
 /**
  * 客户端维度域名网络处理
@@ -20,8 +15,8 @@ public class ClientDimensionalNameNetworking {
      */
     public static void init() {
         // 注册维度域名接收处理器
-        ClientPlayNetworking.registerGlobalReceiver(
-            new Identifier("areashint:dimensional_names"),
+        ClientNetworkCompat.get().registerClientReceiver(
+            Channel.DIMENSIONAL_NAMES,
             ClientDimensionalNameNetworking::handleDimensionalNames
         );
         
@@ -31,14 +26,10 @@ public class ClientDimensionalNameNetworking {
     /**
      * 处理接收到的维度域名配置
      * @param client Minecraft客户端实例
-     * @param handler 网络处理器
-     * @param buf 数据包缓冲区
-     * @param responseSender 响应发送器
+     * @param buf 网络字段读取器
      */
     private static void handleDimensionalNames(MinecraftClient client,
-                                             ClientPlayNetworkHandler handler,
-                                             PacketByteBuf buf,
-                                             PacketSender responseSender) {
+                                             NetworkReader buf) {
         // 读取JSON数据
         String jsonData = buf.readString();
         

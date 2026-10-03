@@ -7,13 +7,8 @@ import areahint.data.ConfigData;
 import areahint.file.FileManager;
 import areahint.i18n.I18nManager;
 import areahint.render.VulkanModCompat;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.Identifier;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -41,26 +36,26 @@ public class ClientNetworking {
         AreashintClient.LOGGER.info("初始化客户端网络处理");
         
         // 注册区域数据接收处理器
-        ClientPlayNetworking.registerGlobalReceiver(
-                new Identifier(Packets.S2C_AREA_DATA),
+        ClientNetworkCompat.get().registerClientReceiver(
+                Channel.S2C_AREA_DATA,
                 ClientNetworking::handleAreaData
         );
         
         // 注册客户端命令接收处理器
-        ClientPlayNetworking.registerGlobalReceiver(
-                new Identifier(Packets.S2C_CLIENT_COMMAND),
+        ClientNetworkCompat.get().registerClientReceiver(
+                Channel.S2C_CLIENT_COMMAND,
                 ClientNetworking::handleClientCommand
         );
         
         // 注册调试命令接收处理器
-        ClientPlayNetworking.registerGlobalReceiver(
-                new Identifier(Packets.S2C_DEBUG_COMMAND),
+        ClientNetworkCompat.get().registerClientReceiver(
+                Channel.S2C_DEBUG_COMMAND,
                 ClientNetworking::handleDebugCommand
         );
         
         // 注册recolor响应接收处理器
-        ClientPlayNetworking.registerGlobalReceiver(
-                Packets.S2C_RECOLOR_RESPONSE,
+        ClientNetworkCompat.get().registerClientReceiver(
+                Channel.S2C_RECOLOR_RESPONSE,
                 ClientNetworking::handleRecolorResponse
         );
 
@@ -68,24 +63,24 @@ public class ClientNetworking {
         areahint.rename.RenameNetworking.registerClientReceivers();
 
         // 注册Teleport响应接收处理器
-        ClientPlayNetworking.registerGlobalReceiver(
-                Packets.S2C_TELEPORT_RESPONSE,
+        ClientNetworkCompat.get().registerClientReceiver(
+                Channel.S2C_TELEPORT_RESPONSE,
                 ClientNetworking::handleTeleportResponse
         );
 
         // 注册SetHigh相关的网络处理器
-        ClientPlayNetworking.registerGlobalReceiver(
-                Packets.S2C_SETHIGH_AREA_LIST,
+        ClientNetworkCompat.get().registerClientReceiver(
+                Channel.S2C_SETHIGH_AREA_LIST,
                 ClientNetworking::handleSetHighAreaList
         );
         
-        ClientPlayNetworking.registerGlobalReceiver(
-                Packets.S2C_SETHIGH_AREA_SELECTION,
+        ClientNetworkCompat.get().registerClientReceiver(
+                Channel.S2C_SETHIGH_AREA_SELECTION,
                 ClientNetworking::handleSetHighAreaSelection
         );
         
-        ClientPlayNetworking.registerGlobalReceiver(
-                Packets.S2C_SETHIGH_RESPONSE,
+        ClientNetworkCompat.get().registerClientReceiver(
+                Channel.S2C_SETHIGH_RESPONSE,
                 ClientNetworking::handleSetHighResponse
         );
 
@@ -121,10 +116,10 @@ public class ClientNetworking {
     /** 将客户端模组语言同步给服务端 */
     public static void sendLanguageToServer() {
         try {
-            if (ClientPlayNetworking.canSend(Packets.C2S_LANGUAGE_SYNC)) {
-                PacketByteBuf buf = PacketByteBufs.create();
+            if (ClientNetworkCompat.get().canSend(Channel.C2S_LANGUAGE_SYNC)) {
+                NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
                 buf.writeString(I18nManager.getCurrentLanguage());
-                ClientPlayNetworking.send(Packets.C2S_LANGUAGE_SYNC, buf);
+                ClientNetworkCompat.get().sendToServer(Channel.C2S_LANGUAGE_SYNC, buf);
             }
         } catch (Exception e) {
             AreashintClient.LOGGER.error("Failed to sync language: " + e.getMessage());
@@ -134,14 +129,10 @@ public class ClientNetworking {
     /**
      * 处理接收到的区域数据
      * @param client Minecraft客户端实例
-     * @param handler 网络处理器
-     * @param buf 数据包缓冲区
-     * @param responseSender 响应发送器
+     * @param buf 网络字段读取器
      */
-    private static void handleAreaData(MinecraftClient client, 
-                                      ClientPlayNetworkHandler handler,
-                                      PacketByteBuf buf, 
-                                      PacketSender responseSender) {
+    private static void handleAreaData(MinecraftClient client,
+                                      NetworkReader buf) {
         // 读取维度名称和文件内容
         String dimensionName = buf.readString();
         String fileContent = buf.readString();
@@ -152,16 +143,17 @@ public class ClientNetworking {
             return;
         }
 
-        registerAreaDataConnection(handler);
+        // 连接身份改从客户端取，与旧 lambda 传入的 handler 是同一个对象
+        registerAreaDataConnection(client.getNetworkHandler());
 
         // 确保缓存判断和文件写入都在客户端主线程中处理
         client.execute(() -> {
-            if (!isActiveAreaDataConnection(handler)) {
+            if (!isActiveAreaDataConnection(client.getNetworkHandler())) {
                 AreashintClient.LOGGER.debug("已忽略失效连接发送的区域数据: {}", dimensionName);
                 return;
             }
             if (!areahint.world.ClientWorldFolderManager.isInitialized()) {
-                cachePendingAreaData(handler, dimensionName, fileContent);
+                cachePendingAreaData(client.getNetworkHandler(), dimensionName, fileContent);
                 return;
             }
             processAreaData(client, dimensionName, fileContent);
@@ -283,14 +275,10 @@ public class ClientNetworking {
     /**
      * 处理接收到的客户端命令
      * @param client Minecraft客户端实例
-     * @param handler 网络处理器
-     * @param buf 数据包缓冲区
-     * @param responseSender 响应发送器
+     * @param buf 网络字段读取器
      */
-    private static void handleClientCommand(MinecraftClient client, 
-                                          ClientPlayNetworkHandler handler,
-                                          PacketByteBuf buf, 
-                                          PacketSender responseSender) {
+    private static void handleClientCommand(MinecraftClient client,
+                                          NetworkReader buf) {
         // 读取命令
         String command = buf.readString();
         
@@ -1033,14 +1021,10 @@ public class ClientNetworking {
     /**
      * 处理接收到的调试命令
      * @param client Minecraft客户端实例
-     * @param handler 网络处理器
-     * @param buf 数据包缓冲区
-     * @param responseSender 响应发送器
+     * @param buf 网络字段读取器
      */
-    private static void handleDebugCommand(MinecraftClient client, 
-                                          ClientPlayNetworkHandler handler,
-                                          PacketByteBuf buf, 
-                                          PacketSender responseSender) {
+    private static void handleDebugCommand(MinecraftClient client,
+                                          NetworkReader buf) {
         // 读取调试状态
         boolean enabled = buf.readBoolean();
         
@@ -1064,8 +1048,8 @@ public class ClientNetworking {
     /**
      * 处理recolor响应
      */
-    private static void handleRecolorResponse(MinecraftClient client, ClientPlayNetworkHandler handler, 
-                                            PacketByteBuf buf, PacketSender responseSender) {
+    private static void handleRecolorResponse(MinecraftClient client,
+                                            NetworkReader buf) {
         try {
             String action = buf.readString();
             
@@ -1161,8 +1145,8 @@ public class ClientNetworking {
      * 处理rename响应
      * 注意：此方法已被 RenameNetworking 接管，保留此方法仅为兼容性
      */
-    private static void handleRenameResponse(MinecraftClient client, ClientPlayNetworkHandler handler,
-                                           PacketByteBuf buf, PacketSender responseSender) {
+    private static void handleRenameResponse(MinecraftClient client,
+                                           NetworkReader buf) {
         // 此方法的功能已移至 areahint.rename.RenameNetworking
         // 保留此方法仅为避免编译错误
         AreashintClient.LOGGER.warn("handleRenameResponse 被调用，但功能已移至 RenameNetworking");
@@ -1171,7 +1155,7 @@ public class ClientNetworking {
     /**
      * 显示交互式recolor界面
      */
-    private static void showInteractiveRecolorScreen(int count, PacketByteBuf buf) {
+    private static void showInteractiveRecolorScreen(int count, NetworkReader buf) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
         
@@ -1217,10 +1201,8 @@ public class ClientNetworking {
     /**
      * 处理SetHigh域名列表
      */
-    private static void handleSetHighAreaList(MinecraftClient client, 
-                                            ClientPlayNetworkHandler handler,
-                                            PacketByteBuf buf, 
-                                            PacketSender responseSender) {
+    private static void handleSetHighAreaList(MinecraftClient client,
+                                            NetworkReader buf) {
         client.execute(() -> {
             try {
                 // 读取域名列表数据
@@ -1273,10 +1255,8 @@ public class ClientNetworking {
     /**
      * 处理SetHigh域名选择
      */
-    private static void handleSetHighAreaSelection(MinecraftClient client, 
-                                                 ClientPlayNetworkHandler handler,
-                                                 PacketByteBuf buf, 
-                                                 PacketSender responseSender) {
+    private static void handleSetHighAreaSelection(MinecraftClient client,
+                                                 NetworkReader buf) {
         client.execute(() -> {
             try {
                 // 读取指定域名的数据
@@ -1316,9 +1296,7 @@ public class ClientNetworking {
     }
     
     private static void handleTeleportResponse(MinecraftClient client,
-                                               ClientPlayNetworkHandler handler,
-                                               PacketByteBuf buf,
-                                               PacketSender responseSender) {
+                                               NetworkReader buf) {
         boolean success = buf.readBoolean();
         String message = buf.readString();
         client.execute(() -> areahint.teleport.TeleportClientManager.getInstance().handleServerResponse(success, message));
@@ -1328,9 +1306,7 @@ public class ClientNetworking {
      * 处理SetHigh响应
      */
     private static void handleSetHighResponse(MinecraftClient client,
-                                            ClientPlayNetworkHandler handler,
-                                            PacketByteBuf buf, 
-                                            PacketSender responseSender) {
+                                            NetworkReader buf) {
         client.execute(() -> {
             try {
                 boolean success = buf.readBoolean();
@@ -1344,11 +1320,11 @@ public class ClientNetworking {
     
     public static void sendTeleportRequest(String mode, String areaName, String teleportFormat) {
         try {
-            PacketByteBuf buf = PacketByteBufs.create();
+            NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
             buf.writeString(mode);
             buf.writeString(areaName);
             buf.writeString(teleportFormat);
-            ClientPlayNetworking.send(Packets.C2S_TELEPORT_REQUEST, buf);
+            ClientNetworkCompat.get().sendToServer(Channel.C2S_TELEPORT_REQUEST, buf);
         } catch (Exception e) {
             AreashintClient.LOGGER.error("发送传送请求时发生错误: " + e.getMessage(), e);
         }
@@ -1364,7 +1340,7 @@ public class ClientNetworking {
     public static void sendSetHighRequest(String areaName, boolean hasAltitude, 
                                         Double maxHeight, Double minHeight) {
         try {
-            PacketByteBuf buf = PacketByteBufs.create();
+            NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
             buf.writeString(areaName);
             buf.writeBoolean(hasAltitude);
             
@@ -1379,7 +1355,7 @@ public class ClientNetworking {
                 }
             }
             
-            ClientPlayNetworking.send(Packets.C2S_SETHIGH_REQUEST, buf);
+            ClientNetworkCompat.get().sendToServer(Channel.C2S_SETHIGH_REQUEST, buf);
             
             AreashintClient.LOGGER.info("发送SetHigh请求: 域名={}, 有高度限制={}, 最大高度={}, 最小高度={}", 
                 areaName, hasAltitude, maxHeight, minHeight);

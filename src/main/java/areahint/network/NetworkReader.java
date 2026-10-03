@@ -7,6 +7,9 @@ package areahint.network;
 public interface NetworkReader {
     String readString();
 
+    /** 带长度上限的读取：现有协议里有 33 处显式写了 32767，保留原样以免改写调用点 */
+    String readString(int maxLength);
+
     boolean readBoolean();
 
     int readInt();
@@ -14,4 +17,7 @@ public interface NetworkReader {
     long readLong();
 
     double readDouble();
+
+    /** 是否还有可读字节：SubtitleCommand 用它兼容旧客户端少发字段的情况 */
+    boolean isReadable();
 }

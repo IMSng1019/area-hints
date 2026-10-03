@@ -1,12 +1,11 @@
 package areahint.deletehint;
 
 import areahint.data.AreaData;
-import areahint.network.Packets;
+import areahint.network.Channel;
+import areahint.network.ClientNetworkCompat;
+import areahint.network.NetworkBuf;
 import areahint.network.TranslatableMessage;
 import areahint.util.AreaDataConverter;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.network.PacketByteBuf;
 import com.google.gson.JsonObject;
 
 /**
@@ -19,11 +18,11 @@ public class DeleteHintClientNetworking {
      */
     public static void sendToServer(AreaData area, String dimension) {
         try {
-            PacketByteBuf buf = PacketByteBufs.create();
+            NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
             JsonObject json = AreaDataConverter.toJsonObject(area);
             buf.writeString(json.toString());
             buf.writeString(dimension);
-            ClientPlayNetworking.send(Packets.DELETEHINT_AREA_CHANNEL, buf);
+            ClientNetworkCompat.get().sendToServer(Channel.DELETEHINT_AREA_CHANNEL, buf);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -33,9 +32,9 @@ public class DeleteHintClientNetworking {
      * 注册客户端网络接收器
      */
     public static void registerClientReceivers() {
-        ClientPlayNetworking.registerGlobalReceiver(
-            Packets.DELETEHINT_AREA_RESPONSE_CHANNEL,
-            (client, handler, buf, responseSender) -> {
+        ClientNetworkCompat.get().registerClientReceiver(
+            Channel.DELETEHINT_AREA_RESPONSE_CHANNEL,
+            (client, buf) -> {
                 boolean success = buf.readBoolean();
                 net.minecraft.text.MutableText message = TranslatableMessage.read(buf);
                 client.execute(() -> {

@@ -1,14 +1,15 @@
 package areahint.network;
 
-import java.util.function.Consumer;
-
 /**
- * 客户端网络能力统一入口：发送、注册接收器、能否发送。
- * 这三件事全都依赖客户端专属 API，所以只能放在 client 源集，不能进 src/main。
+ * 客户端网络能力统一入口：建缓冲区、发送、注册接收器、能否发送。
+ * 这四件事全都依赖客户端专属 API，所以只能放在 client 源集，不能进 src/main。
  */
 public interface ClientNetworkCompat {
+    /** 该代际的缓冲区句柄工厂 */
+    NetworkBuf newBuffer();
+
     /** 客户端向服务端发送：字段由调用方按既有顺序写入 */
-    void sendToServer(Channel channel, Consumer<NetworkWriter> payload);
+    void sendToServer(Channel channel, NetworkBuf buf);
 
     /** 注册客户端接收器 */
     void registerClientReceiver(Channel channel, ClientReceiver receiver);

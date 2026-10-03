@@ -1,14 +1,13 @@
 package areahint.delete;
 
 import areahint.data.AreaData;
-import areahint.network.Packets;
+import areahint.network.Channel;
+import areahint.network.ClientNetworkCompat;
+import areahint.network.NetworkBuf;
 import areahint.debug.ClientDebugManager;
 import areahint.i18n.I18nManager;
 import areahint.file.JsonHelper;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.network.PacketByteBuf;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,11 +25,11 @@ public class DeleteNetworking {
     public static void requestDeletableAreas(String dimension) {
         try {
             // 创建数据包
-            PacketByteBuf buf = PacketByteBufs.create();
+            NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
             buf.writeString(dimension);
 
             // 发送到服务端
-            ClientPlayNetworking.send(Packets.C2S_REQUEST_DELETABLE_AREAS, buf);
+            ClientNetworkCompat.get().sendToServer(Channel.C2S_REQUEST_DELETABLE_AREAS, buf);
 
             ClientDebugManager.sendDebugInfo(ClientDebugManager.DebugCategory.AREA_DETECTION,
                 "向服务端请求可删除域名列表 (维度: " + dimension + ")");
@@ -52,12 +51,12 @@ public class DeleteNetworking {
     public static void sendDeleteRequestToServer(String areaName, String dimension) {
         try {
             // 创建数据包
-            PacketByteBuf buf = PacketByteBufs.create();
+            NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
             buf.writeString(areaName);
             buf.writeString(dimension);
 
             // 发送到服务端
-            ClientPlayNetworking.send(Packets.C2S_DELETE_AREA, buf);
+            ClientNetworkCompat.get().sendToServer(Channel.C2S_DELETE_AREA, buf);
 
             ClientDebugManager.sendDebugInfo(ClientDebugManager.DebugCategory.AREA_DETECTION,
                 "向服务端发送删除请求: " + areaName + " (维度: " + dimension + ")");
@@ -76,8 +75,8 @@ public class DeleteNetworking {
      */
     public static void registerClientReceivers() {
         // 注册可删除域名列表接收器
-        ClientPlayNetworking.registerGlobalReceiver(Packets.S2C_DELETABLE_AREAS_LIST,
-            (client, handler, buf, responseSender) -> {
+        ClientNetworkCompat.get().registerClientReceiver(Channel.S2C_DELETABLE_AREAS_LIST,
+            (client, buf) -> {
                 try {
                     int count = buf.readInt();
                     List<AreaData> areas = new ArrayList<>();
@@ -104,8 +103,8 @@ public class DeleteNetworking {
             });
 
         // 注册服务端响应接收器
-        ClientPlayNetworking.registerGlobalReceiver(Packets.S2C_DELETE_RESPONSE,
-            (client, handler, buf, responseSender) -> {
+        ClientNetworkCompat.get().registerClientReceiver(Channel.S2C_DELETE_RESPONSE,
+            (client, buf) -> {
                 try {
                     boolean success = buf.readBoolean();
                     String message = buf.readString();

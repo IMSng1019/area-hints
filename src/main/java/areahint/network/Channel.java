@@ -5,15 +5,28 @@ package areahint.network;
  * 本文件刻意不引用任何 Minecraft 类型，因此不需要任何版本分支。
  */
 public final class Channel {
+    /** 命名空间；null 表示用模组自身的命名空间（Areashint.MOD_ID） */
+    private final String namespace;
     private final String path;
 
-    private Channel(String path) {
+    private Channel(String namespace, String path) {
+        this.namespace = namespace;
         this.path = path;
     }
 
-    /** 用通道名构造：通道名必须与协议里既有的一致，不许改 */
+    /** 用通道名构造：命名空间取模组自身；通道名必须与协议里既有的一致，不许改 */
     public static Channel of(String path) {
-        return new Channel(path);
+        return new Channel(null, path);
+    }
+
+    /** 用「命名空间 + 通道名」构造：给历史上确实用了别的命名空间的通道留口子 */
+    public static Channel of(String namespace, String path) {
+        return new Channel(namespace, path);
+    }
+
+    /** 命名空间；null 表示用模组自身命名空间 */
+    public String namespace() {
+        return namespace;
     }
 
     /** 通道名（不含命名空间） */
@@ -23,20 +36,35 @@ public final class Channel {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof Channel && path.equals(((Channel) other).path);
+        if (!(other instanceof Channel)) {
+            return false;
+        }
+        Channel that = (Channel) other;
+        return java.util.Objects.equals(namespace, that.namespace) && path.equals(that.path);
     }
 
     @Override
     public int hashCode() {
-        return path.hashCode();
+        return java.util.Objects.hash(namespace, path);
     }
 
     @Override
     public String toString() {
-        return "Channel[" + path + "]";
+        return "Channel[" + (namespace == null ? "<mod>" : namespace) + ":" + path + "]";
     }
 
     // ===== 既有通道清单：字符串值与 Packets 里 new Identifier(MOD_ID, "…") 的第二参数逐字一致 =====
+
+    // 以下四个在旧代码里是 "areas-hint:xxx" 形式的字符串常量，这里只取路径段
+    public static final Channel S2C_AREA_DATA = of("s2c_area_data");
+    public static final Channel S2C_CLIENT_COMMAND = of("s2c_client_command");
+    public static final Channel S2C_DEBUG_COMMAND = of("s2c_debug_command");
+    public static final Channel C2S_REQUEST_AREA_DATA = of("c2s_request_area_data");
+
+    // 以下三个通道历史上用的是 "areashint:" 命名空间（注意：不是 MOD_ID 的 "areas-hint"），必须原样保留
+    public static final Channel DIMENSIONAL_NAMES = of("areashint", "dimensional_names");
+    public static final Channel C2S_REQUEST_WORLD_INFO = of("areashint", "request_world_info");
+    public static final Channel S2C_WORLD_INFO = of("areashint", "world_info");
 
     public static final Channel AREA_DATA_CHANNEL = of("area_data");
     public static final Channel CLIENT_COMMAND_CHANNEL = of("client_command");

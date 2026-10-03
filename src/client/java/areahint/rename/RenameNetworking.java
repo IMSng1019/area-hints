@@ -1,12 +1,12 @@
 package areahint.rename;
 
-import areahint.network.Packets;
+import areahint.network.Channel;
+import areahint.network.ClientNetworkCompat;
+import areahint.network.NetworkBuf;
+import areahint.network.NetworkReader;
 import areahint.debug.ClientDebugManager;
 import areahint.i18n.I18nManager;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.network.PacketByteBuf;
 
 /**
  * Rename网络通信处理
@@ -24,14 +24,14 @@ public class RenameNetworking {
     public static void sendRenameRequest(String oldName, String newName, String newSurfaceName, String dimension) {
         try {
             // 创建数据包
-            PacketByteBuf buf = PacketByteBufs.create();
+            NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
             buf.writeString(oldName);
             buf.writeString(newName);
             buf.writeString(newSurfaceName != null ? newSurfaceName : ""); // 空字符串表示null
             buf.writeString(dimension);
 
             // 发送到服务端
-            ClientPlayNetworking.send(Packets.C2S_RENAME_REQUEST, buf);
+            ClientNetworkCompat.get().sendToServer(Channel.C2S_RENAME_REQUEST, buf);
 
             ClientDebugManager.sendDebugInfo(ClientDebugManager.DebugCategory.NETWORK,
                 "向服务端发送重命名请求: " + oldName + " -> " + newName + " (维度: " + dimension + ")");
@@ -50,8 +50,8 @@ public class RenameNetworking {
      */
     public static void registerClientReceivers() {
         // 注册服务端响应接收器
-        ClientPlayNetworking.registerGlobalReceiver(Packets.S2C_RENAME_RESPONSE,
-            (client, handler, buf, responseSender) -> {
+        ClientNetworkCompat.get().registerClientReceiver(Channel.S2C_RENAME_RESPONSE,
+            (client, buf) -> {
                 try {
                     String action = buf.readString();
 
@@ -73,7 +73,7 @@ public class RenameNetworking {
     /**
      * 处理域名列表响应
      */
-    private static void handleRenameListResponse(MinecraftClient client, PacketByteBuf buf) {
+    private static void handleRenameListResponse(MinecraftClient client, NetworkReader buf) {
         String dimension = buf.readString();
         int count = buf.readInt();
 
@@ -111,7 +111,7 @@ public class RenameNetworking {
     /**
      * 处理重命名结果响应
      */
-    private static void handleRenameResultResponse(MinecraftClient client, PacketByteBuf buf) {
+    private static void handleRenameResultResponse(MinecraftClient client, NetworkReader buf) {
         boolean success = buf.readBoolean();
         String message = buf.readString();
 

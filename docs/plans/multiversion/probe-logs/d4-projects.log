@@ -1,0 +1,62 @@
+Starting a Gradle Daemon (subsequent builds will be faster)
+Running Stonecutter 0.9.7
+Warning: Stonecutter is used with Groovy buildscripts
+------------------------------------------------------------------------------------
+Stonecutter requires a more complex Gradle setup than typical Java projects.
+While Groovy DSL works, Kotlin DSL offers significant advantages:
+- The type-safe model prevents silent failures and Groovy's dynamic typing
+  shenanigans that are hell to debug.
+- Full IDE support with code completion, documentation and source navigation.
+- Kotlin-exclusive operator functions for simpler configurations.
+------------------------------------------------------------------------------------
+For more information see:
+- https://stonecutter.kikugie.dev/wiki/faq#groovy-support
+- https://docs.gradle.org/current/userguide/migrating_from_groovy_to_kotlin_dsl.html
+
+To acknowledge and disable this warning add to the `gradle.properties`:
+```
+dev.kikugie.stonecutter.hard_mode=true
+```
+------------------------------------------------------------------------------------
+
+> Configure project :1.20.4
+Fabric Loom: 1.10.5
+
+> Configure project :1.21.1
+Fabric Loom: 1.10.5
+
+> Task :projects
+
+Projects:
+
+------------------------------------------------------------
+Root project 'mods'
+------------------------------------------------------------
+
+Location: J:\mc\mods
+
+Project hierarchy:
+
+Root project 'mods'
++--- Project ':1.20.4'
+\--- Project ':1.21.1'
+
+Project locations:
+
+project ':1.20.4' - \versions\1.20.4
+project ':1.21.1' - \versions\1.21.1
+
+To see a list of the tasks of a project, run gradlew <project-path>:tasks
+For example, try running gradlew :1.20.4:tasks
+
+[Incubating] Problems report is available at: file:///J:/mc/mods/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 24s
+1 actionable task: 1 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html

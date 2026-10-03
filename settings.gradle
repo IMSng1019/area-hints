@@ -11,7 +11,7 @@ pluginManagement {
 
 // Stonecutter：负责多版本编排（版本号写死，settings 脚本里读不到 gradle.properties 的属性）
 plugins {
-	id 'dev.kikugie.stonecutter' version '0.7.11'
+	id 'dev.kikugie.stonecutter' version '0.9.7'
 }
 
 stonecutter {

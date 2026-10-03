@@ -1,0 +1,134 @@
+Running Stonecutter 0.9.7
+Warning: Stonecutter is used with Groovy buildscripts
+------------------------------------------------------------------------------------
+Stonecutter requires a more complex Gradle setup than typical Java projects.
+While Groovy DSL works, Kotlin DSL offers significant advantages:
+- The type-safe model prevents silent failures and Groovy's dynamic typing
+  shenanigans that are hell to debug.
+- Full IDE support with code completion, documentation and source navigation.
+- Kotlin-exclusive operator functions for simpler configurations.
+------------------------------------------------------------------------------------
+For more information see:
+- https://stonecutter.kikugie.dev/wiki/faq#groovy-support
+- https://docs.gradle.org/current/userguide/migrating_from_groovy_to_kotlin_dsl.html
+
+To acknowledge and disable this warning add to the `gradle.properties`:
+```
+dev.kikugie.stonecutter.hard_mode=true
+```
+------------------------------------------------------------------------------------
+
+> Configure project :1.20.1
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.4
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.6
+Fabric Loom: 1.10.5
+
+> Configure project :1.21.1
+Fabric Loom: 1.10.5
+
+> Task :1.20.1:stonecutterPrepare UP-TO-DATE
+> Task :1.20.6:stonecutterPrepare UP-TO-DATE
+> Task :1.20.1:stonecutterGenerate UP-TO-DATE
+> Task :1.20.6:stonecutterGenerate UP-TO-DATE
+> Task :1.20.6:compileJava UP-TO-DATE
+> Task :1.20.4:compileJava UP-TO-DATE
+> Task :1.20.1:compileJava UP-TO-DATE
+> Task :1.20.4:processResources UP-TO-DATE
+> Task :1.20.1:processResources UP-TO-DATE
+> Task :1.20.4:classes UP-TO-DATE
+> Task :1.20.1:classes UP-TO-DATE
+> Task :1.20.6:processResources UP-TO-DATE
+> Task :1.20.6:classes UP-TO-DATE
+> Task :1.20.1:stonecutterPrepareClient UP-TO-DATE
+> Task :1.20.6:stonecutterPrepareClient UP-TO-DATE
+> Task :1.20.1:stonecutterGenerateClient UP-TO-DATE
+> Task :1.20.6:stonecutterGenerateClient UP-TO-DATE
+> Task :1.20.4:compileClientJava UP-TO-DATE
+> Task :1.20.4:processClientResources UP-TO-DATE
+> Task :1.20.4:clientClasses UP-TO-DATE
+> Task :1.20.4:compileTestJava NO-SOURCE
+> Task :1.20.1:compileClientJava UP-TO-DATE
+> Task :1.20.1:processClientResources UP-TO-DATE
+> Task :1.20.1:clientClasses UP-TO-DATE
+> Task :1.20.1:stonecutterPrepareTest UP-TO-DATE
+> Task :1.20.4:jar UP-TO-DATE
+> Task :1.20.1:stonecutterGenerateTest NO-SOURCE
+> Task :1.20.6:compileClientJava UP-TO-DATE
+> Task :1.20.1:compileTestJava NO-SOURCE
+> Task :1.20.6:processClientResources UP-TO-DATE
+> Task :1.20.6:clientClasses UP-TO-DATE
+> Task :1.20.4:processIncludeJars UP-TO-DATE
+> Task :1.20.6:stonecutterPrepareTest UP-TO-DATE
+> Task :1.20.1:jar UP-TO-DATE
+> Task :1.20.6:stonecutterGenerateTest NO-SOURCE
+> Task :1.20.1:processIncludeJars UP-TO-DATE
+> Task :1.20.6:compileTestJava NO-SOURCE
+> Task :1.20.6:jar UP-TO-DATE
+> Task :1.20.6:processIncludeJars UP-TO-DATE
+> Task :1.21.1:compileJava
+> Task :1.21.1:processResources
+> Task :1.21.1:classes
+> Task :1.20.4:remapJar UP-TO-DATE
+> Task :1.20.6:remapJar UP-TO-DATE
+> Task :1.20.4:sourcesJar UP-TO-DATE
+> Task :1.20.6:sourcesJar UP-TO-DATE
+> Task :1.20.1:remapJar UP-TO-DATE
+> Task :1.20.1:sourcesJar UP-TO-DATE
+> Task :1.20.4:remapSourcesJar UP-TO-DATE
+> Task :1.20.6:remapSourcesJar UP-TO-DATE
+> Task :1.20.4:assemble UP-TO-DATE
+> Task :1.20.6:assemble UP-TO-DATE
+> Task :1.20.1:remapSourcesJar UP-TO-DATE
+> Task :1.20.1:assemble UP-TO-DATE
+> Task :1.20.6:processTestResources NO-SOURCE
+> Task :1.20.4:processTestResources NO-SOURCE
+> Task :1.20.6:testClasses UP-TO-DATE
+> Task :1.20.4:testClasses UP-TO-DATE
+> Task :1.20.1:processTestResources NO-SOURCE
+> Task :1.20.1:testClasses UP-TO-DATE
+> Task :1.20.6:test NO-SOURCE
+> Task :1.20.4:test NO-SOURCE
+> Task :1.20.1:test NO-SOURCE
+> Task :1.20.6:validateAccessWidener NO-SOURCE
+> Task :1.20.6:check UP-TO-DATE
+> Task :1.20.6:build UP-TO-DATE
+> Task :1.20.1:validateAccessWidener NO-SOURCE
+> Task :1.20.1:check UP-TO-DATE
+> Task :1.20.1:build UP-TO-DATE
+> Task :1.20.4:validateAccessWidener NO-SOURCE
+> Task :1.20.4:check UP-TO-DATE
+> Task :1.20.4:build UP-TO-DATE
+> Task :1.21.1:compileClientJava
+> Task :1.21.1:processClientResources NO-SOURCE
+> Task :1.21.1:clientClasses
+> Task :1.21.1:stonecutterPrepareTest UP-TO-DATE
+> Task :1.21.1:stonecutterGenerateTest NO-SOURCE
+> Task :1.21.1:compileTestJava NO-SOURCE
+> Task :1.21.1:jar UP-TO-DATE
+> Task :1.21.1:processIncludeJars UP-TO-DATE
+> Task :1.21.1:sourcesJar UP-TO-DATE
+> Task :1.21.1:remapSourcesJar UP-TO-DATE
+> Task :1.21.1:processTestResources NO-SOURCE
+> Task :1.21.1:testClasses UP-TO-DATE
+> Task :1.21.1:test NO-SOURCE
+> Task :1.21.1:validateAccessWidener NO-SOURCE
+> Task :1.21.1:check UP-TO-DATE
+> Task :1.21.1:remapJar
+> Task :1.21.1:assemble
+> Task :1.21.1:build
+
+[Incubating] Problems report is available at: file:///J:/mc/mods/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 7s
+46 actionable tasks: 4 executed, 42 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html

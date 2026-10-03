@@ -50,6 +50,23 @@ def javaDep = (project.findProperty("deps.${mcVersion}.java") ?: '17').toString(
 // 骨架版本：只出一个最小的空壳 jar，不编译共享 src/ 里的模组代码
 def skeletonOnly = (project.findProperty("deps.${mcVersion}.skeleton") ?: 'false').toString().toBoolean()
 
+// 第三方依赖按版本解析（D2）：只读 deps.<mcVersion>.<name>，刻意不回退旧的扁平键。
+// 原因（实测）：扁平键属于 1.20.4，被别的版本沿用会「编译能过、运行时加载失败」。
+// 该版本查不到坐标时不要写这个键，构建脚本会跳过声明，缺失原因记录在 11-版本矩阵.md。
+def thirdPartyProp = { String name ->
+	def value = project.findProperty("deps.${mcVersion}.${name}")
+	return value == null ? null : value.toString()
+}
+// 统一的「有坐标就声明、没坐标就打印一行」逻辑，避免每个依赖各写一遍
+def declareThirdParty = { String name, String displayName, Closure declare ->
+	def value = thirdPartyProp(name)
+	if (value != null) {
+		declare(value)
+	} else {
+		logger.lifecycle("[areas-hint] ${mcVersion} 未声明 ${displayName}：该版本无可用坐标（见 11-版本矩阵.md）")
+	}
+}
+
 version = project.mod_version
 group = project.maven_group
 
@@ -114,16 +131,21 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${fabricDep}"
 
 	if (!skeletonOnly) {
-		modCompileOnly "maven.modrinth:modmenu:${project.modmenu_version}"
-		compileOnly "net.luckperms:api:5.4"
-		compileOnly "de.bluecolored.bluemap:BlueMapAPI:2.7.2"
+		// 以下第三方依赖全部按当前节点版本解析（D2），该版本缺坐标就不声明该依赖
+		declareThirdParty('modmenu', 'ModMenu') { v -> modCompileOnly "maven.modrinth:modmenu:${v}" }
+		declareThirdParty('luckperms', 'LuckPerms') { v -> compileOnly "net.luckperms:api:${v}" }
+		declareThirdParty('bluemap', 'BlueMap') { v -> compileOnly "de.bluecolored.bluemap:BlueMapAPI:${v}" }
 
 		// Xaero 兼容代码使用远程精确版本编译，避免 CI 依赖被 Git 忽略的本地 JAR。
-		modCompileOnly "maven.modrinth:xaeros-minimap:${project.xaero_minimap_version}"
-		modCompileOnly "maven.modrinth:xaeros-world-map:${project.xaero_world_map_version}"
-		// 本地运行时加载相同版本用于联调，modLocalRuntime 不会将 Xaero 打进最终模组。
-		modLocalRuntime "maven.modrinth:xaeros-minimap:${project.xaero_minimap_version}"
-		modLocalRuntime "maven.modrinth:xaeros-world-map:${project.xaero_world_map_version}"
+		declareThirdParty('xaero_minimap', 'Xaero 小地图') { v ->
+			modCompileOnly "maven.modrinth:xaeros-minimap:${v}"
+			// 本地运行时加载相同版本用于联调，modLocalRuntime 不会将 Xaero 打进最终模组。
+			modLocalRuntime "maven.modrinth:xaeros-minimap:${v}"
+		}
+		declareThirdParty('xaero_world_map', 'Xaero 世界地图') { v ->
+			modCompileOnly "maven.modrinth:xaeros-world-map:${v}"
+			modLocalRuntime "maven.modrinth:xaeros-world-map:${v}"
+		}
 	}
 
 	testImplementation platform("org.junit:junit-bom:5.12.2")

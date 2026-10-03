@@ -259,8 +259,14 @@ public class ClientNetworking {
                 AreashintClient.LOGGER.info("[调试] 区域数据内容预览: " + fileContent.substring(0, 100) + "...");
             }
 
+            // 1.20.5 起 ClientWorld.getDimensionKey 改名为 getRegistryKey，故按版本分支
+            //? if <=1.20.4 {
             if (client.world != null &&
                     dimensionName.equals(Packets.convertDimensionPathToType(client.world.getDimensionKey().getValue().getPath()))) {
+            //?} else {
+            /*if (client.world != null &&
+                    dimensionName.equals(Packets.convertDimensionPathToType(client.world.getRegistryKey().getValue().getPath()))) {*/
+            //?}
                 AreashintClient.LOGGER.info("[调试] 重新加载当前维度的区域数据: " + fileName);
                 AreashintClient.getAreaDetector().loadAreaData(fileName);
                 areahint.boundviz.BoundVizManager.getInstance().reload();

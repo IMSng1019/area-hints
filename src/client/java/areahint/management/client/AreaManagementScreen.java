@@ -113,7 +113,10 @@ final class AreaManagementScreen extends Screen {
     private final class ManagementList extends CompatEntryListWidget<ManagementList.Entry> {
         private ManagementList(MinecraftClient client, int width, int height, int top, int bottom) {
             super(client, width, bottom - top, top, 26);
+            // 1.20.5 起列表控件不再自绘背景、setRenderBackground 被移除，故只在 1.20.4 及以前调用
+            //? if <=1.20.4 {
             this.setRenderBackground(false);
+            //?}
         }
 
         private void addGroup(String key) {
@@ -130,7 +133,12 @@ final class AreaManagementScreen extends Screen {
         }
 
         @Override
+        // 1.20.5 起 getScrollbarPositionX 改名为 getScrollbarX，方法体共用
+        //? if <=1.20.4 {
         protected int getScrollbarPositionX() {
+        //?} else {
+        /*protected int getScrollbarX() {*/
+        //?}
             return this.width - 6;
         }
 

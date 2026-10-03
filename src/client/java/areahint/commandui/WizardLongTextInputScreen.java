@@ -96,7 +96,12 @@ public class WizardLongTextInputScreen extends CommandWizardScreen {
 
     @Override
     public boolean charTyped(char chr, int modifiers) {
+        // 1.20.5 起 SharedConstants.isValidChar 搬到 StringHelper.isValidChar，故按版本分支
+        //? if >=1.20.5 {
+        /*if (net.minecraft.util.StringHelper.isValidChar(chr)) {*/
+        //?} else {
         if (SharedConstants.isValidChar(chr)) {
+        //?}
             this.selectionManager.insert(Character.toString(chr));
             return true;
         }

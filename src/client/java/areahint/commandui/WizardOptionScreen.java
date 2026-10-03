@@ -92,7 +92,10 @@ public class WizardOptionScreen extends CommandWizardScreen {
         OptionListWidget(MinecraftClient client, int width, int height, int top, int bottom, int columns) {
             super(client, width, bottom - top, top, ROW_HEIGHT);
             this.columns = Math.max(1, columns);
+            // 1.20.5 起列表控件不再自绘背景、setRenderBackground 被移除，故只在 1.20.4 及以前调用
+            //? if <=1.20.4 {
             this.setRenderBackground(false);
+            //?}
         }
 
         void addOptions(List<OptionSpec> options) {
@@ -108,7 +111,12 @@ public class WizardOptionScreen extends CommandWizardScreen {
         }
 
         @Override
+        // 1.20.5 起 getScrollbarPositionX 改名为 getScrollbarX，方法体共用
+        //? if <=1.20.4 {
         protected int getScrollbarPositionX() {
+        //?} else {
+        /*protected int getScrollbarX() {*/
+        //?}
             // 滚动条贴近屏幕右边缘，避免长列表看起来偏向内容区内部。
             return this.width - 6;
         }

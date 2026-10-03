@@ -98,7 +98,12 @@ public class ClientWorldNetworking {
             MinecraftClient client = MinecraftClient.getInstance();
             if (client.player != null && client.world != null) {
                 // 强制重新加载区域数据
+                // 1.20.5 起 ClientWorld.getDimensionKey 改名为 getRegistryKey，故按版本分支
+                //? if <=1.20.4 {
                 String dimensionId = client.world.getDimensionKey().getValue().toString();
+                //?} else {
+                /*String dimensionId = client.world.getRegistryKey().getValue().toString();*/
+                //?}
                 String dimensionFileName = getDimensionFileName(dimensionId);
                 
                 AreashintClient.LOGGER.info("网络同步完成，重新加载区域数据: {}", dimensionFileName);

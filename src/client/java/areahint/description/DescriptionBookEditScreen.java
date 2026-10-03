@@ -142,7 +142,12 @@ public final class DescriptionBookEditScreen extends Screen {
         if (super.charTyped(chr, modifiers)) {
             return true;
         }
+        // 1.20.5 起 SharedConstants.isValidChar 搬到 StringHelper.isValidChar，故按版本分支
+        //? if >=1.20.5 {
+        /*if (net.minecraft.util.StringHelper.isValidChar(chr)) {*/
+        //?} else {
         if (SharedConstants.isValidChar(chr)) {
+        //?}
             selectionManager.insert(Character.toString(chr));
             return true;
         }

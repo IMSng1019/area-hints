@@ -51,7 +51,7 @@ public class AreashintClient implements ClientModInitializer {
 	private static ServerInfo cachedServerInfo = null;
 	private static String cachedServerInfoAddress = null;
 	// 维度标识符缓存：同一个 RegistryKey 实例只转换一次，避免每 tick 分配新的 Identifier
-	private static RegistryKey<DimensionType> cachedDimensionKey = null;
+	private static RegistryKey<?> cachedDimensionKey = null;
 	private static Identifier cachedDimensionIdentifier = null;
 	// 上一次tick时玩家是否为null（用于检测进入世界）
 	private static boolean wasPlayerNull = true;
@@ -423,7 +423,12 @@ public class AreashintClient implements ClientModInitializer {
 	 * 解析当前维度标识符：同一个 RegistryKey 实例重复出现时复用上次结果，避免每 tick 分配新对象。
 	 */
 	private static Identifier resolveDimensionIdentifier(MinecraftClient client) {
-		RegistryKey<DimensionType> dimensionKey = client.world.getDimensionKey();
+		// 1.20.5 起 ClientWorld.getDimensionKey 改名为 getRegistryKey，故按版本分支
+		//? if <=1.20.4 {
+		RegistryKey<?> dimensionKey = client.world.getDimensionKey();
+		//?} else {
+		/*RegistryKey<?> dimensionKey = client.world.getRegistryKey();*/
+		//?}
 		if (dimensionKey == cachedDimensionKey && cachedDimensionIdentifier != null) {
 			return cachedDimensionIdentifier;
 		}

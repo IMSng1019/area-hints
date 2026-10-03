@@ -5,11 +5,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.BookScreen;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.text.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,23 +24,12 @@ public final class BookDescriptionScreenUtil {
             return;
         }
 
-        ItemStack book = new ItemStack(Items.WRITTEN_BOOK);
-        NbtCompound nbt = new NbtCompound();
-        nbt.putString("title", sanitizeBookField(title, I18nManager.translate("description.book.default.title")));
-        nbt.putString("author", sanitizeBookField(author, "Areas Hint"));
-
-        NbtList pages = new NbtList();
+        // 书目内容的构建方式各版本不同（1.20.4 及以前是 NBT，1.20.5 起是数据组件），整块交给版本侧实现
+        String safeTitle = sanitizeBookField(title, I18nManager.translate("description.book.default.title"));
+        String safeAuthor = sanitizeBookField(author, "Areas Hint");
         String fallbackDescription = I18nManager.translate("description.book.no_description");
-        for (String page : paginate(description == null || description.isEmpty() ? fallbackDescription : description)) {
-            // 1.20.2 起文本序列化入口由 Text.Serializer.toJson 改为 Text.Serialization.toJsonString
-            //? if >=1.20.2 {
-            pages.add(NbtString.of(Text.Serialization.toJsonString(Text.literal(page))));
-            //?} else {
-            /*pages.add(NbtString.of(Text.Serializer.toJson(Text.literal(page))));*/
-            //?}
-        }
-        nbt.put("pages", pages);
-        book.setNbt(nbt);
+        List<String> pageTexts = paginate(description == null || description.isEmpty() ? fallbackDescription : description);
+        ItemStack book = BookStackFactory.createBook(safeTitle, safeAuthor, pageTexts);
 
         client.setScreen(new DescriptionBookScreen(BookScreen.Contents.create(book)));
     }

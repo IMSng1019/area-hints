@@ -85,7 +85,10 @@ public final class SoundEventCategoryScreen extends CommandUiScreen {
     private final class CategoryListWidget extends CompatEntryListWidget<CategoryListWidget.Entry> {
         CategoryListWidget(MinecraftClient client, int width, int height, int top) {
             super(client, width, height, top, ROW_HEIGHT);
+            // 1.20.5 起列表控件不再自绘背景、setRenderBackground 被移除，故只在 1.20.4 及以前调用
+            //? if <=1.20.4 {
             this.setRenderBackground(false);
+            //?}
         }
 
         void addCategory(String label, String tooltip, Runnable action) {
@@ -98,7 +101,12 @@ public final class SoundEventCategoryScreen extends CommandUiScreen {
         }
 
         @Override
+        // 1.20.5 起 getScrollbarPositionX 改名为 getScrollbarX，方法体共用
+        //? if <=1.20.4 {
         protected int getScrollbarPositionX() {
+        //?} else {
+        /*protected int getScrollbarX() {*/
+        //?}
             return this.width - 6;
         }
 

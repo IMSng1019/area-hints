@@ -592,7 +592,10 @@ public class AreasHintConfigScreen extends Screen {
 
         ConfigListWidget(MinecraftClient client, int width, int height, int top, int bottom) {
             super(client, width, bottom - top, top, 24);
+            // 1.20.5 起列表控件不再自绘背景、setRenderBackground 被移除，故只在 1.20.4 及以前调用
+            //? if <=1.20.4 {
             this.setRenderBackground(false);
+            //?}
         }
 
         void addGroup(String key) {
@@ -617,7 +620,12 @@ public class AreasHintConfigScreen extends Screen {
         }
 
         @Override
+        // 1.20.5 起 getScrollbarPositionX 改名为 getScrollbarX，方法体共用
+        //? if <=1.20.4 {
         protected int getScrollbarPositionX() {
+        //?} else {
+        /*protected int getScrollbarX() {*/
+        //?}
             // 原版列表会按默认宽度计算滚动条位置，宽屏下会压到右侧配置按钮中间。
             return Math.min(this.width - 6, this.getRowRight() + LIST_SCROLLBAR_GAP);
         }

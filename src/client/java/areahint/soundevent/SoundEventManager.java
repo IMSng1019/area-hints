@@ -68,8 +68,14 @@ public final class SoundEventManager {
             return false;
         }
 
+        // 1.20.5 起 PlayerEntity.playSound 去掉 SoundCategory 参数（带分类的改名为 playSoundToPlayer）
+        //? if >=1.20.5 {
+        /*player.playSound(soundEvent.get(), ConfigData.normalizeSoundLevel(soundLevel),
+                ConfigData.clampSoundPitch(selection.pitch()));*/
+        //?} else {
         player.playSound(soundEvent.get(), SoundCategory.PLAYERS, ConfigData.normalizeSoundLevel(soundLevel),
                 ConfigData.clampSoundPitch(selection.pitch()));
+        //?}
         return true;
     }
 

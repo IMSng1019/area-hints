@@ -1076,7 +1076,12 @@ public class ServerCommands {
      */
     private static String getDimensionFromSource(ServerCommandSource source) {
         try {
+            // 1.20.5 起 ServerWorld.getDimensionKey() 改名为 getRegistryKey()，故按版本分支
+            //? if <=1.20.4 {
             Identifier dimension = source.getWorld().getDimensionKey().getValue();
+            //?} else {
+            /*Identifier dimension = source.getWorld().getRegistryKey().getValue();*/
+            //?}
             return Packets.convertDimensionPathToType(dimension.getPath());
         } catch (Exception e) {
             return null;

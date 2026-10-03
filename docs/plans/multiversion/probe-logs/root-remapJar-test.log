@@ -1,0 +1,964 @@
+Caught exception: Couldn't open current thread, error = 5
+Exception in thread "File watcher server" net.rubygrapefruit.platform.NativeException: Couldn't open current thread, error = 5
+	at org.gradle.fileevents.internal.AbstractNativeFileEventFunctions$NativeFileWatcher.initializeRunLoop0(Native Method)
+	at org.gradle.fileevents.internal.AbstractNativeFileEventFunctions$NativeFileWatcher.initializeRunLoop(AbstractNativeFileEventFunctions.java:25)
+	at org.gradle.fileevents.internal.AbstractFileEventFunctions$AbstractFileWatcher$1.run(AbstractFileEventFunctions.java:151)
+Running Stonecutter 0.7.11
+NOTICE: Limited Groovy DSL support for Stonecutter
+
+While functional, the plugin's features are limited 
+by the Groovy syntax and it has reduced IDE support.
+For the best experience, including enhanced syntax, autocompletion, 
+documentation lookup and debugging, it's recommended to use Kotlin DSL.
+
+For more information see: 
+  - https://stonecutter.codeberg.page/wiki/faq#groovy-support
+
+> Configure project :1.20.4
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.6
+Fabric Loom: 1.10.5
+
+> Configure project :1.21.1
+Fabric Loom: 1.10.5
+
+> Task :1.20.6:stonecutterPrepare UP-TO-DATE
+> Task :1.20.6:stonecutterGenerate UP-TO-DATE
+> Task :1.20.4:compileJava UP-TO-DATE
+> Task :1.21.1:compileJava UP-TO-DATE
+> Task :1.21.1:processResources UP-TO-DATE
+> Task :1.21.1:classes UP-TO-DATE
+> Task :1.20.4:processResources UP-TO-DATE
+> Task :1.20.4:classes UP-TO-DATE
+> Task :1.21.1:compileClientJava UP-TO-DATE
+> Task :1.20.4:compileClientJava UP-TO-DATE
+> Task :1.21.1:processClientResources NO-SOURCE
+> Task :1.21.1:clientClasses UP-TO-DATE
+> Task :1.20.4:processClientResources UP-TO-DATE
+> Task :1.20.4:clientClasses UP-TO-DATE
+> Task :1.21.1:stonecutterPrepareTest UP-TO-DATE
+> Task :1.20.4:compileTestJava NO-SOURCE
+> Task :1.21.1:stonecutterGenerateTest NO-SOURCE
+> Task :1.21.1:compileTestJava NO-SOURCE
+> Task :1.21.1:jar UP-TO-DATE
+> Task :1.20.4:jar UP-TO-DATE
+> Task :1.21.1:processIncludeJars UP-TO-DATE
+> Task :1.20.4:processIncludeJars UP-TO-DATE
+
+> Task :1.20.6:compileJava FAILED
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\addhint\AddHintServerNetworking.java:31: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\addhint\AddHintServerNetworking.java:135: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.ADDHINT_AREA_RESPONSE_CHANNEL, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\RecolorCommand.java:155: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.S2C_RECOLOR_RESPONSE, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\RecolorCommand.java:250: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.S2C_RECOLOR_RESPONSE, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\RecolorCommand.java:274: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.S2C_RECOLOR_RESPONSE, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\RenameAreaCommand.java:157: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+                ServerPlayNetworking.send(player, Packets.S2C_RENAME_RESPONSE, buf);
+                                    ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\RenameAreaCommand.java:183: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.S2C_RENAME_RESPONSE, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\RenameAreaCommand.java:332: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+        ServerPlayNetworking.send(player, Packets.S2C_RENAME_RESPONSE, buf);
+                            ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\RenameAreaCommand.java:340: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_RENAME_REQUEST,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\ServerCommands.java:1079: 错误: 找不到符号
+            Identifier dimension = source.getWorld().getDimensionKey().getValue();
+                                                    ^
+  符号:   方法 getDimensionKey()
+  位置: 类 ServerWorld
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\SetHighCommand.java:117: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(source.getPlayer(), Packets.S2C_SETHIGH_AREA_LIST, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\SetHighCommand.java:207: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(source.getPlayer(), Packets.S2C_SETHIGH_AREA_SELECTION, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\SetHighCommand.java:479: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.S2C_SETHIGH_RESPONSE, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\SetHighCommand.java:500: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(source.getPlayer(), new Identifier(Packets.S2C_CLIENT_COMMAND), buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\deletehint\DeleteHintServerNetworking.java:31: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\deletehint\DeleteHintServerNetworking.java:134: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.DELETEHINT_AREA_RESPONSE_CHANNEL, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:45: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_QUERY,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...])); }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:53: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_CURRENT_QUERY,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]yer))
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:56: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_LIST_REQUEST,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...])); }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:65: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_EDIT_QUERY,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...])); }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:73: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_WRITE,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...])); }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:82: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_DELETE,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...])); }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:584: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+        ServerPlayNetworking.send(player, Packets.S2C_DESCRIPTION_QUERY_RESPONSE, buffer);
+                            ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:597: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+        ServerPlayNetworking.send(player, Packets.S2C_DESCRIPTION_EDIT_RESPONSE, buffer);
+                            ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:622: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+        ServerPlayNetworking.send(player, Packets.S2C_DESCRIPTION_AREA_LIST, buffer);
+                            ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:629: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+        ServerPlayNetworking.send(player, Packets.S2C_DESCRIPTION_MUTATION_RESPONSE, buffer);
+                            ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\dividearea\DivideAreaServerNetworking.java:27: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\dividearea\DivideAreaServerNetworking.java:123: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.DIVIDE_AREA_RESPONSE_CHANNEL, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\easyadd\EasyAddServerNetworking.java:30: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_EASYADD_AREA_DATA,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\easyadd\EasyAddServerNetworking.java:163: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.S2C_EASYADD_RESPONSE, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\expandarea\ExpandAreaServerNetworking.java:32: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\expandarea\ExpandAreaServerNetworking.java:211: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.EXPAND_AREA_RESPONSE_CHANNEL, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\log\ServerLogNetworking.java:20: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_AREA_LOG, (server, player, handler, buf, responseSender) -> {
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]}); }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\management\AreaManagementServerNetworking.java:25: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_AREA_MANAGEMENT_CAPABILITIES,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...])); }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\management\AreaManagementServerNetworking.java:75: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+        ServerPlayNetworking.send(player, Packets.S2C_AREA_MANAGEMENT_CAPABILITIES, buf);
+                            ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\DimensionalNameNetworking.java:86: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, new Identifier(S2C_DIMENSIONAL_NAMES), buffer);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:107: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, new Identifier(Packets.S2C_AREA_DATA), buffer);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:167: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, new Identifier(Packets.S2C_CLIENT_COMMAND), buffer);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:196: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, new Identifier(Packets.S2C_DEBUG_COMMAND), buffer);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:236: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_LANGUAGE_SYNC,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...])); }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:243: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_RECOLOR_REQUEST,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:259: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_TELEPORT_REQUEST,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:272: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_SETHIGH_REQUEST,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:299: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_REQUEST_DELETABLE_AREAS,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:313: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DELETE_AREA,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:328: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DIMNAME_REQUEST,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:347: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DIMCOLOR_REQUEST,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:366: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_FIRST_DIMNAME,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:444: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.S2C_DELETABLE_AREAS_LIST, buffer);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:462: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.S2C_DELETABLE_AREAS_LIST, buffer);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:579: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.S2C_DELETE_RESPONSE, buffer);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerWorldNetworking.java:26: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,ServerWorl[...]quest
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerWorldNetworking.java:79: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, new Identifier(S2C_WORLD_INFO), buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\shrinkarea\ShrinkAreaServerNetworking.java:35: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\shrinkarea\ShrinkAreaServerNetworking.java:214: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.SHRINK_AREA_RESPONSE_CHANNEL, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\signature\SignatureServerNetworking.java:33: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\signature\SignatureServerNetworking.java:171: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.SIGNATURE_AREA_RESPONSE_CHANNEL, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\subtitle\SubtitleCommand.java:47: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+        ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_SUBTITLE_MUTATION,
+                            ^
+  需要: Id<T>,PlayPayloadHandler<T>
+  找到:    Identifier,(server,pl[...]; } }
+  原因: 无法推断类型变量 T
+    (参数不匹配; Identifier无法转换为Id<T>)
+  其中, T是类型变量:
+    T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\subtitle\SubtitleCommand.java:242: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.S2C_SUBTITLE_RESPONSE, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\subtitle\SubtitleCommand.java:255: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            ServerPlayNetworking.send(player, Packets.S2C_SUBTITLE_RESPONSE, buf);
+                                ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\teleport\TeleportService.java:159: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, Packets.S2C_TELEPORT_RESPONSE, buf);
+                                                                      ^
+  需要: ServerPlayerEntity,CustomPayload
+  找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+  原因: 实际参数列表和形式参数列表长度不同
+61 个错误
+
+[Incubating] Problems report is available at: file:///J:/mc/mods/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':1.20.6:compileJava'.
+> Compilation failed; see the compiler output below.
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\addhint\AddHintServerNetworking.java:31: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\addhint\AddHintServerNetworking.java:135: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.ADDHINT_AREA_RESPONSE_CHANNEL, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\RecolorCommand.java:155: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.S2C_RECOLOR_RESPONSE, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\RecolorCommand.java:250: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.S2C_RECOLOR_RESPONSE, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\RecolorCommand.java:274: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.S2C_RECOLOR_RESPONSE, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\RenameAreaCommand.java:157: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+                  ServerPlayNetworking.send(player, Packets.S2C_RENAME_RESPONSE, buf);
+                                      ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\RenameAreaCommand.java:183: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.S2C_RENAME_RESPONSE, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\RenameAreaCommand.java:332: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+          ServerPlayNetworking.send(player, Packets.S2C_RENAME_RESPONSE, buf);
+                              ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\RenameAreaCommand.java:340: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_RENAME_REQUEST,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\ServerCommands.java:1079: 错误: 找不到符号
+              Identifier dimension = source.getWorld().getDimensionKey().getValue();
+                                                      ^
+    符号:   方法 getDimensionKey()
+    位置: 类 ServerWorld
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\SetHighCommand.java:117: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(source.getPlayer(), Packets.S2C_SETHIGH_AREA_LIST, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\SetHighCommand.java:207: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(source.getPlayer(), Packets.S2C_SETHIGH_AREA_SELECTION, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\SetHighCommand.java:479: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.S2C_SETHIGH_RESPONSE, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\command\SetHighCommand.java:500: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(source.getPlayer(), new Identifier(Packets.S2C_CLIENT_COMMAND), buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\deletehint\DeleteHintServerNetworking.java:31: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\deletehint\DeleteHintServerNetworking.java:134: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.DELETEHINT_AREA_RESPONSE_CHANNEL, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:45: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_QUERY,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...])); }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:53: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_CURRENT_QUERY,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]yer))
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:56: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_LIST_REQUEST,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...])); }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:65: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_EDIT_QUERY,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...])); }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:73: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_WRITE,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...])); }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:82: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DESCRIPTION_DELETE,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...])); }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:584: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+          ServerPlayNetworking.send(player, Packets.S2C_DESCRIPTION_QUERY_RESPONSE, buffer);
+                              ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:597: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+          ServerPlayNetworking.send(player, Packets.S2C_DESCRIPTION_EDIT_RESPONSE, buffer);
+                              ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:622: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+          ServerPlayNetworking.send(player, Packets.S2C_DESCRIPTION_AREA_LIST, buffer);
+                              ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\description\DescriptionServerNetworking.java:629: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+          ServerPlayNetworking.send(player, Packets.S2C_DESCRIPTION_MUTATION_RESPONSE, buffer);
+                              ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\dividearea\DivideAreaServerNetworking.java:27: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\dividearea\DivideAreaServerNetworking.java:123: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.DIVIDE_AREA_RESPONSE_CHANNEL, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\easyadd\EasyAddServerNetworking.java:30: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_EASYADD_AREA_DATA,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\easyadd\EasyAddServerNetworking.java:163: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.S2C_EASYADD_RESPONSE, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\expandarea\ExpandAreaServerNetworking.java:32: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\expandarea\ExpandAreaServerNetworking.java:211: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.EXPAND_AREA_RESPONSE_CHANNEL, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\log\ServerLogNetworking.java:20: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_AREA_LOG, (server, player, handler, buf, responseSender) -> {
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]}); }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\management\AreaManagementServerNetworking.java:25: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_AREA_MANAGEMENT_CAPABILITIES,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...])); }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\management\AreaManagementServerNetworking.java:75: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+          ServerPlayNetworking.send(player, Packets.S2C_AREA_MANAGEMENT_CAPABILITIES, buf);
+                              ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\DimensionalNameNetworking.java:86: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, new Identifier(S2C_DIMENSIONAL_NAMES), buffer);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:107: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, new Identifier(Packets.S2C_AREA_DATA), buffer);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:167: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, new Identifier(Packets.S2C_CLIENT_COMMAND), buffer);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:196: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, new Identifier(Packets.S2C_DEBUG_COMMAND), buffer);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:236: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_LANGUAGE_SYNC,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...])); }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:243: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_RECOLOR_REQUEST,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:259: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_TELEPORT_REQUEST,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:272: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_SETHIGH_REQUEST,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:299: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_REQUEST_DELETABLE_AREAS,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:313: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DELETE_AREA,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:328: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DIMNAME_REQUEST,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:347: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_DIMCOLOR_REQUEST,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:366: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_FIRST_DIMNAME,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:444: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.S2C_DELETABLE_AREAS_LIST, buffer);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:462: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.S2C_DELETABLE_AREAS_LIST, buffer);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerNetworking.java:579: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.S2C_DELETE_RESPONSE, buffer);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerWorldNetworking.java:26: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,ServerWorl[...]quest
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\network\ServerWorldNetworking.java:79: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, new Identifier(S2C_WORLD_INFO), buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\shrinkarea\ShrinkAreaServerNetworking.java:35: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\shrinkarea\ShrinkAreaServerNetworking.java:214: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.SHRINK_AREA_RESPONSE_CHANNEL, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\signature\SignatureServerNetworking.java:33: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\signature\SignatureServerNetworking.java:171: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.SIGNATURE_AREA_RESPONSE_CHANNEL, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\subtitle\SubtitleCommand.java:47: 错误: 无法将类 ServerPlayNetworking中的方法 registerGlobalReceiver应用到给定类型;
+          ServerPlayNetworking.registerGlobalReceiver(Packets.C2S_SUBTITLE_MUTATION,
+                              ^
+    需要: Id<T>,PlayPayloadHandler<T>
+    找到:    Identifier,(server,pl[...]; } }
+    原因: 无法推断类型变量 T
+      (参数不匹配; Identifier无法转换为Id<T>)
+    其中, T是类型变量:
+      T扩展已在方法 <T>registerGlobalReceiver(Id<T>,PlayPayloadHandler<T>)中声明的CustomPayload
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\subtitle\SubtitleCommand.java:242: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.S2C_SUBTITLE_RESPONSE, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\subtitle\SubtitleCommand.java:255: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              ServerPlayNetworking.send(player, Packets.S2C_SUBTITLE_RESPONSE, buf);
+                                  ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\main\java\areahint\teleport\TeleportService.java:159: 错误: 无法将类 ServerPlayNetworking中的方法 send应用到给定类型;
+              net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, Packets.S2C_TELEPORT_RESPONSE, buf);
+                                                                        ^
+    需要: ServerPlayerEntity,CustomPayload
+    找到:    ServerPlayerEntity,Identifier,PacketByteBuf
+    原因: 实际参数列表和形式参数列表长度不同
+  61 个错误
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.12.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+15 actionable tasks: 1 executed, 14 up-to-date
+BUILD FAILED in 8s

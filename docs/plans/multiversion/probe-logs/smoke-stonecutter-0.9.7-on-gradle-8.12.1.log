@@ -1,0 +1,23 @@
+Caught exception: Couldn't open current thread, error = 5
+Exception in thread "File watcher server" net.rubygrapefruit.platform.NativeException: Couldn't open current thread, error = 5
+	at org.gradle.fileevents.internal.AbstractNativeFileEventFunctions$NativeFileWatcher.initializeRunLoop0(Native Method)
+	at org.gradle.fileevents.internal.AbstractNativeFileEventFunctions$NativeFileWatcher.initializeRunLoop(AbstractNativeFileEventFunctions.java:25)
+	at org.gradle.fileevents.internal.AbstractFileEventFunctions$AbstractFileWatcher$1.run(AbstractFileEventFunctions.java:151)
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Settings file 'J:\mc\mods\settings.gradle' line: 14
+
+* What went wrong:
+An exception occurred applying plugin request [id: 'dev.kikugie.stonecutter', version: '0.9.7']
+> Failed to apply plugin 'dev.kikugie.stonecutter'.
+   > Stonecutter requires at least Gradle 9. See https://gradle.org/releases/
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 25s

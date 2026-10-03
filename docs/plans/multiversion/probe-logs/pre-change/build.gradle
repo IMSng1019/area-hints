@@ -1,0 +1,131 @@
+plugins {
+	id 'fabric-loom' version "${loom_version}"
+	id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+// 模组平台标识：默认 Fabric，移植到 Forge/NeoForge 时在 gradle.properties 里改 mod_loader
+def modLoader = (project.findProperty("mod_loader") ?: "fabric").toString().trim().toLowerCase(Locale.ROOT)
+// 产物基础名：模组名-平台-MC版本，Gradle 会再拼上 mod_version，最终形如 areas-hint-fabric-1.20.4-4.6.0.jar
+def artifactBaseName = "${project.archives_base_name}-${modLoader}-${project.minecraft_version}"
+
+base {
+	archivesName = artifactBaseName
+}
+
+repositories {
+	mavenCentral()
+	maven { url 'https://repo.bluecolored.de/releases' }
+	maven { url 'https://maven.terraformersmc.com/' }
+	maven {
+		name = 'Modrinth'
+		url = 'https://api.modrinth.com/maven'
+		content {
+			includeGroup 'maven.modrinth'
+		}
+	}
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"areas-hint" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+
+}
+
+fabricApi {
+	configureDataGeneration {
+		client = true
+	}
+}
+
+dependencies {
+	// To change the versions see the gradle.properties file
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// Fabric API. This is technically optional, but you probably want it anyway.
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	modCompileOnly "maven.modrinth:modmenu:${project.modmenu_version}"
+	compileOnly "net.luckperms:api:5.4"
+	compileOnly "de.bluecolored.bluemap:BlueMapAPI:2.7.2"
+
+	// Xaero 兼容代码使用远程精确版本编译，避免 CI 依赖被 Git 忽略的本地 JAR。
+	modCompileOnly "maven.modrinth:xaeros-minimap:${project.xaero_minimap_version}"
+	modCompileOnly "maven.modrinth:xaeros-world-map:${project.xaero_world_map_version}"
+	// 本地运行时加载相同版本用于联调，modLocalRuntime 不会将 Xaero 打进最终模组。
+	modLocalRuntime "maven.modrinth:xaeros-minimap:${project.xaero_minimap_version}"
+	modLocalRuntime "maven.modrinth:xaeros-world-map:${project.xaero_world_map_version}"
+
+	testImplementation platform("org.junit:junit-bom:5.12.2")
+	testImplementation "org.junit.jupiter:junit-jupiter"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": inputs.properties.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 17
+}
+
+test {
+	useJUnitPlatform()
+}
+
+java {
+	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+	// if it is present.
+	// If you remove this line, sources will not be generated.
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
+}
+
+jar {
+	// 许可证文件后缀只跟随模组名，避免产物命名规则变化时改动 JAR 内部结构
+	inputs.property "archivesName", project.archives_base_name
+
+	from("LICENSE") {
+		rename { "${it}_${inputs.properties.archivesName}"}
+	}
+	
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+sourcesJar {
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+// configure the maven publication
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			artifactId = project.archives_base_name
+			from components.java
+		}
+	}
+
+	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+	repositories {
+		// Add repositories to publish to here.
+		// Notice: This block does NOT have the same function as the block in the top level.
+		// The repositories here will be used for publishing your artifact, not for
+		// retrieving dependencies.
+	}
+}

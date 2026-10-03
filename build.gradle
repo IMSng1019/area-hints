@@ -3,13 +3,60 @@ plugins {
 	id 'maven-publish'
 }
 
+// ===== Stonecutter 多版本解析 =====
+// Stonecutter 的共享构建脚本会对每个版本节点各执行一次：
+// - 版本节点子项目的名字就是目标 MC 版本（versions/1.20.4 -> 1.20.4）
+// - 根项目（tree）取 Stonecutter 的活跃版本
+// 两种都取不到时回退到旧的扁平属性，保证原有单版本构建方式依旧可用。
+def resolveMcVersion = {
+	def fromStonecutter = null
+	def stonecutterExt = project.extensions.findByName('stonecutter')
+	if (stonecutterExt != null) {
+		try {
+			def current = stonecutterExt.current
+			if (current != null) {
+				fromStonecutter = current.version.toString()
+			}
+		} catch (Exception ignored) {
+			// 非 Stonecutter 环境：忽略，走下面的回退分支
+		}
+	}
+	if (fromStonecutter != null) {
+		return fromStonecutter
+	}
+	if (project.parent != null) {
+		return project.name
+	}
+	return project.findProperty('minecraft_version').toString()
+}
+def mcVersion = resolveMcVersion()
+
+// 每版本参数优先读 deps.<mcVersion>.<name>，缺失时回退到旧的扁平键，避免本阶段破坏原构建
+def versionedProp = { String name, String legacyKey ->
+	def value = project.findProperty("deps.${mcVersion}.${name}")
+	if (value == null) {
+		value = project.findProperty(legacyKey)
+	}
+	if (value == null) {
+		throw new GradleException("缺少依赖参数：${legacyKey} 或 deps.${mcVersion}.${name}")
+	}
+	return value.toString()
+}
+def mcVersionDep = versionedProp('minecraft', 'minecraft_version')
+def yarnDep = versionedProp('yarn', 'yarn_mappings')
+def loaderDep = versionedProp('loader', 'loader_version')
+def fabricDep = versionedProp('fabric', 'fabric_version')
+def javaDep = (project.findProperty("deps.${mcVersion}.java") ?: '17').toString()
+// 骨架版本：只出一个最小的空壳 jar，不编译共享 src/ 里的模组代码
+def skeletonOnly = (project.findProperty("deps.${mcVersion}.skeleton") ?: 'false').toString().toBoolean()
+
 version = project.mod_version
 group = project.maven_group
 
 // 模组平台标识：默认 Fabric，移植到 Forge/NeoForge 时在 gradle.properties 里改 mod_loader
 def modLoader = (project.findProperty("mod_loader") ?: "fabric").toString().trim().toLowerCase(Locale.ROOT)
 // 产物基础名：模组名-平台-MC版本，Gradle 会再拼上 mod_version，最终形如 areas-hint-fabric-1.20.4-4.6.0.jar
-def artifactBaseName = "${project.archives_base_name}-${modLoader}-${project.minecraft_version}"
+def artifactBaseName = "${project.archives_base_name}-${modLoader}-${mcVersionDep}"
 
 base {
 	archivesName = artifactBaseName
@@ -40,30 +87,44 @@ loom {
 
 }
 
-fabricApi {
-	configureDataGeneration {
-		client = true
+if (skeletonOnly) {
+	// 骨架版本：把两个环境 source set 整体指向 versions/<mcVersion>/skeleton 下的最小骨架，
+	// 这样就剔除了 Stonecutter 从根 src/ 链接进来的模组代码，只产出一个可辨认的空壳 jar
+	sourceSets.main.java.setSrcDirs([file('skeleton/main/java')])
+	sourceSets.main.resources.setSrcDirs([file('skeleton/main/resources')])
+	sourceSets.client.java.setSrcDirs([file('skeleton/client/java')])
+	sourceSets.client.resources.setSrcDirs([file('skeleton/client/resources')])
+}
+
+if (!skeletonOnly) {
+	fabricApi {
+		configureDataGeneration {
+			client = true
+		}
 	}
 }
 
 dependencies {
 	// To change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	minecraft "com.mojang:minecraft:${mcVersionDep}"
+	mappings "net.fabricmc:yarn:${yarnDep}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${loaderDep}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-	modCompileOnly "maven.modrinth:modmenu:${project.modmenu_version}"
-	compileOnly "net.luckperms:api:5.4"
-	compileOnly "de.bluecolored.bluemap:BlueMapAPI:2.7.2"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${fabricDep}"
 
-	// Xaero 兼容代码使用远程精确版本编译，避免 CI 依赖被 Git 忽略的本地 JAR。
-	modCompileOnly "maven.modrinth:xaeros-minimap:${project.xaero_minimap_version}"
-	modCompileOnly "maven.modrinth:xaeros-world-map:${project.xaero_world_map_version}"
-	// 本地运行时加载相同版本用于联调，modLocalRuntime 不会将 Xaero 打进最终模组。
-	modLocalRuntime "maven.modrinth:xaeros-minimap:${project.xaero_minimap_version}"
-	modLocalRuntime "maven.modrinth:xaeros-world-map:${project.xaero_world_map_version}"
+	if (!skeletonOnly) {
+		modCompileOnly "maven.modrinth:modmenu:${project.modmenu_version}"
+		compileOnly "net.luckperms:api:5.4"
+		compileOnly "de.bluecolored.bluemap:BlueMapAPI:2.7.2"
+
+		// Xaero 兼容代码使用远程精确版本编译，避免 CI 依赖被 Git 忽略的本地 JAR。
+		modCompileOnly "maven.modrinth:xaeros-minimap:${project.xaero_minimap_version}"
+		modCompileOnly "maven.modrinth:xaeros-world-map:${project.xaero_world_map_version}"
+		// 本地运行时加载相同版本用于联调，modLocalRuntime 不会将 Xaero 打进最终模组。
+		modLocalRuntime "maven.modrinth:xaeros-minimap:${project.xaero_minimap_version}"
+		modLocalRuntime "maven.modrinth:xaeros-world-map:${project.xaero_world_map_version}"
+	}
 
 	testImplementation platform("org.junit:junit-bom:5.12.2")
 	testImplementation "org.junit.jupiter:junit-jupiter"
@@ -80,7 +141,7 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 17
+	it.options.release = Integer.parseInt(javaDep)
 }
 
 test {
@@ -93,15 +154,16 @@ java {
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
+	sourceCompatibility = JavaVersion.toVersion(javaDep)
+	targetCompatibility = JavaVersion.toVersion(javaDep)
 }
 
 jar {
 	// 许可证文件后缀只跟随模组名，避免产物命名规则变化时改动 JAR 内部结构
 	inputs.property "archivesName", project.archives_base_name
 
-	from("LICENSE") {
+	// LICENSE 位于仓库根目录：版本节点子项目在 versions/<v>/ 下，必须显式指向根项目
+	from(rootProject.file("LICENSE")) {
 		rename { "${it}_${inputs.properties.archivesName}"}
 	}
 	

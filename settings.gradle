@@ -8,3 +8,27 @@ pluginManagement {
 		gradlePluginPortal()
 	}
 }
+
+// Stonecutter：负责多版本编排（版本号写死，settings 脚本里读不到 gradle.properties 的属性）
+plugins {
+	id 'dev.kikugie.stonecutter' version '0.7.11'
+}
+
+stonecutter {
+	// 本仓库用 Groovy DSL，需要显式关闭默认的 Kotlin 控制器
+	kotlinController = false
+	// 共享构建脚本沿用现有的 build.gradle，它会被应用到每个版本节点
+	centralScript = 'build.gradle'
+
+	// 探针阶段只声明两个目标：1.20.4（完整模组代码）与 1.21.1（空骨架）
+	create(getRootProject()) {
+		versions '1.20.4', '1.21.1'
+		// 1.20.1 已完成「第二真实编译目标」验证（结论：可用，仅 src/client 16 处 UI API 差异），
+		// 验证后从活跃列表移出以保证默认 gradlew build 绿色；复现请把下面这行放回上面的 versions 列表
+		// 详见 docs/plans/multiversion/17-第二真实编译目标验证.md
+		// version '1.20.1', '1.20.1'
+		// 探针 C 结论：1.20.6 无法在当前代码形态下编译（61 条错误，见 10-阶段0-探针结论.md）
+		// 需要复现该实验时，把下面这行放回上面的 versions 列表即可
+		// version '1.20.6', '1.20.6'
+	}
+}

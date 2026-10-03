@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "areas-hint",
+  "version": "${version}",
+  "name": "Areas Hint Skeleton (1.21.1)",
+  "description": "阶段 0 Stonecutter 探针用的 1.21.1 空骨架产物，不含模组业务代码",
+  "environment": "*",
+  "depends": {
+    "fabricloader": ">=0.16.14",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  }
+}

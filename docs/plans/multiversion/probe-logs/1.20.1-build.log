@@ -1,0 +1,292 @@
+Caught exception: Couldn't open current thread, error = 5
+Exception in thread "File watcher server" net.rubygrapefruit.platform.NativeException: Couldn't open current thread, error = 5
+	at org.gradle.fileevents.internal.AbstractNativeFileEventFunctions$NativeFileWatcher.initializeRunLoop0(Native Method)
+	at org.gradle.fileevents.internal.AbstractNativeFileEventFunctions$NativeFileWatcher.initializeRunLoop(AbstractNativeFileEventFunctions.java:25)
+	at org.gradle.fileevents.internal.AbstractFileEventFunctions$AbstractFileWatcher$1.run(AbstractFileEventFunctions.java:151)
+Running Stonecutter 0.7.11
+NOTICE: Limited Groovy DSL support for Stonecutter
+
+While functional, the plugin's features are limited 
+by the Groovy syntax and it has reduced IDE support.
+For the best experience, including enhanced syntax, autocompletion, 
+documentation lookup and debugging, it's recommended to use Kotlin DSL.
+
+For more information see: 
+  - https://stonecutter.codeberg.page/wiki/faq#groovy-support
+
+> Configure project :1.20.1
+Fabric Loom: 1.10.5
+:remapping 54 mods from modImplementation (java-api)
+:remapping 3 mods from modCompileOnly (java-api)
+:remapping sources
+
+> Configure project :1.20.4
+Fabric Loom: 1.10.5
+
+> Configure project :1.21.1
+Fabric Loom: 1.10.5
+
+> Task :1.20.1:stonecutterPrepare
+> Task :1.20.1:stonecutterGenerate
+> Task :1.20.1:compileJava
+> Task :1.20.1:processResources
+> Task :1.20.1:classes
+> Task :1.20.1:stonecutterPrepareClient
+> Task :1.20.1:stonecutterGenerateClient
+
+> Task :1.20.1:compileClientJava
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\commandui\CommandUiScreen.java:103: 错误: 无法将类 Screen中的方法 renderBackground应用到给定类型;
+        this.renderBackground(context, mouseX, mouseY, delta);
+            ^
+  需要: DrawContext
+  找到:    DrawContext,int,int,float
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\commandui\WizardSelectionListScreen.java:112: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+            super(client, width, bottom - top, top, 30);
+            ^
+  需要: MinecraftClient,int,int,int,int,int
+  找到:    MinecraftClient,int,int,int,int
+  原因: 实际参数列表和形式参数列表长度不同
+  其中, E是类型变量:
+    E扩展已在类 ElementListWidget中声明的Entry<E>
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\commandui\WizardOptionScreen.java:92: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+            super(client, width, bottom - top, top, ROW_HEIGHT);
+            ^
+  需要: MinecraftClient,int,int,int,int,int
+  找到:    MinecraftClient,int,int,int,int
+  原因: 实际参数列表和形式参数列表长度不同
+  其中, E是类型变量:
+    E扩展已在类 ElementListWidget中声明的Entry<E>
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\commandui\CommandListScreen.java:139: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+            super(client, width, bottom - top, top, 34);
+            ^
+  需要: MinecraftClient,int,int,int,int,int
+  找到:    MinecraftClient,int,int,int,int
+  原因: 实际参数列表和形式参数列表长度不同
+  其中, E是类型变量:
+    E扩展已在类 ElementListWidget中声明的Entry<E>
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\commandui\DeleteHintVertexScreen.java:81: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+            super(client, width, bottom - top, top, 28);
+            ^
+  需要: MinecraftClient,int,int,int,int,int
+  找到:    MinecraftClient,int,int,int,int
+  原因: 实际参数列表和形式参数列表长度不同
+  其中, E是类型变量:
+    E扩展已在类 ElementListWidget中声明的Entry<E>
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\commandui\HelpCommandScreen.java:52: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+            super(client, width, bottom - top, top, 34);
+            ^
+  需要: MinecraftClient,int,int,int,int,int
+  找到:    MinecraftClient,int,int,int,int
+  原因: 实际参数列表和形式参数列表长度不同
+  其中, E是类型变量:
+    E扩展已在类 ElementListWidget中声明的Entry<E>
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\description\BookDescriptionScreenUtil.java:40: 错误: 找不到符号
+            pages.add(NbtString.of(Text.Serialization.toJsonString(Text.literal(page))));
+                                       ^
+  符号:   变量 Serialization
+  位置: 接口 Text
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\gui\AreasHintConfigScreen.java:237: 错误: 无法将类 Screen中的方法 renderBackground应用到给定类型;
+        this.renderBackground(context, mouseX, mouseY, delta);
+            ^
+  需要: DrawContext
+  找到:    DrawContext,int,int,float
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\gui\AreasHintConfigScreen.java:589: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+            super(client, width, bottom - top, top, 24);
+            ^
+  需要: MinecraftClient,int,int,int,int,int
+  找到:    MinecraftClient,int,int,int,int
+  原因: 实际参数列表和形式参数列表长度不同
+  其中, E是类型变量:
+    E扩展已在类 ElementListWidget中声明的Entry<E>
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\management\client\AreaManagementClient.java:170: 错误: 无法将类 Screen中的方法 renderBackground应用到给定类型;
+            this.renderBackground(context, mouseX, mouseY, delta);
+                ^
+  需要: DrawContext
+  找到:    DrawContext,int,int,float
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\management\client\AreaManagementScreen.java:66: 错误: 无法将类 Screen中的方法 renderBackground应用到给定类型;
+        this.renderBackground(context, mouseX, mouseY, delta);
+            ^
+  需要: DrawContext
+  找到:    DrawContext,int,int,float
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\management\client\AreaManagementScreen.java:109: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+            super(client, width, bottom - top, top, 26);
+            ^
+  需要: MinecraftClient,int,int,int,int,int
+  找到:    MinecraftClient,int,int,int,int
+  原因: 实际参数列表和形式参数列表长度不同
+  其中, E是类型变量:
+    E扩展已在类 ElementListWidget中声明的Entry<E>
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventCategoryScreen.java:86: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+            super(client, width, height, top, ROW_HEIGHT);
+            ^
+  需要: MinecraftClient,int,int,int,int,int
+  找到:    MinecraftClient,int,int,int,int
+  原因: 实际参数列表和形式参数列表长度不同
+  其中, E是类型变量:
+    E扩展已在类 ElementListWidget中声明的Entry<E>
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventCategoryScreen.java:116: 错误: 找不到符号
+                this.button.setDimensionsAndPosition(entryWidth, BUTTON_HEIGHT, x, y + 3);
+                           ^
+  符号:   方法 setDimensionsAndPosition(int,int,int,int)
+  位置: 类型为ButtonWidget的变量 button
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventListScreen.java:142: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+            super(client, width, height, top, ROW_HEIGHT);
+            ^
+  需要: MinecraftClient,int,int,int,int,int
+  找到:    MinecraftClient,int,int,int,int
+  原因: 实际参数列表和形式参数列表长度不同
+  其中, E是类型变量:
+    E扩展已在类 ElementListWidget中声明的Entry<E>
+J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventListScreen.java:172: 错误: 找不到符号
+                this.button.setDimensionsAndPosition(entryWidth, BUTTON_HEIGHT, x, y + 4);
+                           ^
+  符号:   方法 setDimensionsAndPosition(int,int,int,int)
+  位置: 类型为ButtonWidget的变量 button
+16 个错误
+
+> Task :1.20.1:compileClientJava FAILED
+> Task :1.20.1:processClientResources
+> Task :1.20.1:stonecutterPrepareTest
+> Task :1.20.1:stonecutterGenerateTest NO-SOURCE
+> Task :1.20.1:processIncludeJars
+> Task :1.20.1:sourcesJar
+> Task :1.20.1:processTestResources NO-SOURCE
+> Task :1.20.1:validateAccessWidener NO-SOURCE
+> Task :1.20.1:remapSourcesJar
+
+[Incubating] Problems report is available at: file:///J:/mc/mods/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':1.20.1:compileClientJava'.
+> Compilation failed; see the compiler output below.
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\commandui\CommandUiScreen.java:103: 错误: 无法将类 Screen中的方法 renderBackground应用到给定类型;
+          this.renderBackground(context, mouseX, mouseY, delta);
+              ^
+    需要: DrawContext
+    找到:    DrawContext,int,int,float
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\commandui\WizardSelectionListScreen.java:112: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+              super(client, width, bottom - top, top, 30);
+              ^
+    需要: MinecraftClient,int,int,int,int,int
+    找到:    MinecraftClient,int,int,int,int
+    原因: 实际参数列表和形式参数列表长度不同
+    其中, E是类型变量:
+      E扩展已在类 ElementListWidget中声明的Entry<E>
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\commandui\WizardOptionScreen.java:92: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+              super(client, width, bottom - top, top, ROW_HEIGHT);
+              ^
+    需要: MinecraftClient,int,int,int,int,int
+    找到:    MinecraftClient,int,int,int,int
+    原因: 实际参数列表和形式参数列表长度不同
+    其中, E是类型变量:
+      E扩展已在类 ElementListWidget中声明的Entry<E>
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\commandui\CommandListScreen.java:139: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+              super(client, width, bottom - top, top, 34);
+              ^
+    需要: MinecraftClient,int,int,int,int,int
+    找到:    MinecraftClient,int,int,int,int
+    原因: 实际参数列表和形式参数列表长度不同
+    其中, E是类型变量:
+      E扩展已在类 ElementListWidget中声明的Entry<E>
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\commandui\DeleteHintVertexScreen.java:81: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+              super(client, width, bottom - top, top, 28);
+              ^
+    需要: MinecraftClient,int,int,int,int,int
+    找到:    MinecraftClient,int,int,int,int
+    原因: 实际参数列表和形式参数列表长度不同
+    其中, E是类型变量:
+      E扩展已在类 ElementListWidget中声明的Entry<E>
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\commandui\HelpCommandScreen.java:52: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+              super(client, width, bottom - top, top, 34);
+              ^
+    需要: MinecraftClient,int,int,int,int,int
+    找到:    MinecraftClient,int,int,int,int
+    原因: 实际参数列表和形式参数列表长度不同
+    其中, E是类型变量:
+      E扩展已在类 ElementListWidget中声明的Entry<E>
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\description\BookDescriptionScreenUtil.java:40: 错误: 找不到符号
+              pages.add(NbtString.of(Text.Serialization.toJsonString(Text.literal(page))));
+                                         ^
+    符号:   变量 Serialization
+    位置: 接口 Text
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\gui\AreasHintConfigScreen.java:237: 错误: 无法将类 Screen中的方法 renderBackground应用到给定类型;
+          this.renderBackground(context, mouseX, mouseY, delta);
+              ^
+    需要: DrawContext
+    找到:    DrawContext,int,int,float
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\gui\AreasHintConfigScreen.java:589: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+              super(client, width, bottom - top, top, 24);
+              ^
+    需要: MinecraftClient,int,int,int,int,int
+    找到:    MinecraftClient,int,int,int,int
+    原因: 实际参数列表和形式参数列表长度不同
+    其中, E是类型变量:
+      E扩展已在类 ElementListWidget中声明的Entry<E>
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\management\client\AreaManagementClient.java:170: 错误: 无法将类 Screen中的方法 renderBackground应用到给定类型;
+              this.renderBackground(context, mouseX, mouseY, delta);
+                  ^
+    需要: DrawContext
+    找到:    DrawContext,int,int,float
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\management\client\AreaManagementScreen.java:66: 错误: 无法将类 Screen中的方法 renderBackground应用到给定类型;
+          this.renderBackground(context, mouseX, mouseY, delta);
+              ^
+    需要: DrawContext
+    找到:    DrawContext,int,int,float
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\management\client\AreaManagementScreen.java:109: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+              super(client, width, bottom - top, top, 26);
+              ^
+    需要: MinecraftClient,int,int,int,int,int
+    找到:    MinecraftClient,int,int,int,int
+    原因: 实际参数列表和形式参数列表长度不同
+    其中, E是类型变量:
+      E扩展已在类 ElementListWidget中声明的Entry<E>
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventCategoryScreen.java:86: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+              super(client, width, height, top, ROW_HEIGHT);
+              ^
+    需要: MinecraftClient,int,int,int,int,int
+    找到:    MinecraftClient,int,int,int,int
+    原因: 实际参数列表和形式参数列表长度不同
+    其中, E是类型变量:
+      E扩展已在类 ElementListWidget中声明的Entry<E>
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventCategoryScreen.java:116: 错误: 找不到符号
+                  this.button.setDimensionsAndPosition(entryWidth, BUTTON_HEIGHT, x, y + 3);
+                             ^
+    符号:   方法 setDimensionsAndPosition(int,int,int,int)
+    位置: 类型为ButtonWidget的变量 button
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventListScreen.java:142: 错误: 无法将类 ElementListWidget<E>中的构造器 ElementListWidget应用到给定类型;
+              super(client, width, height, top, ROW_HEIGHT);
+              ^
+    需要: MinecraftClient,int,int,int,int,int
+    找到:    MinecraftClient,int,int,int,int
+    原因: 实际参数列表和形式参数列表长度不同
+    其中, E是类型变量:
+      E扩展已在类 ElementListWidget中声明的Entry<E>
+  J:\mc\mods\versions\1.20.1\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventListScreen.java:172: 错误: 找不到符号
+                  this.button.setDimensionsAndPosition(entryWidth, BUTTON_HEIGHT, x, y + 4);
+                             ^
+    符号:   方法 setDimensionsAndPosition(int,int,int,int)
+    位置: 类型为ButtonWidget的变量 button
+  16 个错误
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.12.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 3m 3s
+12 actionable tasks: 12 executed

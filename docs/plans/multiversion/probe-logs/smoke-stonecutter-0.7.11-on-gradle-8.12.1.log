@@ -1,0 +1,32 @@
+Caught exception: Couldn't open current thread, error = 5
+Exception in thread "File watcher server" net.rubygrapefruit.platform.NativeException: Couldn't open current thread, error = 5
+	at org.gradle.fileevents.internal.AbstractNativeFileEventFunctions$NativeFileWatcher.initializeRunLoop0(Native Method)
+	at org.gradle.fileevents.internal.AbstractNativeFileEventFunctions$NativeFileWatcher.initializeRunLoop(AbstractNativeFileEventFunctions.java:25)
+	at org.gradle.fileevents.internal.AbstractFileEventFunctions$AbstractFileWatcher$1.run(AbstractFileEventFunctions.java:151)
+Running Stonecutter 0.7.11
+NOTICE: Limited Groovy DSL support for Stonecutter
+
+While functional, the plugin's features are limited 
+by the Groovy syntax and it has reduced IDE support.
+For the best experience, including enhanced syntax, autocompletion, 
+documentation lookup and debugging, it's recommended to use Kotlin DSL.
+
+For more information see: 
+  - https://stonecutter.codeberg.page/wiki/faq#groovy-support
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file 'J:\mc\mods\stonecutter.gradle' line: 3
+
+* What went wrong:
+A problem occurred evaluating root project 'mods'.
+> Could not get unknown property 'stonecutter' for root project 'mods' of type org.gradle.api.Project.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 22s

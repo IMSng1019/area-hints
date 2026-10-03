@@ -43,3 +43,7 @@ replay_*.log
 # 临时调试产物与轮转日志
 _diag/
 logs/*.log.gz
+
+# Stonecutter 版本节点：每个节点是独立子项目，会生成自己的 build/ 与 .gradle/ 缓存
+# 说明：build/ 因不带斜杠已能匹配任意层级，.gradle/ 带斜杠只匹配根目录，故单独忽略
+versions/*/.gradle/

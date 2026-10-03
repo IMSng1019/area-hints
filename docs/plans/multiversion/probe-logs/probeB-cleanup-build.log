@@ -1,0 +1,73 @@
+Caught exception: Couldn't open current thread, error = 5
+Exception in thread "File watcher server" net.rubygrapefruit.platform.NativeException: Couldn't open current thread, error = 5
+	at org.gradle.fileevents.internal.AbstractNativeFileEventFunctions$NativeFileWatcher.initializeRunLoop0(Native Method)
+	at org.gradle.fileevents.internal.AbstractNativeFileEventFunctions$NativeFileWatcher.initializeRunLoop(AbstractNativeFileEventFunctions.java:25)
+	at org.gradle.fileevents.internal.AbstractFileEventFunctions$AbstractFileWatcher$1.run(AbstractFileEventFunctions.java:151)
+Running Stonecutter 0.7.11
+NOTICE: Limited Groovy DSL support for Stonecutter
+
+While functional, the plugin's features are limited 
+by the Groovy syntax and it has reduced IDE support.
+For the best experience, including enhanced syntax, autocompletion, 
+documentation lookup and debugging, it's recommended to use Kotlin DSL.
+
+For more information see: 
+  - https://stonecutter.codeberg.page/wiki/faq#groovy-support
+
+> Configure project :1.20.4
+Fabric Loom: 1.10.5
+
+> Configure project :1.21.1
+Fabric Loom: 1.10.5
+
+> Task :1.20.4:compileJava UP-TO-DATE
+> Task :1.21.1:compileJava UP-TO-DATE
+> Task :1.21.1:processResources UP-TO-DATE
+> Task :1.21.1:classes UP-TO-DATE
+> Task :1.20.4:processResources UP-TO-DATE
+> Task :1.20.4:classes UP-TO-DATE
+> Task :1.21.1:compileClientJava UP-TO-DATE
+> Task :1.21.1:processClientResources NO-SOURCE
+> Task :1.21.1:jar
+> Task :1.21.1:clientClasses UP-TO-DATE
+> Task :1.21.1:stonecutterPrepareTest UP-TO-DATE
+> Task :1.21.1:stonecutterGenerateTest NO-SOURCE
+> Task :1.21.1:compileTestJava NO-SOURCE
+> Task :1.21.1:processIncludeJars UP-TO-DATE
+> Task :1.20.4:compileClientJava
+> Task :1.20.4:processClientResources UP-TO-DATE
+> Task :1.20.4:jar
+> Task :1.20.4:clientClasses
+> Task :1.20.4:compileTestJava NO-SOURCE
+> Task :1.20.4:processIncludeJars UP-TO-DATE
+> Task :1.21.1:sourcesJar
+> Task :1.21.1:processTestResources NO-SOURCE
+> Task :1.21.1:testClasses UP-TO-DATE
+> Task :1.21.1:test NO-SOURCE
+> Task :1.21.1:validateAccessWidener NO-SOURCE
+> Task :1.21.1:check UP-TO-DATE
+> Task :1.20.4:sourcesJar
+> Task :1.20.4:processTestResources NO-SOURCE
+> Task :1.20.4:testClasses UP-TO-DATE
+> Task :1.20.4:test NO-SOURCE
+> Task :1.20.4:validateAccessWidener NO-SOURCE
+> Task :1.20.4:check UP-TO-DATE
+> Task :1.21.1:remapSourcesJar
+> Task :1.21.1:remapJar
+> Task :1.21.1:assemble
+> Task :1.21.1:build
+> Task :1.20.4:remapJar
+> Task :1.20.4:remapSourcesJar
+> Task :1.20.4:assemble
+> Task :1.20.4:build
+
+[Incubating] Problems report is available at: file:///J:/mc/mods/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.12.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 11s
+18 actionable tasks: 9 executed, 9 up-to-date

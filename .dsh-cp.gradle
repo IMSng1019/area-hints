@@ -1,0 +1,11 @@
+allprojects { proj ->
+    proj.afterEvaluate {
+        if (proj.path == ':1.20.6') {
+            proj.tasks.register('printCp') {
+                doLast {
+                    proj.configurations.getByName('compileClasspath').files.each { f -> println 'CP: ' + f.toString() }
+                }
+            }
+        }
+    }
+}

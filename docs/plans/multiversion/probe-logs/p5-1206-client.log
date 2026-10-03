@@ -1,0 +1,292 @@
+Running Stonecutter 0.9.7
+Warning: Stonecutter is used with Groovy buildscripts
+------------------------------------------------------------------------------------
+Stonecutter requires a more complex Gradle setup than typical Java projects.
+While Groovy DSL works, Kotlin DSL offers significant advantages:
+- The type-safe model prevents silent failures and Groovy's dynamic typing
+  shenanigans that are hell to debug.
+- Full IDE support with code completion, documentation and source navigation.
+- Kotlin-exclusive operator functions for simpler configurations.
+------------------------------------------------------------------------------------
+For more information see:
+- https://stonecutter.kikugie.dev/wiki/faq#groovy-support
+- https://docs.gradle.org/current/userguide/migrating_from_groovy_to_kotlin_dsl.html
+
+To acknowledge and disable this warning add to the `gradle.properties`:
+```
+dev.kikugie.stonecutter.hard_mode=true
+```
+------------------------------------------------------------------------------------
+
+> Configure project :1.20.1
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.4
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.6
+Fabric Loom: 1.10.5
+
+> Configure project :1.21.1
+Fabric Loom: 1.10.5
+
+> Task :1.20.6:stonecutterPrepare UP-TO-DATE
+> Task :1.20.6:stonecutterGenerate UP-TO-DATE
+> Task :1.20.6:compileJava UP-TO-DATE
+> Task :1.20.6:processResources
+> Task :1.20.6:classes
+> Task :1.20.6:stonecutterPrepareClient
+> Task :1.20.6:stonecutterGenerateClient
+
+> Task :1.20.6:compileClientJava
+J:\mc\mods\versions\1.20.6\src\client\java\areahint\network\ClientNetworkCompatFactory.java:10: 错误: 找不到符号
+        return new ClientNetworkCompatImpl1206();
+                   ^
+  符号:   类 ClientNetworkCompatImpl1206
+  位置: 类 ClientNetworkCompatFactory
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\AreashintClient.java:426: 错误: 找不到符号
+		RegistryKey<DimensionType> dimensionKey = client.world.getDimensionKey();
+		                                                      ^
+  符号:   方法 getDimensionKey()
+  位置: 类型为ClientWorld的变量 world
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\WizardSelectionListScreen.java:114: 错误: 找不到符号
+            this.setRenderBackground(false);
+                ^
+  符号: 方法 setRenderBackground(boolean)
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\WizardSelectionListScreen.java:126: 错误: 方法不会覆盖或实现超类型的方法
+        @Override
+        ^
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\WizardOptionScreen.java:95: 错误: 找不到符号
+            this.setRenderBackground(false);
+                ^
+  符号: 方法 setRenderBackground(boolean)
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\WizardOptionScreen.java:110: 错误: 方法不会覆盖或实现超类型的方法
+        @Override
+        ^
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\CommandListScreen.java:141: 错误: 找不到符号
+            this.setRenderBackground(false);
+                ^
+  符号: 方法 setRenderBackground(boolean)
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\CommandListScreen.java:165: 错误: 方法不会覆盖或实现超类型的方法
+        @Override
+        ^
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\DeleteHintVertexScreen.java:83: 错误: 找不到符号
+            this.setRenderBackground(false);
+                ^
+  符号: 方法 setRenderBackground(boolean)
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\DeleteHintVertexScreen.java:99: 错误: 方法不会覆盖或实现超类型的方法
+        @Override
+        ^
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\HelpCommandScreen.java:54: 错误: 找不到符号
+            this.setRenderBackground(false);
+                ^
+  符号: 方法 setRenderBackground(boolean)
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\HelpCommandScreen.java:66: 错误: 方法不会覆盖或实现超类型的方法
+        @Override
+        ^
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\WizardLongTextInputScreen.java:99: 错误: 找不到符号
+        if (SharedConstants.isValidChar(chr)) {
+                           ^
+  符号:   方法 isValidChar(char)
+  位置: 类 SharedConstants
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\description\BookDescriptionScreenUtil.java:42: 错误: 无法将类 Serialization中的方法 toJsonString应用到给定类型;
+            pages.add(NbtString.of(Text.Serialization.toJsonString(Text.literal(page))));
+                                                     ^
+  需要: Text,WrapperLookup
+  找到:    MutableText
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\description\BookDescriptionScreenUtil.java:48: 错误: 找不到符号
+        book.setNbt(nbt);
+            ^
+  符号:   方法 setNbt(NbtCompound)
+  位置: 类型为ItemStack的变量 book
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\description\DescriptionBookEditScreen.java:145: 错误: 找不到符号
+        if (SharedConstants.isValidChar(chr)) {
+                           ^
+  符号:   方法 isValidChar(char)
+  位置: 类 SharedConstants
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\gui\AreasHintConfigScreen.java:595: 错误: 找不到符号
+            this.setRenderBackground(false);
+                ^
+  符号: 方法 setRenderBackground(boolean)
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\gui\AreasHintConfigScreen.java:619: 错误: 方法不会覆盖或实现超类型的方法
+        @Override
+        ^
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\management\client\AreaManagementScreen.java:116: 错误: 找不到符号
+            this.setRenderBackground(false);
+                ^
+  符号: 方法 setRenderBackground(boolean)
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\management\client\AreaManagementScreen.java:132: 错误: 方法不会覆盖或实现超类型的方法
+        @Override
+        ^
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\network\ClientNetworking.java:263: 错误: 找不到符号
+                    dimensionName.equals(Packets.convertDimensionPathToType(client.world.getDimensionKey().getValue().getPath()))) {
+                                                                                        ^
+  符号:   方法 getDimensionKey()
+  位置: 类型为ClientWorld的变量 world
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\network\ClientWorldNetworking.java:101: 错误: 找不到符号
+                String dimensionId = client.world.getDimensionKey().getValue().toString();
+                                                 ^
+  符号:   方法 getDimensionKey()
+  位置: 类型为ClientWorld的变量 world
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventCategoryScreen.java:88: 错误: 找不到符号
+            this.setRenderBackground(false);
+                ^
+  符号: 方法 setRenderBackground(boolean)
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventCategoryScreen.java:100: 错误: 方法不会覆盖或实现超类型的方法
+        @Override
+        ^
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventListScreen.java:144: 错误: 找不到符号
+            this.setRenderBackground(false);
+                ^
+  符号: 方法 setRenderBackground(boolean)
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventListScreen.java:156: 错误: 方法不会覆盖或实现超类型的方法
+        @Override
+        ^
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventManager.java:71: 错误: 对于playSound(SoundEvent,SoundCategory,float,float), 找不到合适的方法
+        player.playSound(soundEvent.get(), SoundCategory.PLAYERS, ConfigData.normalizeSoundLevel(soundLevel),
+              ^
+    方法 LivingEntity.playSound(SoundEvent)不适用
+      (实际参数列表和形式参数列表长度不同)
+    方法 ClientPlayerEntity.playSound(SoundEvent,float,float)不适用
+      (实际参数列表和形式参数列表长度不同)
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+27 个错误
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':1.20.6:compileClientJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+> Compilation failed; see the compiler output below.
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\description\BookDescriptionScreenUtil.java:42: 错误: 无法将类 Serialization中的方法 toJsonString应用到给定类型;
+              pages.add(NbtString.of(Text.Serialization.toJsonString(Text.literal(page))));
+                                                       ^
+    需要: Text,WrapperLookup
+    找到:    MutableText
+    原因: 实际参数列表和形式参数列表长度不同
+
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventManager.java:71: 错误: 对于playSound(SoundEvent,SoundCategory,float,float), 找不到合适的方法
+> Task :1.20.6:compileClientJava FAILED
+
+[Incubating] Problems report is available at: file:///J:/mc/mods/build/reports/problems/problems-report.html
+          player.playSound(soundEvent.get(), SoundCategory.PLAYERS, ConfigData.normalizeSoundLevel(soundLevel),
+                ^
+      方法 LivingEntity.playSound(SoundEvent)不适用
+        (实际参数列表和形式参数列表长度不同)
+      方法 ClientPlayerEntity.playSound(SoundEvent,float,float)不适用
+        (实际参数列表和形式参数列表长度不同)
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\WizardSelectionListScreen.java:114: 错误: 找不到符号
+              this.setRenderBackground(false);
+                  ^
+    符号: 方法 setRenderBackground(boolean)
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\WizardOptionScreen.java:95: 错误: 找不到符号
+              this.setRenderBackground(false);
+                  ^
+    符号: 方法 setRenderBackground(boolean)
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\CommandListScreen.java:141: 错误: 找不到符号
+              this.setRenderBackground(false);
+                  ^
+    符号: 方法 setRenderBackground(boolean)
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\DeleteHintVertexScreen.java:83: 错误: 找不到符号
+              this.setRenderBackground(false);
+                  ^
+    符号: 方法 setRenderBackground(boolean)
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\HelpCommandScreen.java:54: 错误: 找不到符号
+              this.setRenderBackground(false);
+                  ^
+    符号: 方法 setRenderBackground(boolean)
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\gui\AreasHintConfigScreen.java:595: 错误: 找不到符号
+              this.setRenderBackground(false);
+                  ^
+    符号: 方法 setRenderBackground(boolean)
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\management\client\AreaManagementScreen.java:116: 错误: 找不到符号
+              this.setRenderBackground(false);
+                  ^
+    符号: 方法 setRenderBackground(boolean)
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventCategoryScreen.java:88: 错误: 找不到符号
+              this.setRenderBackground(false);
+                  ^
+    符号: 方法 setRenderBackground(boolean)
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventListScreen.java:144: 错误: 找不到符号
+              this.setRenderBackground(false);
+                  ^
+    符号: 方法 setRenderBackground(boolean)
+  注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+  J:\mc\mods\versions\1.20.6\src\client\java\areahint\network\ClientNetworkCompatFactory.java:10: 错误: 找不到符号
+          return new ClientNetworkCompatImpl1206();
+                     ^
+    符号:   类 ClientNetworkCompatImpl1206
+    位置: 类 ClientNetworkCompatFactory
+  注: 某些输入文件使用或覆盖了已过时的 API。
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\WizardSelectionListScreen.java:126: 错误: 方法不会覆盖或实现超类型的方法
+          @Override
+          ^
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\WizardOptionScreen.java:110: 错误: 方法不会覆盖或实现超类型的方法
+          @Override
+          ^
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\CommandListScreen.java:165: 错误: 方法不会覆盖或实现超类型的方法
+          @Override
+          ^
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\DeleteHintVertexScreen.java:99: 错误: 方法不会覆盖或实现超类型的方法
+          @Override
+          ^
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\HelpCommandScreen.java:66: 错误: 方法不会覆盖或实现超类型的方法
+          @Override
+          ^
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\gui\AreasHintConfigScreen.java:619: 错误: 方法不会覆盖或实现超类型的方法
+          @Override
+          ^
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\management\client\AreaManagementScreen.java:132: 错误: 方法不会覆盖或实现超类型的方法
+          @Override
+          ^
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventCategoryScreen.java:100: 错误: 方法不会覆盖或实现超类型的方法
+          @Override
+          ^
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventListScreen.java:156: 错误: 方法不会覆盖或实现超类型的方法
+          @Override
+          ^
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\AreashintClient.java:426: 错误: 找不到符号
+  		RegistryKey<DimensionType> dimensionKey = client.world.getDimensionKey();
+  		                                                      ^
+    符号:   方法 getDimensionKey()
+    位置: 类型为ClientWorld的变量 world
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\commandui\WizardLongTextInputScreen.java:99: 错误: 找不到符号
+          if (SharedConstants.isValidChar(chr)) {
+                             ^
+    符号:   方法 isValidChar(char)
+    位置: 类 SharedConstants
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\description\BookDescriptionScreenUtil.java:48: 错误: 找不到符号
+          book.setNbt(nbt);
+              ^
+    符号:   方法 setNbt(NbtCompound)
+    位置: 类型为ItemStack的变量 book
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\description\DescriptionBookEditScreen.java:145: 错误: 找不到符号
+          if (SharedConstants.isValidChar(chr)) {
+                             ^
+    符号:   方法 isValidChar(char)
+    位置: 类 SharedConstants
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\network\ClientNetworking.java:263: 错误: 找不到符号
+                      dimensionName.equals(Packets.convertDimensionPathToType(client.world.getDimensionKey().getValue().getPath()))) {
+                                                                                          ^
+    符号:   方法 getDimensionKey()
+    位置: 类型为ClientWorld的变量 world
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\network\ClientWorldNetworking.java:101: 错误: 找不到符号
+                  String dimensionId = client.world.getDimensionKey().getValue().toString();
+                                                   ^
+    符号:   方法 getDimensionKey()
+    位置: 类型为ClientWorld的变量 world
+  27 个错误
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 11s
+7 actionable tasks: 4 executed, 3 up-to-date

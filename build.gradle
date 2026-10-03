@@ -35,6 +35,11 @@ def mcVersion = resolveMcVersion()
 def versionedProp = { String name, String legacyKey ->
 	def value = project.findProperty("deps.${mcVersion}.${name}")
 	if (value == null) {
+		// 该版本已经在 gradle.properties 里显式配过参数，却缺这一项：直接报错。
+		// 绝不回退旧扁平键——那等于把 1.20.4 的坐标安到别的版本上，正是 D2 要防的坑
+		if (project.findProperty("deps.${mcVersion}.minecraft") != null) {
+			throw new GradleException("deps.${mcVersion}.${name} 缺失：该版本已显式配置，不回退旧扁平键 ${legacyKey}")
+		}
 		value = project.findProperty(legacyKey)
 	}
 	if (value == null) {
@@ -133,8 +138,10 @@ dependencies {
 	if (!skeletonOnly) {
 		// 以下第三方依赖全部按当前节点版本解析（D2），该版本缺坐标就不声明该依赖
 		declareThirdParty('modmenu', 'ModMenu') { v -> modCompileOnly "maven.modrinth:modmenu:${v}" }
-		declareThirdParty('luckperms', 'LuckPerms') { v -> compileOnly "net.luckperms:api:${v}" }
-		declareThirdParty('bluemap', 'BlueMap') { v -> compileOnly "de.bluecolored.bluemap:BlueMapAPI:${v}" }
+		// BlueMap 与 LuckPerms 的键里存的是完整坐标 group:artifact:version：
+		// BlueMap 在 2.7.3 起把 artifact 改成了 de.bluecolored:bluemap-api，写死 group 会取不到
+		declareThirdParty('luckperms', 'LuckPerms') { v -> compileOnly "${v}" }
+		declareThirdParty('bluemap', 'BlueMap') { v -> compileOnly "${v}" }
 
 		// Xaero 兼容代码使用远程精确版本编译，避免 CI 依赖被 Git 忽略的本地 JAR。
 		declareThirdParty('xaero_minimap', 'Xaero 小地图') { v ->

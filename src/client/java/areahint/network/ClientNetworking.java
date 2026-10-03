@@ -950,6 +950,15 @@ public class ClientNetworking {
         }
     }
 
+    /** 1.21.2 起 sendMessage(Text) 单参重载被移除，只保留带 overlay 标志的版本。 */
+    private static void sendChatMessage(net.minecraft.client.network.ClientPlayerEntity player, net.minecraft.text.Text message) {
+        //? if <=1.21.1 {
+        player.sendMessage(message);
+        //?} else {
+        /*player.sendMessage(message, false);*/
+        //?}
+    }
+
     /**
      * 显示当前频率信息
      * @param client Minecraft客户端实例
@@ -957,7 +966,7 @@ public class ClientNetworking {
     private static void displayFrequencyInfo(MinecraftClient client) {
         if (client.player != null) {
             double frequency = ClientConfig.getFrequency();
-            client.player.sendMessage(net.minecraft.text.Text.of(I18nManager.translate("message.message.general_50") + areahint.data.ConfigData.formatFrequency(frequency) + "§a Hz"));
+            sendChatMessage(client.player, net.minecraft.text.Text.of(I18nManager.translate("message.message.general_50") + areahint.data.ConfigData.formatFrequency(frequency) + "§a Hz"));
         }
     }
     
@@ -1009,7 +1018,7 @@ public class ClientNetworking {
     private static void displayHintRenderInfo(MinecraftClient client) {
         if (client.player != null) {
             String renderMode = ClientConfig.getHintRender();
-            client.player.sendMessage(net.minecraft.text.Text.of(I18nManager.translate("message.message.general_49") + renderMode));
+            sendChatMessage(client.player, net.minecraft.text.Text.of(I18nManager.translate("message.message.general_49") + renderMode));
         }
     }
     
@@ -1020,7 +1029,7 @@ public class ClientNetworking {
     private static void displayTitleStyleInfo(MinecraftClient client) {
         if (client.player != null) {
             String style = ClientConfig.getTitleStyle();
-            client.player.sendMessage(net.minecraft.text.Text.of(I18nManager.translate("message.message.general_48") + style));
+            sendChatMessage(client.player, net.minecraft.text.Text.of(I18nManager.translate("message.message.general_48") + style));
         }
     }
     

@@ -139,10 +139,16 @@ public class Areashint implements ModInitializer {
 				player.sendMessage(msg, false);
 				MutableText nameBtn = Text.translatable("message.button.dimension_3")
 					.setStyle(Style.EMPTY
+						// 1.21.5 起 ClickEvent/HoverEvent 由构造器改为具体记录类型（SuggestCommand / ShowText）
+						//? if <=1.21.4 {
 						.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
 							"/areahint dimensionalityname select \"" + dimId + "\""))
 						.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
 							Text.translatable("message.hover.dimension.setname").append(Text.literal(dimId)))));
+						//?} else {
+						/*.withClickEvent(new ClickEvent.SuggestCommand("/areahint dimensionalityname select \"" + dimId + "\""))
+						.withHoverEvent(new HoverEvent.ShowText(Text.translatable("message.hover.dimension.setname").append(Text.literal(dimId)))));*/
+						//?}
 				player.sendMessage(nameBtn, false);
 				// 同步给客户端
 				areahint.network.DimensionalNameNetworking.sendDimensionalNamesToClient(player);

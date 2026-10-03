@@ -129,8 +129,14 @@ public class CheckCommand {
                 }
 
                 unionText.styled(style -> style
+                    // 1.21.5 起 ClickEvent/HoverEvent 由构造器改为具体记录类型（ShowText / RunCommand）
+                    //? if <=1.21.4 {
                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverContent))
                     .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint check \"" + unionName + "\""))
+                    //?} else {
+                    /*.withHoverEvent(new HoverEvent.ShowText(hoverContent))
+                    .withClickEvent(new ClickEvent.RunCommand("/areahint check \"" + unionName + "\""))*/
+                    //?}
                 );
                 
                 source.sendMessage(unionText);

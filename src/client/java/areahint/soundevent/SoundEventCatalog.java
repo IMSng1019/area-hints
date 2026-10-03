@@ -82,7 +82,8 @@ public final class SoundEventCatalog {
         if (identifier == null) {
             return Optional.empty();
         }
-        return Registries.SOUND_EVENT.getOrEmpty(identifier);
+        // 1.21.2 起 Registry.getOrEmpty 改名为 getOptionalValue，两者都等价于 Optional.ofNullable(get(id))，故直接展开
+        return Optional.ofNullable(Registries.SOUND_EVENT.get(identifier));
     }
 
     /**

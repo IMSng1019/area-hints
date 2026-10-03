@@ -8,6 +8,10 @@ import areahint.util.ColorUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.*;
+// 1.21.5 起 VertexFormat 移到 com.mojang.blaze3d.vertex，通配 import 覆盖不到，需显式导入
+//? if >=1.21.5 {
+/*import com.mojang.blaze3d.vertex.VertexFormat;*/
+//?}
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -69,7 +73,12 @@ public class BoundVizRenderer {
         RenderSystem.enableDepthTest();
         RenderSystem.depthMask(false);
         RenderSystem.disableCull();
+        // 1.21.2 起 GameRenderer 的 shader program getter 被移除，改用 ShaderProgramKeys
+        //? if <=1.21.1 {
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+        //?} else {
+        /*RenderSystem.setShader(net.minecraft.client.gl.ShaderProgramKeys.POSITION_COLOR);*/
+        //?}
 
         matrices.push();
         matrices.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
@@ -527,21 +536,30 @@ public class BoundVizRenderer {
 
         for (int by = yMin; by <= yMax; by++) {
             pos.set(bx, by, bz);
-            if (!world.getBlockState(pos).isOpaqueFullCube(world, pos)) continue;
+            if (!isOpaqueFullCube(world, pos)) continue;
 
             float bottom = Math.max(by, fMinY);
             float top = Math.min(by + 1, fMaxY);
             if (top <= bottom) continue;
 
             pos.set(bx, by + 1, bz);
-            if (top == by + 1 && !world.getBlockState(pos).isOpaqueFullCube(world, pos)) {
+            if (top == by + 1 && !isOpaqueFullCube(world, pos)) {
                 segments.add(new float[]{x1, top + FACE_OFFSET, z1, x2, top + FACE_OFFSET, z2});
             }
             pos.set(bx, by - 1, bz);
-            if (bottom == by && !world.getBlockState(pos).isOpaqueFullCube(world, pos)) {
+            if (bottom == by && !isOpaqueFullCube(world, pos)) {
                 segments.add(new float[]{x1, bottom - FACE_OFFSET, z1, x2, bottom - FACE_OFFSET, z2});
             }
         }
+    }
+
+    /** 1.21.2 起 isOpaqueFullCube 改为无参版本（形状在方块状态里预计算）。 */
+    private static boolean isOpaqueFullCube(World world, BlockPos pos) {
+        //? if <=1.21.1 {
+        return world.getBlockState(pos).isOpaqueFullCube(world, pos);
+        //?} else {
+        /*return world.getBlockState(pos).isOpaqueFullCube();*/
+        //?}
     }
 
     /**
@@ -554,7 +572,7 @@ public class BoundVizRenderer {
         BlockPos.Mutable pos = new BlockPos.Mutable();
         for (int by = yMin; by <= yMax; by++) {
             pos.set(bx, by, bz);
-            if (!world.getBlockState(pos).isOpaqueFullCube(world, pos)) continue;
+            if (!isOpaqueFullCube(world, pos)) continue;
 
             float lineBottom = Math.max(by, fMinY);
             float lineTop = Math.min(by + 1, fMaxY);

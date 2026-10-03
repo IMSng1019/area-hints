@@ -18,7 +18,7 @@ final class AreaMinimapContext {
     double backgroundCoordinateScale = 1.0D;
     List<OverlayArea> visibleAreas = List.of();
     FillPlan fillPlan = FillPlan.empty();
-    XaeroMinimapBridge.TransformState transform = XaeroMinimapBridge.TransformState.EMPTY;
+    MinimapTransformState transform = MinimapTransformState.EMPTY;
 
     // 以下几何缓冲只在渲染线程内使用，每轮收集前清空输出并把计数归零，提交后即可安全复用
     /** 当前域名的填充三角形输出，元素是复用的 6 分量坐标数组。 */

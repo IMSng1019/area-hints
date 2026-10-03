@@ -105,7 +105,12 @@ public final class TeleportService {
 
     private static boolean executeTeleport(ServerPlayerEntity player, Vec3d position) {
         try {
+            // 1.21.2 起 ServerPlayerEntity.teleport 多了 Set<PositionFlag> 与末尾布尔参数
+            //? if <=1.21.1 {
             player.teleport(player.getServerWorld(), position.x, position.y, position.z, player.getYaw(), player.getPitch());
+            //?} else {
+            /*player.teleport(player.getServerWorld(), position.x, position.y, position.z, java.util.Set.of(), player.getYaw(), player.getPitch(), false);*/
+            //?}
             return player.squaredDistanceTo(position) < 1.0D;
         } catch (Exception e) {
             Areashint.LOGGER.error("执行域名传送时发生错误", e);

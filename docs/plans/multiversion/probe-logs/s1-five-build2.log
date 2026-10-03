@@ -1,0 +1,345 @@
+Running Stonecutter 0.9.7
+Warning: Stonecutter is used with Groovy buildscripts
+------------------------------------------------------------------------------------
+Stonecutter requires a more complex Gradle setup than typical Java projects.
+While Groovy DSL works, Kotlin DSL offers significant advantages:
+- The type-safe model prevents silent failures and Groovy's dynamic typing
+  shenanigans that are hell to debug.
+- Full IDE support with code completion, documentation and source navigation.
+- Kotlin-exclusive operator functions for simpler configurations.
+------------------------------------------------------------------------------------
+For more information see:
+- https://stonecutter.kikugie.dev/wiki/faq#groovy-support
+- https://docs.gradle.org/current/userguide/migrating_from_groovy_to_kotlin_dsl.html
+
+To acknowledge and disable this warning add to the `gradle.properties`:
+```
+dev.kikugie.stonecutter.hard_mode=true
+```
+------------------------------------------------------------------------------------
+
+> Configure project :1.20.1
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.4
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.6
+Fabric Loom: 1.10.5
+
+> Configure project :1.21.1
+Fabric Loom: 1.10.5
+
+> Configure project :1.21.4
+Fabric Loom: 1.10.5
+
+> Task :1.20.1:stonecutterPrepare UP-TO-DATE
+> Task :1.21.1:stonecutterPrepare UP-TO-DATE
+> Task :1.20.6:stonecutterPrepare UP-TO-DATE
+> Task :1.21.4:stonecutterPrepare UP-TO-DATE
+> Task :1.20.1:stonecutterGenerate UP-TO-DATE
+> Task :1.21.1:stonecutterGenerate UP-TO-DATE
+> Task :1.20.6:stonecutterGenerate UP-TO-DATE
+> Task :1.21.4:stonecutterGenerate UP-TO-DATE
+> Task :1.20.6:compileJava UP-TO-DATE
+> Task :1.20.4:compileJava UP-TO-DATE
+> Task :1.21.1:compileJava UP-TO-DATE
+> Task :1.20.1:compileJava UP-TO-DATE
+> Task :1.20.6:processResources UP-TO-DATE
+> Task :1.20.6:classes UP-TO-DATE
+> Task :1.21.1:processResources UP-TO-DATE
+> Task :1.20.4:processResources UP-TO-DATE
+> Task :1.20.1:processResources UP-TO-DATE
+> Task :1.20.4:classes UP-TO-DATE
+> Task :1.20.1:classes UP-TO-DATE
+> Task :1.21.1:classes UP-TO-DATE
+> Task :1.20.1:stonecutterPrepareClient
+> Task :1.20.6:stonecutterPrepareClient
+> Task :1.21.1:stonecutterPrepareClient
+> Task :1.20.1:stonecutterGenerateClient
+> Task :1.20.6:stonecutterGenerateClient
+> Task :1.21.1:stonecutterGenerateClient
+
+> Task :1.20.6:compileClientJava
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :1.20.1:compileClientJava
+> Task :1.20.1:processClientResources UP-TO-DATE
+> Task :1.20.1:clientClasses
+> Task :1.20.1:stonecutterPrepareTest UP-TO-DATE
+> Task :1.20.1:stonecutterGenerateTest NO-SOURCE
+> Task :1.20.1:compileTestJava NO-SOURCE
+> Task :1.20.4:compileClientJava
+> Task :1.20.4:processClientResources UP-TO-DATE
+> Task :1.20.4:clientClasses
+> Task :1.20.4:compileTestJava NO-SOURCE
+> Task :1.21.1:compileClientJava
+> Task :1.21.1:processClientResources UP-TO-DATE
+> Task :1.20.6:processClientResources UP-TO-DATE
+> Task :1.21.1:clientClasses
+> Task :1.20.6:clientClasses
+> Task :1.20.6:stonecutterPrepareTest UP-TO-DATE
+> Task :1.21.1:stonecutterPrepareTest UP-TO-DATE
+> Task :1.21.1:stonecutterGenerateTest NO-SOURCE
+> Task :1.20.6:stonecutterGenerateTest NO-SOURCE
+> Task :1.20.6:compileTestJava NO-SOURCE
+> Task :1.21.1:compileTestJava NO-SOURCE
+> Task :1.20.4:jar
+> Task :1.20.1:jar
+> Task :1.20.4:processIncludeJars UP-TO-DATE
+> Task :1.20.1:processIncludeJars UP-TO-DATE
+> Task :1.20.6:jar
+> Task :1.21.1:jar
+> Task :1.21.1:processIncludeJars UP-TO-DATE
+> Task :1.20.6:processIncludeJars UP-TO-DATE
+> Task :1.20.6:sourcesJar
+> Task :1.20.6:processTestResources NO-SOURCE
+> Task :1.20.6:testClasses UP-TO-DATE
+> Task :1.20.6:test NO-SOURCE
+> Task :1.20.6:validateAccessWidener NO-SOURCE
+> Task :1.20.6:check UP-TO-DATE
+> Task :1.21.1:sourcesJar
+> Task :1.21.1:processTestResources NO-SOURCE
+> Task :1.21.1:testClasses UP-TO-DATE
+> Task :1.21.1:test NO-SOURCE
+> Task :1.21.1:validateAccessWidener NO-SOURCE
+> Task :1.21.1:check UP-TO-DATE
+> Task :1.20.4:sourcesJar
+> Task :1.20.1:sourcesJar
+> Task :1.20.4:processTestResources NO-SOURCE
+> Task :1.20.4:testClasses UP-TO-DATE
+> Task :1.20.4:test NO-SOURCE
+> Task :1.20.1:processTestResources NO-SOURCE
+> Task :1.20.1:testClasses UP-TO-DATE
+> Task :1.20.1:test NO-SOURCE
+> Task :1.20.4:validateAccessWidener NO-SOURCE
+> Task :1.20.4:check UP-TO-DATE
+> Task :1.20.1:validateAccessWidener NO-SOURCE
+> Task :1.20.1:check UP-TO-DATE
+> Task :1.21.4:compileJava
+> Task :1.20.1:remapJar
+> Task :1.20.6:remapJar
+> Task :1.21.1:remapJar
+> Task :1.20.4:remapJar
+> Task :1.21.4:processResources
+> Task :1.21.4:classes
+> Task :1.21.4:stonecutterPrepareClient
+> Task :1.21.4:stonecutterGenerateClient
+> Task :1.21.1:remapSourcesJar
+> Task :1.21.1:assemble
+> Task :1.21.1:build
+> Task :1.20.4:remapSourcesJar
+> Task :1.20.4:assemble
+> Task :1.20.4:build
+> Task :1.20.1:remapSourcesJar
+> Task :1.20.1:assemble
+> Task :1.20.1:build
+> Task :1.20.6:remapSourcesJar
+> Task :1.20.6:assemble
+> Task :1.20.6:build
+
+> Task :1.21.4:compileClientJava
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:72: 错误: 方法引用无效
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+                               ^
+  找不到符号
+    符号:   方法 getPositionColorProgram()
+    位置: 类 GameRenderer
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:530: 错误: 无法将类 AbstractBlockState中的方法 isOpaqueFullCube应用到给定类型;
+            if (!world.getBlockState(pos).isOpaqueFullCube(world, pos)) continue;
+                                         ^
+  需要: 没有参数
+  找到:    World,Mutable
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:537: 错误: 无法将类 AbstractBlockState中的方法 isOpaqueFullCube应用到给定类型;
+            if (top == by + 1 && !world.getBlockState(pos).isOpaqueFullCube(world, pos)) {
+                                                          ^
+  需要: 没有参数
+  找到:    World,Mutable
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:541: 错误: 无法将类 AbstractBlockState中的方法 isOpaqueFullCube应用到给定类型;
+            if (bottom == by && !world.getBlockState(pos).isOpaqueFullCube(world, pos)) {
+                                                         ^
+  需要: 没有参数
+  找到:    World,Mutable
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:557: 错误: 无法将类 AbstractBlockState中的方法 isOpaqueFullCube应用到给定类型;
+            if (!world.getBlockState(pos).isOpaqueFullCube(world, pos)) continue;
+                                         ^
+  需要: 没有参数
+  找到:    World,Mutable
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\commandui\WizardLongTextInputScreen.java:133: 错误: 找不到符号
+        context.drawTextWrapped(this.textRenderer, Text.literal(this.text), x + 4, boxY + 4, contentWidth - 8, 0xFFFFFF);
+               ^
+  符号:   方法 drawTextWrapped(TextRenderer,MutableText,int,int,int,int)
+  位置: 类型为DrawContext的变量 context
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\description\DescriptionBookEditScreen.java:167: 错误: 对于drawTexture(Identifier,int,int,int,int,int,int), 找不到合适的方法
+        context.drawTexture(net.minecraft.client.gui.screen.ingame.BookScreen.BOOK_TEXTURE, bookX, 2, 0, 0, PAGE_BACKGROUND_WIDTH, PAGE_BACKGROUND_HEIGHT);
+               ^
+    方法 DrawContext.drawTexture(Function<Identifier,RenderLayer>,Identifier,int,int,float,float,int,int,int,int,int)不适用
+      (实际参数列表和形式参数列表长度不同)
+    方法 DrawContext.drawTexture(Function<Identifier,RenderLayer>,Identifier,int,int,float,float,int,int,int,int)不适用
+      (实际参数列表和形式参数列表长度不同)
+    方法 DrawContext.drawTexture(Function<Identifier,RenderLayer>,Identifier,int,int,float,float,int,int,int,int,int,int)不适用
+      (实际参数列表和形式参数列表长度不同)
+    方法 DrawContext.drawTexture(Function<Identifier,RenderLayer>,Identifier,int,int,float,float,int,int,int,int,int,int,int)不适用
+      (实际参数列表和形式参数列表长度不同)
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\description\DescriptionBookEditScreen.java:174: 错误: 找不到符号
+        context.drawTextWrapped(textRenderer, Text.literal(page), textX, textY, MAX_TEXT_WIDTH, 0);
+               ^
+  符号:   方法 drawTextWrapped(TextRenderer,MutableText,int,int,int,int)
+  位置: 类型为DrawContext的变量 context
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\network\ClientNetworking.java:960: 错误: 无法将类 ClientPlayerEntity中的方法 sendMessage应用到给定类型;
+            client.player.sendMessage(net.minecraft.text.Text.of(I18nManager.translate("message.message.general_50") + areahint.data.ConfigData.formatFrequency(frequency) + "§a Hz"));
+                         ^
+  需要: Text,boolean
+  找到:    Text
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\network\ClientNetworking.java:1012: 错误: 无法将类 ClientPlayerEntity中的方法 sendMessage应用到给定类型;
+            client.player.sendMessage(net.minecraft.text.Text.of(I18nManager.translate("message.message.general_49") + renderMode));
+                         ^
+  需要: Text,boolean
+  找到:    Text
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\network\ClientNetworking.java:1023: 错误: 无法将类 ClientPlayerEntity中的方法 sendMessage应用到给定类型;
+            client.player.sendMessage(net.minecraft.text.Text.of(I18nManager.translate("message.message.general_48") + style));
+                         ^
+  需要: Text,boolean
+  找到:    Text
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventCatalog.java:85: 错误: 找不到符号
+        return Registries.SOUND_EVENT.getOrEmpty(identifier);
+                                     ^
+  符号:   方法 getOrEmpty(Identifier)
+  位置: 类型为Registry<SoundEvent>的变量 SOUND_EVENT
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:46: 错误: 方法引用无效
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+                               ^
+  找不到符号
+    符号:   方法 getPositionColorProgram()
+    位置: 类 GameRenderer
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:135: 错误: 对于setShader(()->shader), 找不到合适的方法
+                RenderSystem.setShader(() -> shader);
+                            ^
+    方法 RenderSystem.setShader(ShaderProgramKey)不适用
+      (参数不匹配; ShaderProgramKey 不是函数接口)
+    方法 RenderSystem.setShader(ShaderProgram)不适用
+      (参数不匹配; ShaderProgram 不是函数接口)
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+14 个错误
+
+> Task :1.21.4:compileClientJava FAILED
+
+[Incubating] Problems report is available at: file:///J:/mc/mods/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':1.21.4:compileClientJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+> Compilation failed; see the compiler output below.
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:530: 错误: 无法将类 AbstractBlockState中的方法 isOpaqueFullCube应用到给定类型;
+              if (!world.getBlockState(pos).isOpaqueFullCube(world, pos)) continue;
+                                           ^
+    需要: 没有参数
+    找到:    World,Mutable
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:537: 错误: 无法将类 AbstractBlockState中的方法 isOpaqueFullCube应用到给定类型;
+              if (top == by + 1 && !world.getBlockState(pos).isOpaqueFullCube(world, pos)) {
+                                                            ^
+    需要: 没有参数
+    找到:    World,Mutable
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:541: 错误: 无法将类 AbstractBlockState中的方法 isOpaqueFullCube应用到给定类型;
+              if (bottom == by && !world.getBlockState(pos).isOpaqueFullCube(world, pos)) {
+                                                           ^
+    需要: 没有参数
+    找到:    World,Mutable
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:557: 错误: 无法将类 AbstractBlockState中的方法 isOpaqueFullCube应用到给定类型;
+              if (!world.getBlockState(pos).isOpaqueFullCube(world, pos)) continue;
+                                           ^
+    需要: 没有参数
+    找到:    World,Mutable
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\network\ClientNetworking.java:960: 错误: 无法将类 ClientPlayerEntity中的方法 sendMessage应用到给定类型;
+              client.player.sendMessage(net.minecraft.text.Text.of(I18nManager.translate("message.message.general_50") + areahint.data.ConfigData.formatFrequency(frequency) + "§a Hz"));
+                           ^
+    需要: Text,boolean
+    找到:    Text
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\network\ClientNetworking.java:1012: 错误: 无法将类 ClientPlayerEntity中的方法 sendMessage应用到给定类型;
+              client.player.sendMessage(net.minecraft.text.Text.of(I18nManager.translate("message.message.general_49") + renderMode));
+                           ^
+    需要: Text,boolean
+    找到:    Text
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\network\ClientNetworking.java:1023: 错误: 无法将类 ClientPlayerEntity中的方法 sendMessage应用到给定类型;
+              client.player.sendMessage(net.minecraft.text.Text.of(I18nManager.translate("message.message.general_48") + style));
+                           ^
+    需要: Text,boolean
+    找到:    Text
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\description\DescriptionBookEditScreen.java:167: 错误: 对于drawTexture(Identifier,int,int,int,int,int,int), 找不到合适的方法
+          context.drawTexture(net.minecraft.client.gui.screen.ingame.BookScreen.BOOK_TEXTURE, bookX, 2, 0, 0, PAGE_BACKGROUND_WIDTH, PAGE_BACKGROUND_HEIGHT);
+                 ^
+      方法 DrawContext.drawTexture(Function<Identifier,RenderLayer>,Identifier,int,int,float,float,int,int,int,int,int)不适用
+        (实际参数列表和形式参数列表长度不同)
+      方法 DrawContext.drawTexture(Function<Identifier,RenderLayer>,Identifier,int,int,float,float,int,int,int,int)不适用
+        (实际参数列表和形式参数列表长度不同)
+      方法 DrawContext.drawTexture(Function<Identifier,RenderLayer>,Identifier,int,int,float,float,int,int,int,int,int,int)不适用
+        (实际参数列表和形式参数列表长度不同)
+      方法 DrawContext.drawTexture(Function<Identifier,RenderLayer>,Identifier,int,int,float,float,int,int,int,int,int,int,int)不适用
+        (实际参数列表和形式参数列表长度不同)
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:135: 错误: 对于setShader(()->shader), 找不到合适的方法
+                  RenderSystem.setShader(() -> shader);
+                              ^
+      方法 RenderSystem.setShader(ShaderProgramKey)不适用
+        (参数不匹配; ShaderProgramKey 不是函数接口)
+      方法 RenderSystem.setShader(ShaderProgram)不适用
+        (参数不匹配; ShaderProgram 不是函数接口)
+  注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:72: 错误: 方法引用无效
+          RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+                                 ^
+    找不到符号
+      符号:   方法 getPositionColorProgram()
+      位置: 类 GameRenderer
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:46: 错误: 方法引用无效
+          RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+                                 ^
+    找不到符号
+      符号:   方法 getPositionColorProgram()
+      位置: 类 GameRenderer
+  注: 某些输入文件使用或覆盖了已过时的 API。
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\commandui\WizardLongTextInputScreen.java:133: 错误: 找不到符号
+          context.drawTextWrapped(this.textRenderer, Text.literal(this.text), x + 4, boxY + 4, contentWidth - 8, 0xFFFFFF);
+                 ^
+    符号:   方法 drawTextWrapped(TextRenderer,MutableText,int,int,int,int)
+    位置: 类型为DrawContext的变量 context
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\description\DescriptionBookEditScreen.java:174: 错误: 找不到符号
+          context.drawTextWrapped(textRenderer, Text.literal(page), textX, textY, MAX_TEXT_WIDTH, 0);
+                 ^
+    符号:   方法 drawTextWrapped(TextRenderer,MutableText,int,int,int,int)
+    位置: 类型为DrawContext的变量 context
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\client\java\areahint\soundevent\SoundEventCatalog.java:85: 错误: 找不到符号
+          return Registries.SOUND_EVENT.getOrEmpty(identifier);
+                                       ^
+    符号:   方法 getOrEmpty(Identifier)
+    位置: 类型为Registry<SoundEvent>的变量 SOUND_EVENT
+  14 个错误
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 17s
+58 actionable tasks: 31 executed, 27 up-to-date

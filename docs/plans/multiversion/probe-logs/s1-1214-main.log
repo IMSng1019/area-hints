@@ -1,0 +1,105 @@
+Running Stonecutter 0.9.7
+Warning: Stonecutter is used with Groovy buildscripts
+------------------------------------------------------------------------------------
+Stonecutter requires a more complex Gradle setup than typical Java projects.
+While Groovy DSL works, Kotlin DSL offers significant advantages:
+- The type-safe model prevents silent failures and Groovy's dynamic typing
+  shenanigans that are hell to debug.
+- Full IDE support with code completion, documentation and source navigation.
+- Kotlin-exclusive operator functions for simpler configurations.
+------------------------------------------------------------------------------------
+For more information see:
+- https://stonecutter.kikugie.dev/wiki/faq#groovy-support
+- https://docs.gradle.org/current/userguide/migrating_from_groovy_to_kotlin_dsl.html
+
+To acknowledge and disable this warning add to the `gradle.properties`:
+```
+dev.kikugie.stonecutter.hard_mode=true
+```
+------------------------------------------------------------------------------------
+
+> Configure project :1.20.1
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.4
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.6
+Fabric Loom: 1.10.5
+
+> Configure project :1.21.1
+Fabric Loom: 1.10.5
+
+> Configure project :1.21.4
+Fabric Loom: 1.10.5
+:remapping 50 mods from modImplementation (java-api)
+:remapping 3 mods from modCompileOnly (java-api)
+:remapping sources
+
+> Task :1.21.4:stonecutterPrepare
+> Task :1.21.4:stonecutterGenerate
+
+> Task :1.21.4:compileJava
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\main\java\areahint\map\BlueMapMarkerFactory.java:157: 错误: 无法将类 World中的方法 getTopY应用到给定类型;
+        double topY = world.getTopY();
+                           ^
+  需要: Type,int,int
+  找到:    没有参数
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\main\java\areahint\teleport\SafeLandingFinder.java:122: 错误: 无法将类 World中的方法 getTopY应用到给定类型;
+        int max = world.getTopY() - 2;
+                       ^
+  需要: Type,int,int
+  找到:    没有参数
+  原因: 实际参数列表和形式参数列表长度不同
+J:\mc\mods\versions\1.21.4\build\generated\stonecutter\main\java\areahint\teleport\TeleportService.java:108: 错误: 对于teleport(ServerWorld,double,double,double,float,float), 找不到合适的方法
+            player.teleport(player.getServerWorld(), position.x, position.y, position.z, player.getYaw(), player.getPitch());
+                  ^
+    方法 LivingEntity.teleport(double,double,double,boolean)不适用
+      (实际参数列表和形式参数列表长度不同)
+    方法 ServerPlayerEntity.teleport(ServerWorld,double,double,double,Set<PositionFlag>,float,float,boolean)不适用
+      (实际参数列表和形式参数列表长度不同)
+3 个错误
+
+> Task :1.21.4:compileJava FAILED
+
+[Incubating] Problems report is available at: file:///J:/mc/mods/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':1.21.4:compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+> Compilation failed; see the compiler output below.
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\main\java\areahint\map\BlueMapMarkerFactory.java:157: 错误: 无法将类 World中的方法 getTopY应用到给定类型;
+          double topY = world.getTopY();
+                             ^
+    需要: Type,int,int
+    找到:    没有参数
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\main\java\areahint\teleport\SafeLandingFinder.java:122: 错误: 无法将类 World中的方法 getTopY应用到给定类型;
+          int max = world.getTopY() - 2;
+                         ^
+    需要: Type,int,int
+    找到:    没有参数
+    原因: 实际参数列表和形式参数列表长度不同
+  J:\mc\mods\versions\1.21.4\build\generated\stonecutter\main\java\areahint\teleport\TeleportService.java:108: 错误: 对于teleport(ServerWorld,double,double,double,float,float), 找不到合适的方法
+              player.teleport(player.getServerWorld(), position.x, position.y, position.z, player.getYaw(), player.getPitch());
+                    ^
+      方法 LivingEntity.teleport(double,double,double,boolean)不适用
+        (实际参数列表和形式参数列表长度不同)
+      方法 ServerPlayerEntity.teleport(ServerWorld,double,double,double,Set<PositionFlag>,float,float,boolean)不适用
+        (实际参数列表和形式参数列表长度不同)
+  3 个错误
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 3m 10s
+3 actionable tasks: 3 executed

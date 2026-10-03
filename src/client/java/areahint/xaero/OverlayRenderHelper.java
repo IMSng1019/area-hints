@@ -5,7 +5,12 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.GameRenderer;
+// 1.21.5 起 VertexFormat 由 net.minecraft.client.render 移到 com.mojang.blaze3d.vertex
+//? if <=1.21.4 {
 import net.minecraft.client.render.VertexFormat;
+//?} else {
+/*import com.mojang.blaze3d.vertex.VertexFormat;*/
+//?}
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.gl.ShaderProgram;
 import org.joml.Matrix4f;
@@ -43,7 +48,12 @@ public final class OverlayRenderHelper {
         RenderSystem.disableDepthTest();
         // 域名顶点允许按任意方向记录，关闭背面剔除可避免某一种绕序的填充面被 Xaero 丢弃
         RenderSystem.disableCull();
+        // 1.21.2 起 GameRenderer 的 shader program getter 被移除，改用 ShaderProgramKeys
+        //? if <=1.21.1 {
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+        //?} else {
+        /*RenderSystem.setShader(net.minecraft.client.gl.ShaderProgramKeys.POSITION_COLOR);*/
+        //?}
     }
 
     public static void endOverlay() {
@@ -132,7 +142,12 @@ public final class OverlayRenderHelper {
                 RenderSystem.disableCull();
             }
             if (shader != null) {
+                // 1.21.2 起 setShader 不再接受 Supplier，改为直接传 ShaderProgram
+                //? if <=1.21.1 {
                 RenderSystem.setShader(() -> shader);
+                //?} else {
+                /*RenderSystem.setShader(shader);*/
+                //?}
             }
         }
     }

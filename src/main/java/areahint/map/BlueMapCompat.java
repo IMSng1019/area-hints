@@ -5,12 +5,11 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 
 /**
- * BlueMap 兼容入口。
- * 不直接引用 BlueMap API 类型，避免在未安装 BlueMap 时触发类加载错误。
+ * BlueMap 兼容入口（共享侧）：只做可用性判断与转发，具体实现由各版本目录的同名工厂提供。
+ * 未安装 BlueMap 时绝不触碰实现类，避免在缺少依赖时触发 BlueMap 类型加载。
  */
 public final class BlueMapCompat {
     private static final String BLUEMAP_MOD_ID = "bluemap";
-    private static final String INTEGRATION_CLASS = "areahint.map.BlueMapIntegration";
 
     private static volatile boolean initialized;
     private static volatile boolean available;
@@ -32,15 +31,10 @@ public final class BlueMapCompat {
         }
 
         try {
-            Class<?> clazz = Class.forName(INTEGRATION_CLASS);
-            Object instance = clazz.getDeclaredConstructor().newInstance();
-            if (!(instance instanceof BlueMapBridge loadedBridge)) {
-                Areashint.LOGGER.warn("BlueMap 集成类未实现桥接接口，已跳过: {}", INTEGRATION_CLASS);
-                return;
-            }
-
+            // 只有确认装了 BlueMap 才会执行到这里，从而加载版本目录里的实现类
+            BlueMapBridge loadedBridge = BlueMapCompatFactory.create();
+            loadedBridge.init();
             bridge = loadedBridge;
-            bridge.init();
             available = true;
             Areashint.LOGGER.info("BlueMap 已检测到，地图联动已启用。");
         } catch (Throwable t) {

@@ -27,7 +27,7 @@ stonecutter {
 	//   第三档 实验性：26.1 / 26.2（无 Yarn、无 intermediary，需要 no-remap Loom 与 JDK 25）
 	// 各版本的构建参数已经全部写进 gradle.properties，激活某个版本只需把它加进下面的 versions 列表
 	create(getRootProject()) {
-		versions '1.20.4', '1.20.1', '1.20.6', '1.21.1'
+		versions '1.20.4', '1.20.1', '1.20.6', '1.21.1', '1.21.4'
 		// 1.20.1 已完成「第二真实编译目标」验证（src/main 0 错误、src/client 16 处 UI API 差异），
 		// 要复现就把下面这行放回 versions 列表，详见 17-第二真实编译目标验证.md
 		// version '1.20.1', '1.20.1'

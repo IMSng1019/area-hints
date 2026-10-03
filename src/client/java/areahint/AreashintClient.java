@@ -87,6 +87,9 @@ public class AreashintClient implements ClientModInitializer {
 		areahint.dimensional.DimensionalityNameVisualController.register();
 		areahint.dimensional.DimensionalityColorVisualController.register();
 		
+		// 安装当前版本的客户端网络实现：机制 ② 的唯一交接点（实现类在各版本目录里）
+		areahint.network.ClientNetworkCompat.install(areahint.network.ClientNetworkCompatFactory.create());
+
 		// 初始化网络处理
 		ClientNetworking.init();
 		

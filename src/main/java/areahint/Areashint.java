@@ -86,6 +86,9 @@ public class Areashint implements ModInitializer {
 		});
 		ServerTickEvents.END_SERVER_TICK.register(server -> BlueMapCompat.onServerTick(System.currentTimeMillis()));
 
+		// 安装当前版本的网络实现：机制 ② 的唯一交接点（实现类在各版本目录里）
+		areahint.network.NetworkCompat.install(areahint.network.NetworkCompatFactory.create());
+
 		// 初始化服务端网络处理
 		ServerNetworking.init();
 

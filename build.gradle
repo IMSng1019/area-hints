@@ -154,11 +154,44 @@ dependencies {
 
 }
 
+// ===== 产物元数据按版本解析（阶段 1 Task 3）=====
+// minecraft 依赖范围默认收紧到当前节点版本；如需放宽，在 gradle.properties 写 deps.<版本>.mc_depends
+def minecraftRange = (project.findProperty("deps.${mcVersion}.mc_depends") ?: "~${mcVersionDep}").toString()
+// Xaero 的 suggests 精确版本号取坐标里 _Fabric_ 之前的部分；该版本无坐标时标记 __DROP__，产物里整行删除
+def xaeroSuggest = { String name ->
+	def raw = thirdPartyProp(name)
+	return raw == null ? '__DROP__' : raw.split('_Fabric_')[0]
+}
+def xaeroMinimapSuggest = xaeroSuggest('xaero_minimap')
+def xaeroWorldMapSuggest = xaeroSuggest('xaero_world_map')
+
 processResources {
 	inputs.property "version", project.version
+	// 这些值必须进输入指纹，否则改完 deps 后 processResources 会被误判为 UP-TO-DATE
+	inputs.property "minecraftRange", minecraftRange
+	inputs.property "fabricloaderVersion", loaderDep
+	inputs.property "javaVersion", javaDep
+	inputs.property "xaeroMinimapSuggest", xaeroMinimapSuggest
+	inputs.property "xaeroWorldMapSuggest", xaeroWorldMapSuggest
 
 	filesMatching("fabric.mod.json") {
-		expand "version": inputs.properties.version
+		expand "version": inputs.properties.version,
+			"minecraft_range": minecraftRange,
+			"fabricloader_version": loaderDep,
+			"java_version": javaDep,
+			"xaero_minimap": xaeroMinimapSuggest,
+			"xaero_world_map": xaeroWorldMapSuggest
+	}
+
+	doLast {
+		// 该版本查不到 Xaero 坐标时占位符是 __DROP__：整行删掉，而不是留一个错的精确版本号
+		// 输出目录从 outputs 里取（ProcessResources 没有可直接访问的 destinationDirectory 属性）
+		def destDir = outputs.files.files.find { it.isDirectory() }
+		def metaFile = destDir == null ? null : new File(destDir, 'fabric.mod.json')
+		if (metaFile != null && metaFile.exists() && metaFile.getText("UTF-8").contains('__DROP__')) {
+			def kept = metaFile.getText("UTF-8").readLines().findAll { !it.contains('__DROP__') }
+			metaFile.setText(kept.join(System.lineSeparator()) + System.lineSeparator(), "UTF-8")
+		}
 	}
 }
 

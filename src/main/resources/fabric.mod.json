@@ -36,17 +36,17 @@
 		}
 	],
 	"depends": {
-		"fabricloader": ">=0.16.14",
-		"minecraft": "~1.20.4",
-		"java": ">=17",
+		"fabricloader": ">=${fabricloader_version}",
+		"minecraft": "${minecraft_range}",
+		"java": ">=${java_version}",
 		"fabric-api": "*"
 	},
 	"suggests": {
 		"sodium": "*",
 		"modmenu": "*",
 		"bluemap": "*",
-		"xaerominimap": "=25.2.0",
-		"xaeroworldmap": "=1.39.2",
+		"xaerominimap": "=${xaero_minimap}",
+		"xaeroworldmap": "=${xaero_world_map}",
 		"vulkanmod": "*"
 	},
 	"recommends": {

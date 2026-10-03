@@ -1,0 +1,277 @@
+Running Stonecutter 0.9.7
+Warning: Stonecutter is used with Groovy buildscripts
+------------------------------------------------------------------------------------
+Stonecutter requires a more complex Gradle setup than typical Java projects.
+While Groovy DSL works, Kotlin DSL offers significant advantages:
+- The type-safe model prevents silent failures and Groovy's dynamic typing
+  shenanigans that are hell to debug.
+- Full IDE support with code completion, documentation and source navigation.
+- Kotlin-exclusive operator functions for simpler configurations.
+------------------------------------------------------------------------------------
+For more information see:
+- https://stonecutter.kikugie.dev/wiki/faq#groovy-support
+- https://docs.gradle.org/current/userguide/migrating_from_groovy_to_kotlin_dsl.html
+
+To acknowledge and disable this warning add to the `gradle.properties`:
+```
+dev.kikugie.stonecutter.hard_mode=true
+```
+------------------------------------------------------------------------------------
+
+> Configure project :1.20.1
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.4
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.6
+Fabric Loom: 1.10.5
+
+> Configure project :1.21.1
+Fabric Loom: 1.10.5
+
+> Task :1.20.1:stonecutterPrepare UP-TO-DATE
+> Task :1.20.6:stonecutterPrepare UP-TO-DATE
+> Task :1.20.1:stonecutterGenerate UP-TO-DATE
+> Task :1.20.6:stonecutterGenerate UP-TO-DATE
+> Task :1.21.1:stonecutterPrepare UP-TO-DATE
+> Task :1.21.1:stonecutterGenerate UP-TO-DATE
+> Task :1.21.1:compileJava UP-TO-DATE
+> Task :1.20.1:compileJava UP-TO-DATE
+> Task :1.20.4:compileJava UP-TO-DATE
+> Task :1.20.1:processResources UP-TO-DATE
+> Task :1.20.1:classes UP-TO-DATE
+> Task :1.20.6:compileJava UP-TO-DATE
+> Task :1.21.1:processResources UP-TO-DATE
+> Task :1.21.1:classes UP-TO-DATE
+> Task :1.20.1:stonecutterPrepareClient UP-TO-DATE
+> Task :1.21.1:stonecutterPrepareClient UP-TO-DATE
+> Task :1.20.4:processResources UP-TO-DATE
+> Task :1.20.4:classes UP-TO-DATE
+> Task :1.20.6:processResources UP-TO-DATE
+> Task :1.20.6:classes UP-TO-DATE
+> Task :1.20.6:stonecutterPrepareClient UP-TO-DATE
+> Task :1.21.1:stonecutterGenerateClient UP-TO-DATE
+> Task :1.20.1:stonecutterGenerateClient UP-TO-DATE
+> Task :1.20.6:stonecutterGenerateClient UP-TO-DATE
+> Task :1.20.1:compileClientJava UP-TO-DATE
+> Task :1.21.1:compileClientJava UP-TO-DATE
+> Task :1.20.1:processClientResources UP-TO-DATE
+> Task :1.21.1:processClientResources UP-TO-DATE
+> Task :1.20.4:compileClientJava UP-TO-DATE
+> Task :1.21.1:clientClasses UP-TO-DATE
+> Task :1.20.1:clientClasses UP-TO-DATE
+> Task :1.21.1:stonecutterPrepareTest UP-TO-DATE
+> Task :1.21.1:stonecutterGenerateTest NO-SOURCE
+> Task :1.20.4:processClientResources UP-TO-DATE
+> Task :1.20.4:clientClasses UP-TO-DATE
+> Task :1.21.1:compileTestJava NO-SOURCE
+> Task :1.20.4:compileTestJava NO-SOURCE
+> Task :1.20.1:stonecutterPrepareTest UP-TO-DATE
+> Task :1.20.1:stonecutterGenerateTest NO-SOURCE
+> Task :1.21.1:jar UP-TO-DATE
+> Task :1.20.1:compileTestJava NO-SOURCE
+> Task :1.21.1:processIncludeJars UP-TO-DATE
+> Task :1.20.4:jar
+> Task :1.20.4:processIncludeJars UP-TO-DATE
+> Task :1.20.1:jar
+> Task :1.20.1:processIncludeJars UP-TO-DATE
+
+> Task :1.20.6:compileClientJava
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :1.20.6:processClientResources UP-TO-DATE
+> Task :1.20.6:clientClasses
+> Task :1.20.6:stonecutterPrepareTest UP-TO-DATE
+> Task :1.20.6:stonecutterGenerateTest NO-SOURCE
+> Task :1.20.6:compileTestJava NO-SOURCE
+> Task :1.20.6:jar
+> Task :1.20.6:processIncludeJars UP-TO-DATE
+> Task :1.21.1:sourcesJar
+> Task :1.21.1:processTestResources NO-SOURCE
+> Task :1.21.1:testClasses UP-TO-DATE
+> Task :1.21.1:test NO-SOURCE
+> Task :1.21.1:validateAccessWidener NO-SOURCE
+> Task :1.21.1:check UP-TO-DATE
+> Task :1.20.4:sourcesJar
+> Task :1.20.1:sourcesJar
+> Task :1.20.6:sourcesJar
+> Task :1.20.4:processTestResources NO-SOURCE
+> Task :1.20.4:testClasses UP-TO-DATE
+> Task :1.20.4:test NO-SOURCE
+> Task :1.20.4:validateAccessWidener NO-SOURCE
+> Task :1.20.4:check UP-TO-DATE
+> Task :1.20.6:processTestResources NO-SOURCE
+> Task :1.20.6:testClasses UP-TO-DATE
+> Task :1.20.6:test NO-SOURCE
+> Task :1.20.6:validateAccessWidener NO-SOURCE
+> Task :1.20.6:check UP-TO-DATE
+> Task :1.20.1:processTestResources NO-SOURCE
+> Task :1.20.1:testClasses UP-TO-DATE
+> Task :1.20.1:test NO-SOURCE
+> Task :1.20.1:validateAccessWidener NO-SOURCE
+> Task :1.20.1:check UP-TO-DATE
+> Task :1.21.1:remapSourcesJar FAILED
+
+> Task :1.20.4:remapSourcesJar
+java.lang.OutOfMemoryError: Java heap space
+	at java.base/java.io.FileCleanable.register(FileCleanable.java:77)
+	at java.base/java.io.FileInputStream.<init>(FileInputStream.java:153)
+	at org.cadixdev.mercury.shadow.org.eclipse.jdt.internal.compiler.util.Util.getFileCharContent(Util.java:429)
+	at org.cadixdev.mercury.shadow.org.eclipse.jdt.core.dom.CompilationUnitResolver.resolve(CompilationUnitResolver.java:1088)
+	at org.cadixdev.mercury.shadow.org.eclipse.jdt.core.dom.CompilationUnitResolver.resolve(CompilationUnitResolver.java:739)
+	at org.cadixdev.mercury.shadow.org.eclipse.jdt.core.dom.ASTParser.createASTs(ASTParser.java:1049)
+	at org.cadixdev.mercury.Mercury.run(Mercury.java:243)
+	at org.cadixdev.mercury.Mercury.rewrite(Mercury.java:198)
+	at net.fabricmc.loom.task.service.SourceRemapperService.remapSourcesJar(SourceRemapperService.java:112)
+	at net.fabricmc.loom.task.RemapSourcesJarTask$RemapSourcesAction.execute(RemapSourcesJarTask.java:90)
+	at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:68)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:64)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:61)
+	at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:102)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:61)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$$Lambda/0x000002b9b5f7def0.execute(Unknown Source)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:58)
+	at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:174)
+	at org.gradle.workers.internal.DefaultWorkerExecutor$$Lambda/0x000002b9b5f7d290.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:191)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.access$500(DefaultConditionalExecutionQueue.java:112)
+
+> Task :1.20.4:remapSourcesJar FAILED
+> Task :1.20.1:remapJar FAILED
+> Task :1.21.1:remapJar FAILED
+
+> Task :1.20.1:remapSourcesJar
+java.lang.OutOfMemoryError: Java heap space
+	at java.base/java.io.FileInputStream.readAllBytes(FileInputStream.java:310)
+	at org.cadixdev.mercury.shadow.org.eclipse.jdt.internal.compiler.util.Util.getInputStreamAsByteArray(Util.java:477)
+	at org.cadixdev.mercury.shadow.org.eclipse.jdt.internal.compiler.util.Util.getInputStreamAsCharArray(Util.java:505)
+	at org.cadixdev.mercury.shadow.org.eclipse.jdt.internal.compiler.util.Util.getFileCharContent(Util.java:430)
+	at org.cadixdev.mercury.shadow.org.eclipse.jdt.core.dom.CompilationUnitResolver.resolve(CompilationUnitResolver.java:1088)
+	at org.cadixdev.mercury.shadow.org.eclipse.jdt.core.dom.CompilationUnitResolver.resolve(CompilationUnitResolver.java:739)
+	at org.cadixdev.mercury.shadow.org.eclipse.jdt.core.dom.ASTParser.createASTs(ASTParser.java:1049)
+	at org.cadixdev.mercury.Mercury.run(Mercury.java:243)
+	at org.cadixdev.mercury.Mercury.rewrite(Mercury.java:198)
+	at net.fabricmc.loom.task.service.SourceRemapperService.remapSourcesJar(SourceRemapperService.java:112)
+	at net.fabricmc.loom.task.RemapSourcesJarTask$RemapSourcesAction.execute(RemapSourcesJarTask.java:90)
+	at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:68)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:64)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:61)
+	at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:102)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:61)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$$Lambda/0x000002b9b5f7def0.execute(Unknown Source)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:58)
+	at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:174)
+	at org.gradle.workers.internal.DefaultWorkerExecutor$$Lambda/0x000002b9b5f7d290.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:191)
+
+> Task :1.20.1:remapSourcesJar FAILED
+> Task :1.20.6:remapJar
+> Task :1.20.4:remapJar
+> Task :1.20.6:remapSourcesJar
+
+
+[Incubating] Problems report is available at: file:///J:/mc/mods/build/reports/problems/problems-report.html
+FAILURE: Build completed with 5 failures.
+
+1: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':1.21.1:remapSourcesJar' (registered by plugin 'fabric-loom').
+> A failure occurred while executing net.fabricmc.loom.task.RemapSourcesJarTask$RemapSourcesAction
+   > Java heap space
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':1.20.4:remapSourcesJar' (registered by plugin 'fabric-loom').
+> A failure occurred while executing net.fabricmc.loom.task.RemapSourcesJarTask$RemapSourcesAction
+   > Failed to remap sources
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+3: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':1.21.1:remapJar' (registered by plugin 'fabric-loom').
+> A failure occurred while executing net.fabricmc.loom.task.RemapJarTask$RemapAction
+   > Java heap space
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+4: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':1.20.1:remapJar' (registered by plugin 'fabric-loom').
+> A failure occurred while executing net.fabricmc.loom.task.RemapJarTask$RemapAction
+   > Java heap space
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+5: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':1.20.1:remapSourcesJar' (registered by plugin 'fabric-loom').
+> A failure occurred while executing net.fabricmc.loom.task.RemapSourcesJarTask$RemapSourcesAction
+   > Java heap space
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+51 actionable tasks: 16 executed, 35 up-to-date
+
+BUILD FAILED in 40s

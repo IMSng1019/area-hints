@@ -1,10 +1,10 @@
 package areahint.xaero;
 
+import areahint.render.BufferCompat;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.gl.ShaderProgram;
@@ -66,15 +66,14 @@ public final class OverlayRenderHelper {
         float red = ((rgb >> 16) & 0xFF) / 255.0F;
         float green = ((rgb >> 8) & 0xFF) / 255.0F;
         float blue = (rgb & 0xFF) / 255.0F;
-        BufferBuilder buffer = Tessellator.getInstance().getBuffer();
-        buffer.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+        BufferBuilder buffer = BufferCompat.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
         for (float[] triangle : triangles) {
             if (triangle.length < 6) {
                 continue;
             }
-            buffer.vertex(matrix, triangle[0], triangle[1], depth).color(red, green, blue, alpha).next();
-            buffer.vertex(matrix, triangle[2], triangle[3], depth).color(red, green, blue, alpha).next();
-            buffer.vertex(matrix, triangle[4], triangle[5], depth).color(red, green, blue, alpha).next();
+            BufferCompat.vertex(buffer, matrix, triangle[0], triangle[1], depth, red, green, blue, alpha);
+            BufferCompat.vertex(buffer, matrix, triangle[2], triangle[3], depth, red, green, blue, alpha);
+            BufferCompat.vertex(buffer, matrix, triangle[4], triangle[5], depth, red, green, blue, alpha);
         }
         BufferRenderer.drawWithGlobalProgram(buffer.end());
     }
@@ -87,14 +86,13 @@ public final class OverlayRenderHelper {
         float red = ((rgb >> 16) & 0xFF) / 255.0F;
         float green = ((rgb >> 8) & 0xFF) / 255.0F;
         float blue = (rgb & 0xFF) / 255.0F;
-        BufferBuilder buffer = Tessellator.getInstance().getBuffer();
-        buffer.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
+        BufferBuilder buffer = BufferCompat.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
         for (float[] line : lines) {
             if (line.length < 4) {
                 continue;
             }
-            buffer.vertex(matrix, line[0], line[1], depth).color(red, green, blue, alpha).next();
-            buffer.vertex(matrix, line[2], line[3], depth).color(red, green, blue, alpha).next();
+            BufferCompat.vertex(buffer, matrix, line[0], line[1], depth, red, green, blue, alpha);
+            BufferCompat.vertex(buffer, matrix, line[2], line[3], depth, red, green, blue, alpha);
         }
         BufferRenderer.drawWithGlobalProgram(buffer.end());
     }

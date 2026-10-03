@@ -1,0 +1,113 @@
+Running Stonecutter 0.9.7
+Warning: Stonecutter is used with Groovy buildscripts
+------------------------------------------------------------------------------------
+Stonecutter requires a more complex Gradle setup than typical Java projects.
+While Groovy DSL works, Kotlin DSL offers significant advantages:
+- The type-safe model prevents silent failures and Groovy's dynamic typing
+  shenanigans that are hell to debug.
+- Full IDE support with code completion, documentation and source navigation.
+- Kotlin-exclusive operator functions for simpler configurations.
+------------------------------------------------------------------------------------
+For more information see:
+- https://stonecutter.kikugie.dev/wiki/faq#groovy-support
+- https://docs.gradle.org/current/userguide/migrating_from_groovy_to_kotlin_dsl.html
+
+To acknowledge and disable this warning add to the `gradle.properties`:
+```
+dev.kikugie.stonecutter.hard_mode=true
+```
+------------------------------------------------------------------------------------
+
+> Configure project :1.20.1
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.4
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.6
+Fabric Loom: 1.10.5
+
+> Configure project :1.21.1
+Fabric Loom: 1.10.5
+
+> Task :1.20.1:stonecutterPrepare UP-TO-DATE
+> Task :1.21.1:stonecutterPrepare UP-TO-DATE
+> Task :1.20.6:stonecutterPrepare UP-TO-DATE
+> Task :1.20.1:stonecutterGenerate UP-TO-DATE
+> Task :1.21.1:stonecutterGenerate UP-TO-DATE
+> Task :1.20.6:stonecutterGenerate UP-TO-DATE
+> Task :1.20.6:compileJava UP-TO-DATE
+> Task :1.21.1:compileJava UP-TO-DATE
+> Task :1.20.1:compileJava UP-TO-DATE
+> Task :1.20.4:compileJava UP-TO-DATE
+> Task :1.20.4:processResources UP-TO-DATE
+> Task :1.20.1:processResources UP-TO-DATE
+> Task :1.21.1:processResources UP-TO-DATE
+> Task :1.20.4:classes UP-TO-DATE
+> Task :1.21.1:classes UP-TO-DATE
+> Task :1.20.6:processResources UP-TO-DATE
+> Task :1.20.1:classes UP-TO-DATE
+> Task :1.21.1:stonecutterPrepareClient UP-TO-DATE
+> Task :1.20.6:classes UP-TO-DATE
+> Task :1.21.1:stonecutterGenerateClient UP-TO-DATE
+> Task :1.20.1:stonecutterPrepareClient
+> Task :1.20.6:stonecutterPrepareClient
+> Task :1.21.1:compileClientJava UP-TO-DATE
+> Task :1.21.1:processClientResources
+> Task :1.21.1:clientClasses
+> Task :1.21.1:stonecutterPrepareTest UP-TO-DATE
+> Task :1.21.1:stonecutterGenerateTest NO-SOURCE
+> Task :1.21.1:compileTestJava NO-SOURCE
+> Task :1.21.1:jar
+> Task :1.21.1:processIncludeJars UP-TO-DATE
+> Task :1.20.1:stonecutterGenerateClient
+> Task :1.20.6:stonecutterGenerateClient
+
+> Task :1.20.6:compileClientJava
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:4: 错误: 找不到符号
+import areahint.render.BufferCompat;
+                      ^
+  符号:   类 BufferCompat
+  位置: 程序包 areahint.render
+J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:3: 错误: 找不到符号
+import areahint.render.BufferCompat;
+                      ^
+  符号:   类 BufferCompat
+  位置: 程序包 areahint.render
+2 个错误
+
+> Task :1.20.6:compileClientJava FAILED
+> Task :1.20.1:compileClientJava
+> Task :1.20.4:compileClientJava
+
+[Incubating] Problems report is available at: file:///J:/mc/mods/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':1.20.6:compileClientJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+> Compilation failed; see the compiler output below.
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:4: 错误: 找不到符号
+  import areahint.render.BufferCompat;
+                        ^
+    符号:   类 BufferCompat
+    位置: 程序包 areahint.render
+  J:\mc\mods\versions\1.20.6\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:3: 错误: 找不到符号
+  import areahint.render.BufferCompat;
+                        ^
+    符号:   类 BufferCompat
+    位置: 程序包 areahint.render
+  2 个错误
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+28 actionable tasks: 9 executed, 19 up-to-date
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 14s

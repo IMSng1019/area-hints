@@ -234,7 +234,12 @@ public class AreasHintConfigScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        // 1.20.2 起 renderBackground 改为 4 参、1 参重载被移除，故按版本分支
+        //? if >=1.20.2 {
         this.renderBackground(context, mouseX, mouseY, delta);
+        //?} else {
+        /*this.renderBackground(context);*/
+        //?}
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 12, 0xFFFFFF);
         super.render(context, mouseX, mouseY, delta);
     }
@@ -581,7 +586,7 @@ public class AreasHintConfigScreen extends Screen {
         }
     }
 
-    private class ConfigListWidget extends ElementListWidget<ConfigListWidget.Entry> {
+    private class ConfigListWidget extends CompatEntryListWidget<ConfigListWidget.Entry> {
         private ClickableWidget focusedConfigWidget;
         private TextFieldWidget focusedTextField;
 

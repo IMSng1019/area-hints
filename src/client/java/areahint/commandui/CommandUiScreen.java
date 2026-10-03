@@ -100,6 +100,11 @@ public abstract class CommandUiScreen extends Screen {
             context.fill(0, 0, this.width, this.height, IN_GAME_BACKGROUND);
             return;
         }
+        // 1.20.2 起 renderBackground 改为 4 参、1 参重载被移除，故按版本分支
+        //? if >=1.20.2 {
         this.renderBackground(context, mouseX, mouseY, delta);
+        //?} else {
+        /*this.renderBackground(context);*/
+        //?}
     }
 }

@@ -1,5 +1,6 @@
 package areahint.commandui;
 
+import areahint.gui.CompatEntryListWidget;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
@@ -107,7 +108,7 @@ public class WizardSelectionListScreen<T> extends CommandWizardScreen {
         return titleKey.substring(prefix.length(), titleKey.length() - suffix.length());
     }
 
-    private class SelectionListWidget extends ElementListWidget<SelectionListWidget.Entry> {
+    private class SelectionListWidget extends CompatEntryListWidget<SelectionListWidget.Entry> {
         SelectionListWidget(MinecraftClient client, int width, int height, int top, int bottom) {
             super(client, width, bottom - top, top, 30);
             this.setRenderBackground(false);

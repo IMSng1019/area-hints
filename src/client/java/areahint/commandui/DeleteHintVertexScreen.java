@@ -1,6 +1,7 @@
 package areahint.commandui;
 
 import areahint.data.AreaData;
+import areahint.gui.CompatEntryListWidget;
 import areahint.i18n.I18nManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -76,7 +77,7 @@ public class DeleteHintVertexScreen extends CommandWizardScreen {
         }
     }
 
-    private class VertexListWidget extends ElementListWidget<VertexListWidget.Entry> {
+    private class VertexListWidget extends CompatEntryListWidget<VertexListWidget.Entry> {
         VertexListWidget(MinecraftClient client, int width, int height, int top, int bottom) {
             super(client, width, bottom - top, top, 28);
             this.setRenderBackground(false);

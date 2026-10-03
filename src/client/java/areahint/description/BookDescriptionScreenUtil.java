@@ -37,7 +37,12 @@ public final class BookDescriptionScreenUtil {
         NbtList pages = new NbtList();
         String fallbackDescription = I18nManager.translate("description.book.no_description");
         for (String page : paginate(description == null || description.isEmpty() ? fallbackDescription : description)) {
+            // 1.20.2 起文本序列化入口由 Text.Serializer.toJson 改为 Text.Serialization.toJsonString
+            //? if >=1.20.2 {
             pages.add(NbtString.of(Text.Serialization.toJsonString(Text.literal(page))));
+            //?} else {
+            /*pages.add(NbtString.of(Text.Serializer.toJson(Text.literal(page))));*/
+            //?}
         }
         nbt.put("pages", pages);
         book.setNbt(nbt);

@@ -166,7 +166,12 @@ public final class AreaManagementClient {
 
         @Override
         public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+            // 1.20.2 起 renderBackground 改为 4 参、1 参重载被移除，故按版本分支
+            //? if >=1.20.2 {
             this.renderBackground(context, mouseX, mouseY, delta);
+            //?} else {
+            /*this.renderBackground(context);*/
+            //?}
             context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 18, 0xFFFFFF);
             context.drawCenteredTextWithShadow(this.textRenderer,
                 Text.literal(I18nManager.translate("xaero.areahint.loading.prompt", areaName)),

@@ -1,6 +1,7 @@
 package areahint.soundevent;
 
 import areahint.commandui.CommandUiScreen;
+import areahint.gui.CompatEntryListWidget;
 import areahint.i18n.I18nManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -81,7 +82,7 @@ public final class SoundEventCategoryScreen extends CommandUiScreen {
         return I18nManager.translate(key, args);
     }
 
-    private final class CategoryListWidget extends ElementListWidget<CategoryListWidget.Entry> {
+    private final class CategoryListWidget extends CompatEntryListWidget<CategoryListWidget.Entry> {
         CategoryListWidget(MinecraftClient client, int width, int height, int top) {
             super(client, width, height, top, ROW_HEIGHT);
             this.setRenderBackground(false);
@@ -113,7 +114,9 @@ public final class SoundEventCategoryScreen extends CommandUiScreen {
             @Override
             public void render(DrawContext drawContext, int index, int y, int x, int entryWidth,
                                int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                this.button.setDimensionsAndPosition(entryWidth, BUTTON_HEIGHT, x, y + 3);
+                // 1.20.1 无 setDimensionsAndPosition，等价拆成 setWidth + setPosition（高度构造时已定）
+                this.button.setWidth(entryWidth);
+                this.button.setPosition(x, y + 3);
                 this.button.render(drawContext, mouseX, mouseY, tickDelta);
             }
 

@@ -1,5 +1,6 @@
 package areahint.commandui;
 
+import areahint.gui.CompatEntryListWidget;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
@@ -134,7 +135,7 @@ public class CommandListScreen extends CommandUiScreen {
         return value == null ? "" : value.toLowerCase(Locale.ROOT).trim();
     }
 
-    private class CommandListWidget extends ElementListWidget<CommandListWidget.Entry> {
+    private class CommandListWidget extends CompatEntryListWidget<CommandListWidget.Entry> {
         CommandListWidget(MinecraftClient client, int width, int height, int top, int bottom) {
             super(client, width, bottom - top, top, 34);
             this.setRenderBackground(false);

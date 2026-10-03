@@ -3,6 +3,7 @@ package areahint.management.client;
 import areahint.commandui.CommandVisualHandler;
 import areahint.commandui.CommandVisualLaunchContext;
 import areahint.commandui.CommandVisualRegistry;
+import areahint.gui.CompatEntryListWidget;
 import areahint.i18n.I18nManager;
 import areahint.xaero.AreaOverlayRepository.OverlayArea;
 import net.minecraft.client.MinecraftClient;
@@ -63,7 +64,12 @@ final class AreaManagementScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        // 1.20.2 起 renderBackground 改为 4 参、1 参重载被移除，故按版本分支
+        //? if >=1.20.2 {
         this.renderBackground(context, mouseX, mouseY, delta);
+        //?} else {
+        /*this.renderBackground(context);*/
+        //?}
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 10, 0xFFFFFF);
         context.drawCenteredTextWithShadow(this.textRenderer,
             Text.literal(I18nManager.translate("xaero.areahint.management.area", area.name(), area.level())),
@@ -104,7 +110,7 @@ final class AreaManagementScreen extends Screen {
         return groups;
     }
 
-    private final class ManagementList extends ElementListWidget<ManagementList.Entry> {
+    private final class ManagementList extends CompatEntryListWidget<ManagementList.Entry> {
         private ManagementList(MinecraftClient client, int width, int height, int top, int bottom) {
             super(client, width, bottom - top, top, 26);
             this.setRenderBackground(false);

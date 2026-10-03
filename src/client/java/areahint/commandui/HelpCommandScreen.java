@@ -1,5 +1,6 @@
 package areahint.commandui;
 
+import areahint.gui.CompatEntryListWidget;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
@@ -47,7 +48,7 @@ public class HelpCommandScreen extends CommandUiScreen {
         }
     }
 
-    private class HelpListWidget extends ElementListWidget<HelpListWidget.Entry> {
+    private class HelpListWidget extends CompatEntryListWidget<HelpListWidget.Entry> {
         HelpListWidget(MinecraftClient client, int width, int height, int top, int bottom) {
             super(client, width, bottom - top, top, 34);
             this.setRenderBackground(false);

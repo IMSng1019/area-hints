@@ -90,7 +90,12 @@ public class CPURender implements RenderManager.IRender {
      * @param drawContext 绘制上下文
      * @param tickDelta tick间隔时间
      */
+    // 1.21 起 HudRenderCallback 第二参数由 float 改为 RenderTickCounter；本模组这两个参数都没用到
+    //? if >=1.21 {
+    /*private void onHudRender(DrawContext drawContext, net.minecraft.client.render.RenderTickCounter tickCounter) {*/
+    //?} else {
     private void onHudRender(DrawContext drawContext, float tickDelta) {
+    //?}
         if (animationState == AnimationState.NONE || currentText == null || client.player == null) {
             return;
         }

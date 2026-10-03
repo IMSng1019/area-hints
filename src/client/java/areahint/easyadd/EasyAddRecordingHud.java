@@ -27,7 +27,12 @@ public final class EasyAddRecordingHud {
         registered = true;
     }
 
+    // 1.21 起 HudRenderCallback 第二参数由 float 改为 RenderTickCounter；本模组这两个参数都没用到
+    //? if >=1.21 {
+    /*private static void render(DrawContext context, net.minecraft.client.render.RenderTickCounter tickCounter) {*/
+    //?} else {
     private static void render(DrawContext context, float tickDelta) {
+    //?}
         EasyAddManager manager = EasyAddManager.getInstance();
         if (!manager.isVisualMode()
                 || manager.getCurrentState() != EasyAddManager.EasyAddState.RECORDING_POINTS) {

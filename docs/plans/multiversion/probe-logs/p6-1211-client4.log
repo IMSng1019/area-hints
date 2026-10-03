@@ -1,0 +1,478 @@
+Running Stonecutter 0.9.7
+Warning: Stonecutter is used with Groovy buildscripts
+------------------------------------------------------------------------------------
+Stonecutter requires a more complex Gradle setup than typical Java projects.
+While Groovy DSL works, Kotlin DSL offers significant advantages:
+- The type-safe model prevents silent failures and Groovy's dynamic typing
+  shenanigans that are hell to debug.
+- Full IDE support with code completion, documentation and source navigation.
+- Kotlin-exclusive operator functions for simpler configurations.
+------------------------------------------------------------------------------------
+For more information see:
+- https://stonecutter.kikugie.dev/wiki/faq#groovy-support
+- https://docs.gradle.org/current/userguide/migrating_from_groovy_to_kotlin_dsl.html
+
+To acknowledge and disable this warning add to the `gradle.properties`:
+```
+dev.kikugie.stonecutter.hard_mode=true
+```
+------------------------------------------------------------------------------------
+
+> Configure project :1.20.1
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.4
+Fabric Loom: 1.10.5
+
+> Configure project :1.20.6
+Fabric Loom: 1.10.5
+
+> Configure project :1.21.1
+Fabric Loom: 1.10.5
+
+> Task :1.21.1:stonecutterPrepare UP-TO-DATE
+> Task :1.21.1:stonecutterGenerate UP-TO-DATE
+> Task :1.21.1:compileJava UP-TO-DATE
+> Task :1.21.1:processResources UP-TO-DATE
+> Task :1.21.1:classes UP-TO-DATE
+> Task :1.21.1:stonecutterPrepareClient
+> Task :1.21.1:stonecutterGenerateClient
+
+> Task :1.21.1:compileClientJava
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:78: 错误: 找不到符号
+        BufferBuilder buffer = tessellator.getBuffer();
+                                          ^
+  符号:   方法 getBuffer()
+  位置: 类型为Tessellator的变量 tessellator
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:287: 错误: 找不到符号
+                buffer.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+                      ^
+  符号:   方法 begin(DrawMode,VertexFormat)
+  位置: 类型为BufferBuilder的变量 buffer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:300: 错误: 找不到符号
+                buffer.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
+                      ^
+  符号:   方法 begin(DrawMode,VertexFormat)
+  位置: 类型为BufferBuilder的变量 buffer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:307: 错误: 找不到符号
+                    buffer.vertex(matrix, seg[0], seg[1], seg[2]).color(ca.r, ca.g, ca.b, 0.8f).next();
+                                                                                               ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:308: 错误: 找不到符号
+                    buffer.vertex(matrix, seg[3], seg[4], seg[5]).color(ca.r, ca.g, ca.b, 0.8f).next();
+                                                                                               ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:330: 错误: 找不到符号
+                buffer.vertex(matrix, vx[idx], minY, vz[idx]).color(cr, cg, cb, 0.2f).next();
+                                                                                     ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:334: 错误: 找不到符号
+                buffer.vertex(matrix, vx[idx], maxY, vz[idx]).color(cr, cg, cb, 0.2f).next();
+                                                                                     ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:344: 错误: 找不到符号
+            buffer.vertex(matrix, vx[i], minY, vz[i]).color(ri, gi, bi, 0.2f).next();
+                                                                             ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:345: 错误: 找不到符号
+            buffer.vertex(matrix, vx[i], maxY, vz[i]).color(ri, gi, bi, 0.2f).next();
+                                                                             ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:346: 错误: 找不到符号
+            buffer.vertex(matrix, vx[j], minY, vz[j]).color(rj, gj, bj, 0.2f).next();
+                                                                             ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:347: 错误: 找不到符号
+            buffer.vertex(matrix, vx[i], maxY, vz[i]).color(ri, gi, bi, 0.2f).next();
+                                                                             ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:348: 错误: 找不到符号
+            buffer.vertex(matrix, vx[j], maxY, vz[j]).color(rj, gj, bj, 0.2f).next();
+                                                                             ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:349: 错误: 找不到符号
+            buffer.vertex(matrix, vx[j], minY, vz[j]).color(rj, gj, bj, 0.2f).next();
+                                                                             ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:369: 错误: 找不到符号
+            buffer.vertex(matrix, vx[i], minY, vz[i]).color(ri, gi, bi, 0.8f).next();
+                                                                             ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:370: 错误: 找不到符号
+            buffer.vertex(matrix, vx[j], minY, vz[j]).color(rj, gj, bj, 0.8f).next();
+                                                                             ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:371: 错误: 找不到符号
+            buffer.vertex(matrix, vx[i], maxY, vz[i]).color(ri, gi, bi, 0.8f).next();
+                                                                             ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:372: 错误: 找不到符号
+            buffer.vertex(matrix, vx[j], maxY, vz[j]).color(rj, gj, bj, 0.8f).next();
+                                                                             ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:377: 错误: 找不到符号
+            buffer.vertex(matrix, vx[i], minY, vz[i]).color(ri, gi, bi, 0.8f).next();
+                                                                             ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:378: 错误: 找不到符号
+            buffer.vertex(matrix, vx[i], maxY, vz[i]).color(ri, gi, bi, 0.8f).next();
+                                                                             ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:574: 错误: 找不到符号
+        buffer.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
+              ^
+  符号:   方法 begin(DrawMode,VertexFormat)
+  位置: 类型为BufferBuilder的变量 buffer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:578: 错误: 找不到符号
+            buffer.vertex(matrix, px - size, py, pz).color(1f, 1f, 1f, 1f).next();
+                                                                          ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:579: 错误: 找不到符号
+            buffer.vertex(matrix, px + size, py, pz).color(1f, 1f, 1f, 1f).next();
+                                                                          ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:580: 错误: 找不到符号
+            buffer.vertex(matrix, px, py, pz - size).color(1f, 1f, 1f, 1f).next();
+                                                                          ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:581: 错误: 找不到符号
+            buffer.vertex(matrix, px, py, pz + size).color(1f, 1f, 1f, 1f).next();
+                                                                          ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:602: 错误: 找不到符号
+            buffer.vertex(matrix, (float)(x1 + dx * t1), y, (float)(z1 + dz * t1)).color(1f, 1f, 1f, 1f).next();
+                                                                                                        ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:603: 错误: 找不到符号
+            buffer.vertex(matrix, (float)(x1 + dx * t2), y, (float)(z1 + dz * t2)).color(1f, 1f, 1f, 1f).next();
+                                                                                                        ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:69: 错误: 找不到符号
+        BufferBuilder buffer = Tessellator.getInstance().getBuffer();
+                                                        ^
+  符号:   方法 getBuffer()
+  位置: 类 Tessellator
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:70: 错误: 找不到符号
+        buffer.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+              ^
+  符号:   方法 begin(DrawMode,VertexFormat)
+  位置: 类型为BufferBuilder的变量 buffer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:75: 错误: 找不到符号
+            buffer.vertex(matrix, triangle[0], triangle[1], depth).color(red, green, blue, alpha).next();
+                                                                                                 ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:76: 错误: 找不到符号
+            buffer.vertex(matrix, triangle[2], triangle[3], depth).color(red, green, blue, alpha).next();
+                                                                                                 ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:77: 错误: 找不到符号
+            buffer.vertex(matrix, triangle[4], triangle[5], depth).color(red, green, blue, alpha).next();
+                                                                                                 ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:90: 错误: 找不到符号
+        BufferBuilder buffer = Tessellator.getInstance().getBuffer();
+                                                        ^
+  符号:   方法 getBuffer()
+  位置: 类 Tessellator
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:91: 错误: 找不到符号
+        buffer.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
+              ^
+  符号:   方法 begin(DrawMode,VertexFormat)
+  位置: 类型为BufferBuilder的变量 buffer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:96: 错误: 找不到符号
+            buffer.vertex(matrix, line[0], line[1], depth).color(red, green, blue, alpha).next();
+                                                                                         ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:97: 错误: 找不到符号
+            buffer.vertex(matrix, line[2], line[3], depth).color(red, green, blue, alpha).next();
+                                                                                         ^
+  符号:   方法 next()
+  位置: 接口 VertexConsumer
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\AreaWorldMapReader.java:109: 错误: 无法访问ScreenBase
+        GuiMap map = originalRightClickMenu ? currentMap() : null;
+                                            ^
+  找不到xaero.lib.client.gui.ScreenBase的类文件
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\AreaWorldMapReader.java:197: 错误: 不兼容的类型: Screen无法转换为GuiMap
+        return client != null && client.currentScreen instanceof GuiMap map ? map : null;
+                                       ^
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\AreaWorldMapRightClick.java:96: 错误: 不兼容的类型: Screen无法转换为GuiMap
+            if (screen instanceof GuiMap map) {
+                ^
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\AreaWorldMapRightClick.java:127: 错误: 不可比较的类型: Screen和GuiMap
+        if (client == null || client.currentScreen != map) {
+                                                   ^
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\AreaWorldMapRightClick.java:133: 错误: 不兼容的类型: GuiMap无法转换为Screen
+        AreaManagementClient.openForHits(map, dimensionId, hits);
+                                         ^
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\XaeroWorldMapBridge.java:37: 错误: 不兼容的类型: Screen无法转换为GuiMap
+            if (screen instanceof GuiMap map) {
+                ^
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\XaeroWorldMapBridge.java:38: 错误: 不兼容的类型: GuiMap无法转换为Screen
+                AreaWorldMapRightClick.register(map);
+                                                ^
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\XaeroWorldMapBridge.java:46: 错误: 不兼容的类型: Screen无法转换为GuiMap
+        if (client != null && client.currentScreen instanceof GuiMap map) {
+                                    ^
+J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\XaeroWorldMapBridge.java:61: 错误: 不兼容的类型: Screen无法转换为GuiMap
+        if (client == null || !(client.currentScreen instanceof GuiMap map) || coordinateScaleMethod == null) {
+                                      ^
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: 某些消息已经过简化; 请使用 -Xdiags:verbose 重新编译以获得完整输出
+44 个错误
+
+> Task :1.21.1:compileClientJava FAILED
+
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':1.21.1:compileClientJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+> Compilation failed; see the compiler output below.
+  注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\AreaWorldMapRightClick.java:127: 错误: 不可比较的类型: Screen和GuiMap
+          if (client == null || client.currentScreen != map) {
+                                                     ^
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\AreaWorldMapReader.java:197: 错误: 不兼容的类型: Screen无法转换为GuiMap
+          return client != null && client.currentScreen instanceof GuiMap map ? map : null;
+                                         ^
+[Incubating] Problems report is available at: file:///J:/mc/mods/build/reports/problems/problems-report.html
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\AreaWorldMapRightClick.java:96: 错误: 不兼容的类型: Screen无法转换为GuiMap
+              if (screen instanceof GuiMap map) {
+                  ^
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\AreaWorldMapRightClick.java:133: 错误: 不兼容的类型: GuiMap无法转换为Screen
+          AreaManagementClient.openForHits(map, dimensionId, hits);
+                                           ^
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\XaeroWorldMapBridge.java:37: 错误: 不兼容的类型: Screen无法转换为GuiMap
+              if (screen instanceof GuiMap map) {
+                  ^
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\XaeroWorldMapBridge.java:38: 错误: 不兼容的类型: GuiMap无法转换为Screen
+                  AreaWorldMapRightClick.register(map);
+                                                  ^
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\XaeroWorldMapBridge.java:46: 错误: 不兼容的类型: Screen无法转换为GuiMap
+          if (client != null && client.currentScreen instanceof GuiMap map) {
+                                      ^
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\XaeroWorldMapBridge.java:61: 错误: 不兼容的类型: Screen无法转换为GuiMap
+          if (client == null || !(client.currentScreen instanceof GuiMap map) || coordinateScaleMethod == null) {
+                                        ^
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\worldmap\AreaWorldMapReader.java:109: 错误: 无法访问ScreenBase
+          GuiMap map = originalRightClickMenu ? currentMap() : null;
+                                              ^
+    找不到xaero.lib.client.gui.ScreenBase的类文件
+  注: 某些输入文件使用或覆盖了已过时的 API。
+  注: 某些消息已经过简化; 请使用 -Xdiags:verbose 重新编译以获得完整输出
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:78: 错误: 找不到符号
+          BufferBuilder buffer = tessellator.getBuffer();
+                                            ^
+    符号:   方法 getBuffer()
+    位置: 类型为Tessellator的变量 tessellator
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:287: 错误: 找不到符号
+                  buffer.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+                        ^
+    符号:   方法 begin(DrawMode,VertexFormat)
+    位置: 类型为BufferBuilder的变量 buffer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:300: 错误: 找不到符号
+                  buffer.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
+                        ^
+    符号:   方法 begin(DrawMode,VertexFormat)
+    位置: 类型为BufferBuilder的变量 buffer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:307: 错误: 找不到符号
+                      buffer.vertex(matrix, seg[0], seg[1], seg[2]).color(ca.r, ca.g, ca.b, 0.8f).next();
+                                                                                                 ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:308: 错误: 找不到符号
+                      buffer.vertex(matrix, seg[3], seg[4], seg[5]).color(ca.r, ca.g, ca.b, 0.8f).next();
+                                                                                                 ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:330: 错误: 找不到符号
+                  buffer.vertex(matrix, vx[idx], minY, vz[idx]).color(cr, cg, cb, 0.2f).next();
+                                                                                       ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:334: 错误: 找不到符号
+                  buffer.vertex(matrix, vx[idx], maxY, vz[idx]).color(cr, cg, cb, 0.2f).next();
+                                                                                       ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:344: 错误: 找不到符号
+              buffer.vertex(matrix, vx[i], minY, vz[i]).color(ri, gi, bi, 0.2f).next();
+                                                                               ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:345: 错误: 找不到符号
+              buffer.vertex(matrix, vx[i], maxY, vz[i]).color(ri, gi, bi, 0.2f).next();
+                                                                               ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:346: 错误: 找不到符号
+              buffer.vertex(matrix, vx[j], minY, vz[j]).color(rj, gj, bj, 0.2f).next();
+                                                                               ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:347: 错误: 找不到符号
+              buffer.vertex(matrix, vx[i], maxY, vz[i]).color(ri, gi, bi, 0.2f).next();
+                                                                               ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:348: 错误: 找不到符号
+              buffer.vertex(matrix, vx[j], maxY, vz[j]).color(rj, gj, bj, 0.2f).next();
+                                                                               ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:349: 错误: 找不到符号
+              buffer.vertex(matrix, vx[j], minY, vz[j]).color(rj, gj, bj, 0.2f).next();
+                                                                               ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:369: 错误: 找不到符号
+              buffer.vertex(matrix, vx[i], minY, vz[i]).color(ri, gi, bi, 0.8f).next();
+                                                                               ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:370: 错误: 找不到符号
+              buffer.vertex(matrix, vx[j], minY, vz[j]).color(rj, gj, bj, 0.8f).next();
+                                                                               ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:371: 错误: 找不到符号
+              buffer.vertex(matrix, vx[i], maxY, vz[i]).color(ri, gi, bi, 0.8f).next();
+                                                                               ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:372: 错误: 找不到符号
+              buffer.vertex(matrix, vx[j], maxY, vz[j]).color(rj, gj, bj, 0.8f).next();
+                                                                               ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:377: 错误: 找不到符号
+              buffer.vertex(matrix, vx[i], minY, vz[i]).color(ri, gi, bi, 0.8f).next();
+                                                                               ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:378: 错误: 找不到符号
+              buffer.vertex(matrix, vx[i], maxY, vz[i]).color(ri, gi, bi, 0.8f).next();
+                                                                               ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:574: 错误: 找不到符号
+          buffer.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
+                ^
+    符号:   方法 begin(DrawMode,VertexFormat)
+    位置: 类型为BufferBuilder的变量 buffer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:578: 错误: 找不到符号
+              buffer.vertex(matrix, px - size, py, pz).color(1f, 1f, 1f, 1f).next();
+                                                                            ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:579: 错误: 找不到符号
+              buffer.vertex(matrix, px + size, py, pz).color(1f, 1f, 1f, 1f).next();
+                                                                            ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:580: 错误: 找不到符号
+              buffer.vertex(matrix, px, py, pz - size).color(1f, 1f, 1f, 1f).next();
+                                                                            ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:581: 错误: 找不到符号
+              buffer.vertex(matrix, px, py, pz + size).color(1f, 1f, 1f, 1f).next();
+                                                                            ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:602: 错误: 找不到符号
+              buffer.vertex(matrix, (float)(x1 + dx * t1), y, (float)(z1 + dz * t1)).color(1f, 1f, 1f, 1f).next();
+                                                                                                          ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\boundviz\BoundVizRenderer.java:603: 错误: 找不到符号
+              buffer.vertex(matrix, (float)(x1 + dx * t2), y, (float)(z1 + dz * t2)).color(1f, 1f, 1f, 1f).next();
+                                                                                                          ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:69: 错误: 找不到符号
+          BufferBuilder buffer = Tessellator.getInstance().getBuffer();
+                                                          ^
+    符号:   方法 getBuffer()
+    位置: 类 Tessellator
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:70: 错误: 找不到符号
+          buffer.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+                ^
+    符号:   方法 begin(DrawMode,VertexFormat)
+    位置: 类型为BufferBuilder的变量 buffer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:75: 错误: 找不到符号
+              buffer.vertex(matrix, triangle[0], triangle[1], depth).color(red, green, blue, alpha).next();
+                                                                                                   ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:76: 错误: 找不到符号
+              buffer.vertex(matrix, triangle[2], triangle[3], depth).color(red, green, blue, alpha).next();
+                                                                                                   ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:77: 错误: 找不到符号
+              buffer.vertex(matrix, triangle[4], triangle[5], depth).color(red, green, blue, alpha).next();
+                                                                                                   ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:90: 错误: 找不到符号
+          BufferBuilder buffer = Tessellator.getInstance().getBuffer();
+                                                          ^
+    符号:   方法 getBuffer()
+    位置: 类 Tessellator
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:91: 错误: 找不到符号
+          buffer.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
+                ^
+    符号:   方法 begin(DrawMode,VertexFormat)
+    位置: 类型为BufferBuilder的变量 buffer
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:96: 错误: 找不到符号
+              buffer.vertex(matrix, line[0], line[1], depth).color(red, green, blue, alpha).next();
+                                                                                           ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+7 actionable tasks: 3 executed, 4 up-to-date
+  J:\mc\mods\versions\1.21.1\build\generated\stonecutter\client\java\areahint\xaero\OverlayRenderHelper.java:97: 错误: 找不到符号
+              buffer.vertex(matrix, line[2], line[3], depth).color(red, green, blue, alpha).next();
+                                                                                           ^
+    符号:   方法 next()
+    位置: 接口 VertexConsumer
+  44 个错误
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 6s

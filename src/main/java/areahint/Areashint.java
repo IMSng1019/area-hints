@@ -51,6 +51,9 @@ public class Areashint implements ModInitializer {
 
 		LOGGER.info("区域提示模组服务端初始化中...");
 
+		// 安装当前版本的网络实现：必须先于任何会注册接收器的初始化（机制 ② 的唯一交接点）
+		areahint.network.NetworkCompat.install(areahint.network.NetworkCompatFactory.create());
+
 		// 初始化服务端国际化
 		ServerI18nManager.init();
 
@@ -85,9 +88,6 @@ public class Areashint implements ModInitializer {
 			onServerStopped(server);
 		});
 		ServerTickEvents.END_SERVER_TICK.register(server -> BlueMapCompat.onServerTick(System.currentTimeMillis()));
-
-		// 安装当前版本的网络实现：机制 ② 的唯一交接点（实现类在各版本目录里）
-		areahint.network.NetworkCompat.install(areahint.network.NetworkCompatFactory.create());
 
 		// 初始化服务端网络处理
 		ServerNetworking.init();

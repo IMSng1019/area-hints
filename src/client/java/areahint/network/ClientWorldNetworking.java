@@ -54,15 +54,20 @@ public class ClientWorldNetworking {
      */
     private static void handleWorldInfo(MinecraftClient client,
                                        NetworkReader buf) {
-        // 接收时捕获当前连接，替代新接口已移除的 handler 形参
-        ClientPlayNetworkHandler handler = client.getNetworkHandler();
+        // 网络线程上客户端可能尚未完成 GameJoin，getNetworkHandler() 可能为 null，连接确认统一放到主线程
+        ClientPlayNetworkHandler receivedOn = client.getNetworkHandler();
         try {
             String worldName = buf.readString();
             
             // 在主线程中处理世界信息
             client.execute(() -> {
                 try {
-                    if (client.getNetworkHandler() != handler) {
+                    ClientPlayNetworkHandler handler = client.getNetworkHandler();
+                    if (handler == null) {
+                        AreashintClient.LOGGER.warn("世界信息到达时客户端连接尚未就绪，已忽略: '{}'", worldName);
+                        return;
+                    }
+                    if (receivedOn != null && receivedOn != handler) {
                         AreashintClient.LOGGER.debug("已忽略失效连接发送的世界信息: {}", worldName);
                         return;
                     }

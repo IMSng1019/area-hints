@@ -143,17 +143,21 @@ public class ClientNetworking {
             return;
         }
 
-        // 连接身份改从客户端取，与旧 lambda 传入的 handler 是同一个对象
-        registerAreaDataConnection(client.getNetworkHandler());
-
-        // 确保缓存判断和文件写入都在客户端主线程中处理
+        // 登录阶段的包会先于 GameJoin 的主线程处理到达：此时 client.player 尚未赋值，getNetworkHandler() 仍为 null
+        // 因此连接身份登记必须推迟到主线程执行，否则会被连接校验静默丢弃
         client.execute(() -> {
-            if (!isActiveAreaDataConnection(client.getNetworkHandler())) {
+            ClientPlayNetworkHandler handler = client.getNetworkHandler();
+            if (handler == null) {
+                AreashintClient.LOGGER.warn("区域数据到达时客户端连接尚未就绪，已丢弃: {}", dimensionName);
+                return;
+            }
+            registerAreaDataConnection(handler);
+            if (!isActiveAreaDataConnection(handler)) {
                 AreashintClient.LOGGER.debug("已忽略失效连接发送的区域数据: {}", dimensionName);
                 return;
             }
             if (!areahint.world.ClientWorldFolderManager.isInitialized()) {
-                cachePendingAreaData(client.getNetworkHandler(), dimensionName, fileContent);
+                cachePendingAreaData(handler, dimensionName, fileContent);
                 return;
             }
             processAreaData(client, dimensionName, fileContent);

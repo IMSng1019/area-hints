@@ -74,6 +74,10 @@ public class ClientWorldNetworking {
 
                     // 正式目录确定后先回放登录阶段暂存的域名数据，避免检测器读取空目录
                     ClientNetworking.flushPendingAreaData(client, handler);
+
+                    // 兜底刷新：即使登录阶段区域数据包全部丢失，也用已就绪的世界目录刷新边界与 Xaero 覆盖层
+                    areahint.boundviz.BoundVizManager.getInstance().reload();
+                    areahint.xaero.AreaOverlayRepository.getInstance().refreshAll();
                     
                     // 重新加载当前区域数据
                     reloadCurrentAreaData();

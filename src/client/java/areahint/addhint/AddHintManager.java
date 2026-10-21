@@ -28,6 +28,8 @@ public class AddHintManager {
     private AreaData selectedArea;
     private String selectedDimensionId;
     private List<Double[]> newVertices = new ArrayList<>();
+    // 审批临时模式只回传副本，绝不走普通域名保存网络包。
+    private java.util.function.Consumer<AreaData> temporarySubmit;
 
     public static AddHintManager getInstance() {
         if (instance == null) {
@@ -45,6 +47,8 @@ public class AddHintManager {
      */
     public void start() {
         if (client.player == null) return;
+
+        temporarySubmit = null;
 
         isActive = true;
         List<AreaData> modifiableAreas = getModifiableAreas();
@@ -66,6 +70,7 @@ public class AddHintManager {
             return List.of();
         }
 
+        temporarySubmit = null;
         isActive = true;
         List<AreaData> modifiableAreas = getModifiableAreas();
         if (modifiableAreas.isEmpty()) {
@@ -112,11 +117,28 @@ public class AddHintManager {
         client.player.sendMessage(Text.of(I18nManager.translate("addhint.button.record.finish")), false);
     }
 
+    // 复用现有录点和顶点排序流程，但临时草稿由审批会话持有并决定何时上传。
+    public void beginTemporary(AreaData area, String dimensionId, java.util.function.Consumer<AreaData> callback) {
+        reset();
+        if (area == null || callback == null || client.player == null) return;
+        selectedArea = new com.google.gson.Gson().fromJson(new com.google.gson.Gson().toJson(area), AreaData.class);
+        selectedDimensionId = dimensionId;
+        temporarySubmit = callback;
+        isActive = true;
+        isRecording = true;
+        areahint.commandui.CommandVisualController.beginVisualRecordMode("addhint");
+    }
+
     /**
      * 记录当前位置
      */
     public void recordCurrentPosition() {
         if (!isRecording || client.player == null) return;
+        if (temporarySubmit != null && (client.world == null
+                || !client.world.getRegistryKey().getValue().toString().equals(selectedDimensionId))) {
+            client.player.sendMessage(Text.literal(I18nManager.translate("approval.client.wrong_dimension")), false);
+            return;
+        }
 
         int x = (int) Math.round(client.player.getX());
         int z = (int) Math.round(client.player.getZ());
@@ -178,7 +200,11 @@ public class AddHintManager {
                 return;
             }
 
-            // 发送到服务端
+            // 临时模式保留审批草稿，普通模式仍按原流程发送到服务端。
+            if (temporarySubmit != null) {
+                temporarySubmit.accept(selectedArea);
+                return;
+            }
             AddHintClientNetworking.sendToServer(selectedArea, selectedDimensionId);
 
             client.player.sendMessage(Text.of(I18nManager.translate("addhint.message.area") + selectedArea.getName() + I18nManager.translate("addhint.message.vertex_2")), false);
@@ -207,6 +233,7 @@ public class AddHintManager {
         isRecording = false;
         selectedArea = null;
         selectedDimensionId = null;
+        temporarySubmit = null;
         newVertices.clear();
         areahint.boundviz.BoundVizManager.getInstance().clearTemporaryVertices();
     }

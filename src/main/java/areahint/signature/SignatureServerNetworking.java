@@ -1,6 +1,7 @@
 package areahint.signature;
 
 import areahint.data.AreaData;
+import areahint.approval.ApprovalManager;
 import areahint.file.FileManager;
 import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Channel;
@@ -110,6 +111,13 @@ public class SignatureServerNetworking {
                     return;
                 }
                 storedArea.removeSignature(target);
+            }
+
+            // 扩展签名变化同样需要审批，避免未审批的签名提前授予域名修改资格。
+            if (ApprovalManager.submitAreasIfRequired(player,
+                "add".equals(normalizedOperation) ? "addsignature" : "deletesignature", areaFile, areas)) {
+                sendResponse(player, true, key("approval.message.submitted"));
+                return;
             }
 
             if (!FileManager.writeAreaData(areaFile, areas)) {

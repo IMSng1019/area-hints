@@ -38,6 +38,8 @@ public class DeleteHintVertexScreen extends CommandWizardScreen {
         int x = (this.width - totalWidth) / 2;
         int y = this.height - FOOTER_Y_OFFSET;
         this.addDrawableChild(ButtonWidget.builder(Text.literal(t("commandui.button.delete")), button -> {
+            // 未选择顶点时保留当前页面，避免临时审批流程留在活跃状态却失去恢复入口。
+            if (this.manager.getMarkedIndices().isEmpty()) return;
             markFlowHandled();
             if (this.client != null) {
                 this.client.setScreen(null);

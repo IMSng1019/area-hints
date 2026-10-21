@@ -1,6 +1,7 @@
 package areahint.dividearea;
 
 import areahint.data.AreaData;
+import areahint.approval.ApprovalManager;
 import areahint.file.FileManager;
 import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Channel;
@@ -56,6 +57,24 @@ public class DivideAreaServerNetworking {
                 sendResponse(player, false, key("dividearea.error.permission"));
                 return;
             }
+            // 分割涉及删除原域名并新增两个域名，必须作为同一份候选结果审批。
+            if (ApprovalManager.requiresApproval(player)) {
+                String fileName = Packets.getFileNameForDimension(dimType);
+                if (fileName == null) {
+                    sendResponse(player, false, key("dividearea.error.dimension"));
+                    return;
+                }
+                Path areaFile = areahint.world.WorldFolderManager.getWorldDimensionFile(fileName);
+                List<AreaData> proposed = FileManager.readAreaData(areaFile);
+                proposed.removeIf(area -> area.getName().equals(origName));
+                proposed.add(area1);
+                proposed.add(area2);
+                if (ApprovalManager.submitAreasIfRequired(player, "dividearea", areaFile, proposed)) {
+                    sendResponse(player, true, key("approval.message.submitted"));
+                    return;
+                }
+            }
+
             if (!saveDividedAreas(area1, area2, origName, dimension)) {
                 sendResponse(player, false, key("dividearea.error.save"));
                 return;

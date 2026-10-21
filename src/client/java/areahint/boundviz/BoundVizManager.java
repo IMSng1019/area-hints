@@ -22,6 +22,12 @@ public class BoundVizManager {
     private List<AreaData> currentDimensionAreas = new ArrayList<>();
     private String currentDimension = null;
     private int version = 0;
+    // 审批预览单独存于内存，刷新正式文件或切换维度均不会把临时内容写回磁盘。
+    private String previewDimension;
+    private List<AreaData> previewAreas = new ArrayList<>();
+    private java.util.Set<String> previewHiddenNames = java.util.Set.of();
+    private List<AreaData> previewMergedAreas = new ArrayList<>();
+    private int previewMergedVersion = -1;
 
     // 临时顶点记录（用于easyadd、expandarea、shrinkarea）
     private List<BlockPos> temporaryVertices = new ArrayList<>();
@@ -125,7 +131,7 @@ public class BoundVizManager {
         if (enabled) {
             loadCurrentDimensionAreas();
         }
-        return new ArrayList<>(currentDimensionAreas);
+        return new ArrayList<>(getVisibleAreas());
     }
 
     /**
@@ -135,7 +141,36 @@ public class BoundVizManager {
         if (enabled) {
             loadCurrentDimensionAreas();
         }
-        return currentDimensionAreas;
+        return getVisibleAreas();
+    }
+
+    // 同名正式域名及重命名前域名都先隐藏，再叠加审批草稿，避免新旧边界重叠。
+    public void setApprovalPreview(String dimensionId, List<AreaData> areas, java.util.Set<String> hiddenNames) {
+        previewDimension = dimensionId;
+        previewAreas = new ArrayList<>(areas);
+        previewHiddenNames = new java.util.HashSet<>(hiddenNames);
+        version++;
+    }
+
+    public void clearApprovalPreview() {
+        previewDimension = null;
+        previewAreas.clear();
+        previewHiddenNames = java.util.Set.of();
+        previewMergedAreas.clear();
+        version++;
+    }
+
+    private List<AreaData> getVisibleAreas() {
+        if (previewDimension == null || !previewDimension.equals(currentDimension)) return currentDimensionAreas;
+        if (previewMergedVersion != version) {
+            previewMergedAreas = new ArrayList<>();
+            for (AreaData area : currentDimensionAreas) {
+                if (!previewHiddenNames.contains(area.getName())) previewMergedAreas.add(area);
+            }
+            previewMergedAreas.addAll(previewAreas);
+            previewMergedVersion = version;
+        }
+        return previewMergedAreas;
     }
 
     /**

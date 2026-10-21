@@ -1,6 +1,7 @@
 package areahint.description;
 
 import areahint.Areashint;
+import areahint.approval.ApprovalManager;
 import areahint.command.DimensionalNameCommands;
 import areahint.data.AreaData;
 import areahint.dimensional.DimensionalNameManager;
@@ -16,6 +17,7 @@ import areahint.permission.PermissionService;
 import areahint.teleport.ServerAreaGeometry;
 import areahint.util.AreaPermissionUtil;
 import areahint.world.WorldFolderManager;
+import com.google.gson.Gson;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.nio.file.Files;
@@ -32,6 +34,7 @@ import java.util.Map;
  * 服务端域名描述网络处理。
  */
 public final class DescriptionServerNetworking {
+    private static final Gson GSON = new Gson();
     public static final int MAX_DESCRIPTION_LENGTH = 32767;
     private static final String TARGET_AREA = "area";
     private static final String TARGET_DIMENSION = "dimension";
@@ -335,6 +338,11 @@ public final class DescriptionServerNetworking {
         }
 
         DescriptionData data = createDescriptionData(TARGET_AREA, context.area().getName(), context.surfaceName(), dimensionType, description, player);
+        // 描述独立于域名几何文件保存，必须单独拦截才能保证所有域名修改都经过审批。
+        String operation = Files.exists(file) ? "replacedescription" : "adddescription";
+        if (submitDescriptionForApproval(player, operation, file, data, getPlayerDimensionId(player), List.of(context.area()))) {
+            return;
+        }
         sendMutationResponse(player, DescriptionFileManager.writeDescription(file, data),
             translate(player, "description.server.success.area_saved", context.surfaceName()));
     }
@@ -354,6 +362,11 @@ public final class DescriptionServerNetworking {
         }
 
         DescriptionData data = createDescriptionData(TARGET_DIMENSION, cleanDimensionId, displayName, cleanDimensionId, description, player);
+        // 权限节点可以授予非管理员，因此维度域名描述同样需要执行审批判断。
+        String operation = Files.exists(file) ? "replacedimensionalitydescription" : "adddimensionalitydescription";
+        if (submitDescriptionForApproval(player, operation, file, data, cleanDimensionId, List.of())) {
+            return;
+        }
         sendMutationResponse(player, DescriptionFileManager.writeDescription(file, data),
             translate(player, "description.server.success.dimension_saved", displayName));
     }
@@ -386,6 +399,11 @@ public final class DescriptionServerNetworking {
 
         Path file = DescriptionFileManager.getAreaDescriptionFile(dimensionType, context.surfaceName());
         boolean existed = Files.exists(file);
+        // 已不存在的描述沿用原来的幂等成功响应，存在时才生成删除申请。
+        if (existed && submitDescriptionForApproval(player, "deletedescription", file, null,
+            getPlayerDimensionId(player), List.of(context.area()))) {
+            return;
+        }
         boolean success = DescriptionFileManager.deleteDescription(file);
         sendMutationResponse(player, success, existed
             ? translate(player, "description.server.success.area_deleted", context.surfaceName())
@@ -402,10 +420,31 @@ public final class DescriptionServerNetworking {
         String displayName = DimensionalNameManager.getDimensionalName(cleanDimensionId);
         Path file = DescriptionFileManager.getDimensionalDescriptionFile(displayName);
         boolean existed = Files.exists(file);
+        // 删除维度域名描述在正式删除文件前保存审批候选状态。
+        if (existed && submitDescriptionForApproval(player, "deletedimensionalitydescription", file, null,
+            cleanDimensionId, List.of())) {
+            return;
+        }
         boolean success = DescriptionFileManager.deleteDescription(file);
         sendMutationResponse(player, success, existed
             ? translate(player, "description.server.success.dimension_deleted", displayName)
             : translate(player, "description.server.message.no_description_or_deleted"));
+    }
+
+    // 返回 true 表示申请已处理或存储失败，调用者都必须停止正式写入以避免审批绕过。
+    private static boolean submitDescriptionForApproval(ServerPlayerEntity player, String operation, Path file,
+                                                        DescriptionData proposed, String dimensionId, List<AreaData> previewAreas) {
+        try {
+            if (!ApprovalManager.submitDocumentIfRequired(player, operation, file,
+                proposed == null ? null : GSON.toJsonTree(proposed), dimensionId, previewAreas)) {
+                return false;
+            }
+            sendMutationResponse(player, true, translate(player, "approval.message.submitted"));
+        } catch (java.io.IOException e) {
+            Areashint.LOGGER.error("提交域名描述审批失败", e);
+            sendMutationResponse(player, false, translate(player, "approval.error.storage"));
+        }
+        return true;
     }
 
     private static DescriptionData createDescriptionData(String targetType, String targetName, String surfaceName,

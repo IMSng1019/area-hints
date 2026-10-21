@@ -2,6 +2,7 @@ package areahint.command;
 
 import areahint.Areashint;
 import areahint.data.AreaData;
+import areahint.approval.ApprovalManager;
 import areahint.file.FileManager;
 import areahint.i18n.ServerI18nManager;
 import areahint.management.AreaManagementCapabilityService;
@@ -280,6 +281,12 @@ public class RenameAreaCommand {
                 if (oldName.equals(area.getBaseName())) {
                     area.setBaseName(newName);
                 }
+            }
+
+            // 将自身改名和子域名引用更新作为同一份申请，避免审批前产生部分改名。
+            if (ApprovalManager.submitAreasIfRequired(player, "rename", areaFile, areas)) {
+                sendRenameResponse(player, true, key("approval.message.submitted"));
+                return;
             }
 
             // 保存文件

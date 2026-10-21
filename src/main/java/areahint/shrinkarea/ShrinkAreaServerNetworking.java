@@ -1,6 +1,7 @@
 package areahint.shrinkarea;
 
 import areahint.data.AreaData;
+import areahint.approval.ApprovalManager;
 import areahint.file.FileManager;
 import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Channel;
@@ -88,6 +89,16 @@ public class ShrinkAreaServerNetworking {
             if (!validateAreaData(shrunkArea)) {
                 sendResponse(player, false, key("shrinkarea.server.error.validation"));
                 return;
+            }
+
+            // 构造独立候选列表供审批使用，保留管理员原有的直接保存流程。
+            if (ApprovalManager.requiresApproval(player)) {
+                List<AreaData> proposed = new java.util.ArrayList<>(existingAreas);
+                proposed.replaceAll(area -> area.getName().equals(shrunkArea.getName()) ? shrunkArea : area);
+                if (ApprovalManager.submitAreasIfRequired(player, "shrinkarea", areaPath, proposed)) {
+                    sendResponse(player, true, key("approval.message.submitted"));
+                    return;
+                }
             }
 
             // 保存收缩后的域名

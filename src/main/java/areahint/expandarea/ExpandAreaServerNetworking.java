@@ -1,6 +1,7 @@
 package areahint.expandarea;
 
 import areahint.data.AreaData;
+import areahint.approval.ApprovalManager;
 import areahint.file.FileManager;
 import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Channel;
@@ -85,6 +86,16 @@ public class ExpandAreaServerNetworking {
             if (!validateAreaData(expandedArea)) {
                 sendResponse(player, false, key("easyadd.error.area_4"));
                 return;
+            }
+
+            // 构造独立候选列表供审批使用，保留管理员原有的直接保存流程。
+            if (ApprovalManager.requiresApproval(player)) {
+                List<AreaData> proposed = new java.util.ArrayList<>(existingAreas);
+                proposed.replaceAll(area -> area.getName().equals(expandedArea.getName()) ? expandedArea : area);
+                if (ApprovalManager.submitAreasIfRequired(player, "expandarea", areaPath, proposed)) {
+                    sendResponse(player, true, key("approval.message.submitted"));
+                    return;
+                }
             }
 
             // 保存扩展后的域名

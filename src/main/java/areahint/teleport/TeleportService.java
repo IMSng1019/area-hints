@@ -104,14 +104,46 @@ public final class TeleportService {
     }
 
     private static boolean executeTeleport(ServerPlayerEntity player, Vec3d position) {
+        return executeTeleport(player, player.getServerWorld(), position);
+    }
+
+    // 审批预览仍使用 TCP 的中心安全落点算法，只把查找目标换成服务端保存的临时域名。
+    public static boolean handleApprovalTeleport(ServerPlayerEntity player, String id, int index)
+            throws areahint.approval.ApprovalManager.ApprovalException {
+        if (!PermissionService.hasCommandPermission(player, PermissionNodes.TELEPORT, 0)) {
+            throw new areahint.approval.ApprovalManager.ApprovalException("approval.error.denied");
+        }
+        var request = areahint.approval.ApprovalManager.findVisible(player, id);
+        AreaData area = areahint.approval.ApprovalManager.previewArea(player, id, index, false);
+        Identifier dimension = Identifier.tryParse(request.dimensionId);
+        ServerWorld world = dimension == null ? null : player.getServer().getWorld(
+            net.minecraft.registry.RegistryKey.of(net.minecraft.registry.RegistryKeys.WORLD, dimension));
+        if (world == null) {
+            throw new areahint.approval.ApprovalManager.ApprovalException("approval.error.preview_unavailable");
+        }
+        Optional<Vec3d> landing = SAFE_LANDING_FINDER.findCenterLanding(world, area);
+        if (landing.isEmpty()) {
+            sendResponse(player, false, translate(player, "teleport.server.error.no_landing", area.getName()));
+            return false;
+        }
+        Vec3d position = landing.get();
+        boolean success = executeTeleport(player, world, position);
+        sendResponse(player, success, success
+            ? translate(player, "teleport.server.success.teleported", area.getName(), formatCoordinate(position.x),
+                formatCoordinate(position.y), formatCoordinate(position.z))
+            : translate(player, "teleport.server.error.execute_failed"));
+        return success;
+    }
+
+    private static boolean executeTeleport(ServerPlayerEntity player, ServerWorld world, Vec3d position) {
         try {
             // 1.21.2 起 ServerPlayerEntity.teleport 多了 Set<PositionFlag> 与末尾布尔参数
             //? if <=1.21.1 {
-            player.teleport(player.getServerWorld(), position.x, position.y, position.z, player.getYaw(), player.getPitch());
+            player.teleport(world, position.x, position.y, position.z, player.getYaw(), player.getPitch());
             //?} else {
-            /*player.teleport(player.getServerWorld(), position.x, position.y, position.z, java.util.Set.of(), player.getYaw(), player.getPitch(), false);*/
+            /*player.teleport(world, position.x, position.y, position.z, java.util.Set.of(), player.getYaw(), player.getPitch(), false);*/
             //?}
-            return player.squaredDistanceTo(position) < 1.0D;
+            return player.getServerWorld() == world && player.squaredDistanceTo(position) < 1.0D;
         } catch (Exception e) {
             Areashint.LOGGER.error("执行域名传送时发生错误", e);
             return false;

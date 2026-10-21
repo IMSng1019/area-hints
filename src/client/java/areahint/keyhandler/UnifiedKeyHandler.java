@@ -235,7 +235,10 @@ public class UnifiedKeyHandler {
                 waitingForIdleRelease = false;
                 // 长按打开面板后忽略本次仍未松开的绑定键，避免重复按键事件立刻关闭界面。
                 suppressRecordKeyUntilRelease();
-                client.setScreen(new areahint.commandui.CommandPanelScreen());
+                // 审批预览临时收起后，长按优先恢复原申请；普通状态仍打开统一菜单。
+                if (!areahint.approval.ApprovalClientManager.restorePanel()) {
+                    client.setScreen(new areahint.commandui.CommandPanelScreen());
+                }
             }
             return;
         }

@@ -2,6 +2,7 @@ package areahint.subtitle;
 
 import areahint.Areashint;
 import areahint.data.AreaData;
+import areahint.approval.ApprovalManager;
 import areahint.file.FileManager;
 import areahint.file.JsonHelper;
 import areahint.i18n.ServerI18nManager;
@@ -151,6 +152,14 @@ public class SubtitleCommand {
                 handleSetSubtitleColor(player, targetArea, areas, value);
             } else {
                 sendResponse(player, false, translate(player, "subtitle.server.error.unknown_operation", mutation));
+                return;
+            }
+
+            // 副字幕内容、删除和颜色修改都在完成各自权限校验后进入统一审批。
+            String approvalOperation = MUTATION_DELETE_SUBTITLE.equals(mutation) ? "deletesubtitle"
+                : MUTATION_SET_COLOR.equals(mutation) ? "replacesubtitlecolor" : "addsubtitle";
+            if (ApprovalManager.submitAreasIfRequired(player, approvalOperation, areaFile, areas)) {
+                sendResponse(player, true, translate(player, "approval.message.submitted"));
                 return;
             }
 

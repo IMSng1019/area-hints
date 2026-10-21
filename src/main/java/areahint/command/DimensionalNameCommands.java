@@ -1,6 +1,8 @@
 package areahint.command;
 
 import areahint.Areashint;
+import areahint.approval.ApprovalManager;
+import areahint.data.DimensionalNameData;
 import areahint.dimensional.DimensionalNameManager;
 import areahint.network.DimensionalNameNetworking;
 import areahint.network.ServerNetworking;
@@ -8,6 +10,8 @@ import areahint.util.ColorUtil;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
@@ -15,6 +19,8 @@ import net.minecraft.text.Text;
 import areahint.i18n.ServerI18nManager;
 
 import java.util.Set;
+import java.util.Map;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -22,6 +28,7 @@ import java.util.stream.Collectors;
  * 处理 /areahint dimensionalityname 和 /areahint dimensionalitycolor 命令
  */
 public class DimensionalNameCommands {
+    private static final Gson GSON = new Gson();
 
     // ===== dimensionalityname 交互式命令 =====
 
@@ -159,6 +166,10 @@ public class DimensionalNameCommands {
     public static void handleDimNameChange(ServerCommandSource source, String dimensionId, String newName) {
         try {
             String oldName = DimensionalNameManager.getDimensionalName(dimensionId);
+            // 静态维度名称映射本身会参与权限与同步，必须在修改映射之前提交审批。
+            if (submitDimensionalChangeForApproval(source, "dimensionalityname", dimensionId, newName, null)) {
+                return;
+            }
             DimensionalNameManager.setDimensionalName(dimensionId, newName, source.getName());
 
             if (DimensionalNameManager.saveDimensionalNames()) {
@@ -190,6 +201,10 @@ public class DimensionalNameCommands {
         try {
             String oldColor = DimensionalNameManager.getDimensionalColor(dimensionId);
             String oldColorDisplay = oldColor != null ? oldColor : ServerI18nManager.translate("command.message.general_6");
+            // 只为申请构造候选集合，未审批的颜色不得提前写入服务端缓存。
+            if (submitDimensionalChangeForApproval(source, "dimensionalitycolor", dimensionId, null, newColor)) {
+                return;
+            }
             DimensionalNameManager.setDimensionalColor(dimensionId, newColor);
 
             if (DimensionalNameManager.saveDimensionalNames()) {
@@ -210,6 +225,39 @@ public class DimensionalNameCommands {
             source.sendError(Text.translatable("command.error.color.dimension_2").append(Text.literal(e.getMessage())));
             Areashint.LOGGER.error(ServerI18nManager.translate("command.error.color.dimension"), e);
         }
+    }
+
+    // 维度配置包含多个维度，复制现有映射后仅替换目标字段以保留其他维度及已有签名。
+    private static boolean submitDimensionalChangeForApproval(ServerCommandSource source, String operation,
+                                                             String dimensionId, String newName, String newColor) {
+        if (!source.isExecutedByPlayer() || !ApprovalManager.requiresApproval(source.getPlayer())) {
+            return false;
+        }
+        Map<String, String> names = DimensionalNameManager.getAllDimensionalNames();
+        Map<String, String> colors = DimensionalNameManager.getAllDimensionalColors();
+        Map<String, String> signatures = DimensionalNameManager.getAllDimensionalSignatures();
+        if ("dimensionalityname".equals(operation)) {
+            names.put(dimensionId, newName);
+            signatures.putIfAbsent(dimensionId, source.getName().trim());
+        } else {
+            colors.put(dimensionId, newColor);
+        }
+        JsonArray proposed = new JsonArray();
+        for (Map.Entry<String, String> entry : names.entrySet()) {
+            proposed.add(GSON.toJsonTree(new DimensionalNameData(entry.getKey(), entry.getValue(),
+                colors.get(entry.getKey()), signatures.get(entry.getKey()))));
+        }
+        try {
+            if (!ApprovalManager.submitDocumentIfRequired(source.getPlayer(), operation,
+                areahint.world.WorldFolderManager.getWorldDimensionalNamesFile(), proposed, dimensionId, List.of())) {
+                return false;
+            }
+            source.sendMessage(Text.translatable("approval.message.submitted"));
+        } catch (java.io.IOException e) {
+            Areashint.LOGGER.error("提交维度域名审批失败", e);
+            source.sendError(Text.translatable("approval.error.storage"));
+        }
+        return true;
     }
 
     /**
@@ -280,7 +328,10 @@ public class DimensionalNameCommands {
             // 使用维度路径作为默认名称（如 overworld, the_nether）
             String defaultName = source.getPlayer().getWorld().getRegistryKey().getValue().getPath();
             handleDimNameChange(source, dimId, defaultName);
-            source.sendMessage(Text.translatable("command.message.name").append(Text.literal(defaultName)));
+            // 需要审批时处理方法已发送申请结果，避免再提示名称已经正式生效。
+            if (!ApprovalManager.requiresApproval(source.getPlayer())) {
+                source.sendMessage(Text.translatable("command.message.name").append(Text.literal(defaultName)));
+            }
         }
         return Command.SINGLE_SUCCESS;
     }

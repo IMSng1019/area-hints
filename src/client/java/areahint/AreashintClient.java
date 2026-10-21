@@ -92,6 +92,8 @@ public class AreashintClient implements ClientModInitializer {
 
 		// 初始化网络处理
 		ClientNetworking.init();
+		// 审批快照与结果使用独立通道，正式世界目录就绪后再拉取并持久化。
+		areahint.approval.ApprovalClientManager.register();
 		
 		// 初始化维度域名网络处理
 		areahint.network.ClientDimensionalNameNetworking.init();
@@ -456,6 +458,7 @@ public class AreashintClient implements ClientModInitializer {
 
 				LOGGER.info("检测到断开连接,清理世界文件夹管理器状态");
 				areahint.world.ClientWorldFolderManager.resetState();
+				areahint.approval.ApprovalClientManager.reset();
 
 				currentDimension = null;
 				currentAreaName = null;
@@ -498,6 +501,7 @@ public class AreashintClient implements ClientModInitializer {
 				areahint.management.client.AreaManagementClient.clear();
 			}
 			areahint.management.client.AreaManagementClient.tick();
+			areahint.approval.ApprovalClientManager.tick();
 			
 			if (player == null || client.world == null) {
 				return;

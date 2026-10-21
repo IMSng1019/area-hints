@@ -2,6 +2,7 @@ package areahint.command;
 
 import areahint.Areashint;
 import areahint.data.AreaData;
+import areahint.approval.ApprovalManager;
 import areahint.file.FileManager;
 import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Channel;
@@ -214,6 +215,12 @@ public class RecolorCommand {
                 return;
             }
             
+            // 修改后的颜色只作为审批候选数据，未通过时保持服务器原文件不变。
+            if (ApprovalManager.submitAreasIfRequired(player, "recolor", areaFile, areas)) {
+                sendRecolorResponse(player, true, key("approval.message.submitted"));
+                return;
+            }
+
             // 保存文件
             if (FileManager.writeAreaData(areaFile, areas)) {
                 sendRecolorResponse(player, true, key("command.message.area_10"), lit(areaName), key("command.message.color_4"), lit(oldColor), lit(" → "), lit(newColor));

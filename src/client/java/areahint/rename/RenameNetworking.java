@@ -113,15 +113,13 @@ public class RenameNetworking {
      */
     private static void handleRenameResultResponse(MinecraftClient client, NetworkReader buf) {
         boolean success = buf.readBoolean();
-        String message = buf.readString();
+        // 与服务端结构化消息协议保持一致，审批提交提示也按原翻译片段显示。
+        net.minecraft.text.MutableText message = areahint.network.TranslatableMessage.read(buf);
 
         client.execute(() -> {
             if (client.player != null) {
-                if (success) {
-                    client.player.sendMessage(net.minecraft.text.Text.of("§a" + message), false);
-                } else {
-                    client.player.sendMessage(net.minecraft.text.Text.of("§c" + message), false);
-                }
+                client.player.sendMessage(message.formatted(success
+                    ? net.minecraft.util.Formatting.GREEN : net.minecraft.util.Formatting.RED), false);
             }
         });
 

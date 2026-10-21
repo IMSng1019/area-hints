@@ -2,6 +2,7 @@ package areahint.command;
 
 import areahint.Areashint;
 import areahint.data.AreaData;
+import areahint.approval.ApprovalManager;
 import areahint.file.FileManager;
 import areahint.i18n.ServerI18nManager;
 import areahint.management.AreaManagementCapabilityService;
@@ -389,6 +390,12 @@ public class SetHighCommand {
                 }
             }
             
+            // 审批申请保存候选高度，正式域名仍使用磁盘中的原高度。
+            if (ApprovalManager.submitAreasIfRequired(player, "sethigh", areaFile, allAreas)) {
+                sendResponse(player, true, key("approval.message.submitted"));
+                return;
+            }
+
             FileManager.writeAreaData(areaFile, allAreas);
             
             // 重新分发数据给所有玩家（相当于执行一次reload指令）

@@ -296,6 +296,12 @@ public class ClientNetworking {
         client.execute(() -> {
             try {
                 AreashintClient.LOGGER.info("接收到服务端命令: " + command);
+
+                // 审批专用指令同时接受既有命名空间封装和服务器直接发送的动作形式。
+                if (command.startsWith("approval_addhint:") || command.startsWith("approval_deletehint:")) {
+                    areahint.approval.ApprovalClientManager.handleClientCommand(command);
+                    return;
+                }
                 
                 // 解析命令（只在第一个冒号处分割，保留参数）
                 int firstColonIndex = command.indexOf(":");
@@ -308,6 +314,10 @@ public class ClientNetworking {
                 
                 // 根据命令类型处理
                 if (type.equals("areahint")) {
+                    if (action.startsWith("approval_addhint:") || action.startsWith("approval_deletehint:")) {
+                        areahint.approval.ApprovalClientManager.handleClientCommand(action);
+                        return;
+                    }
                     // 处理reload命令
                     if (action.equals("reload")) {
                         AreashintClient.reload();
@@ -1142,15 +1152,12 @@ public class ClientNetworking {
             } else if ("recolor_response".equals(action)) {
                 // 处理修改颜色响应
                 boolean success = buf.readBoolean();
-                String message = buf.readString();
+                net.minecraft.text.MutableText message = TranslatableMessage.read(buf);
                 
                 client.execute(() -> {
                     if (client.player != null) {
-                        if (success) {
-                            client.player.sendMessage(net.minecraft.text.Text.of("§a" + message), false);
-                        } else {
-                            client.player.sendMessage(net.minecraft.text.Text.of("§c" + message), false);
-                        }
+                        client.player.sendMessage(message.formatted(success
+                            ? net.minecraft.util.Formatting.GREEN : net.minecraft.util.Formatting.RED), false);
                     }
                 });
             }

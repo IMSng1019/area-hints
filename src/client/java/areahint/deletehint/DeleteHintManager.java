@@ -28,6 +28,8 @@ public class DeleteHintManager {
     private AreaData selectedArea;
     private String selectedDimensionId;
     private Set<Integer> markedIndices = new HashSet<>();
+    // 审批草稿使用回调接收顶点变更，避免发送正式域名修改包。
+    private java.util.function.Consumer<AreaData> temporarySubmit;
 
     public static DeleteHintManager getInstance() {
         if (instance == null) {
@@ -45,6 +47,8 @@ public class DeleteHintManager {
      */
     public void start() {
         if (client.player == null) return;
+
+        temporarySubmit = null;
 
         isActive = true;
         List<AreaData> modifiableAreas = getModifiableAreas();
@@ -66,6 +70,7 @@ public class DeleteHintManager {
             return List.of();
         }
 
+        temporarySubmit = null;
         isActive = true;
         List<AreaData> modifiableAreas = getModifiableAreas();
         if (modifiableAreas.isEmpty()) {
@@ -172,6 +177,16 @@ public class DeleteHintManager {
         showVertexButtons();
     }
 
+    // 临时选择绕过磁盘域名查找，仍复用删除标记和至少三个顶点的原有校验。
+    public void beginTemporary(AreaData area, String dimensionId, java.util.function.Consumer<AreaData> callback) {
+        reset();
+        if (area == null || callback == null || client.player == null) return;
+        selectedArea = new com.google.gson.Gson().fromJson(new com.google.gson.Gson().toJson(area), AreaData.class);
+        selectedDimensionId = dimensionId;
+        temporarySubmit = callback;
+        isActive = true;
+    }
+
     /**
      * 提交删除
      */
@@ -219,7 +234,11 @@ public class DeleteHintManager {
                 return;
             }
 
-            // 发送到服务端
+            // 审批临时模式仅回传几何副本，普通删除仍由原网络流程处理。
+            if (temporarySubmit != null) {
+                temporarySubmit.accept(selectedArea);
+                return;
+            }
             DeleteHintClientNetworking.sendToServer(selectedArea, selectedDimensionId);
 
             client.player.sendMessage(Text.of(I18nManager.translate("addhint.message.area") + selectedArea.getName() + I18nManager.translate("deletehint.message.vertex.delete")), false);
@@ -246,6 +265,7 @@ public class DeleteHintManager {
         isActive = false;
         selectedArea = null;
         selectedDimensionId = null;
+        temporarySubmit = null;
         markedIndices.clear();
     }
 

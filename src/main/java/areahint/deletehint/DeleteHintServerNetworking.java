@@ -1,6 +1,7 @@
 package areahint.deletehint;
 
 import areahint.data.AreaData;
+import areahint.approval.ApprovalManager;
 import areahint.file.FileManager;
 import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Channel;
@@ -96,6 +97,12 @@ public class DeleteHintServerNetworking {
 
             if (!found) {
                 sendResponse(player, false, key("addhint.message.area_3"), lit(updatedArea.getName()));
+                return;
+            }
+
+            // 删除顶点的候选结果先进入审批队列，避免未审批的修改同步到其他玩家。
+            if (ApprovalManager.submitAreasIfRequired(player, "deletehint", areaFile, areas)) {
+                sendResponse(player, true, key("approval.message.submitted"));
                 return;
             }
 

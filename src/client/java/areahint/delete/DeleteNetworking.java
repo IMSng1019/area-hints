@@ -107,17 +107,13 @@ public class DeleteNetworking {
             (client, buf) -> {
                 try {
                     boolean success = buf.readBoolean();
-                    String message = buf.readString();
+                    // 服务端发送的是结构化翻译片段，提交审批时不能再额外拼接“删除成功”。
+                    net.minecraft.text.MutableText message = areahint.network.TranslatableMessage.read(buf);
 
                     client.execute(() -> {
                         if (client.player != null) {
-                            if (success) {
-                                client.player.sendMessage(
-                                    net.minecraft.text.Text.of("§a" + I18nManager.translate("message.success.area.delete") + message), false);
-                            } else {
-                                client.player.sendMessage(
-                                    net.minecraft.text.Text.of("§c" + message), false);
-                            }
+                            client.player.sendMessage(message.formatted(success
+                                ? net.minecraft.util.Formatting.GREEN : net.minecraft.util.Formatting.RED), false);
                         }
                     });
 

@@ -2,6 +2,7 @@ package areahint.easyadd;
 
 import areahint.Areashint;
 import areahint.data.AreaData;
+import areahint.approval.ApprovalManager;
 import areahint.file.FileManager;
 import areahint.file.JsonHelper;
 import areahint.network.Channel;
@@ -87,6 +88,12 @@ public class EasyAddServerNetworking {
 
             // 添加新域名
             existingAreas.add(areaData);
+
+            // 新域名完成原有校验后提交审批，管理员和关闭审批时继续直接保存。
+            if (ApprovalManager.submitAreasIfRequired(player, "easyadd", areaFile, existingAreas)) {
+                sendResponseToClient(player, true, "approval.message.submitted");
+                return;
+            }
 
             // 保存到文件
             if (FileManager.writeAreaData(areaFile, existingAreas)) {

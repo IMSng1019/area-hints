@@ -77,6 +77,9 @@ public class ClientWorldNetworking {
                     // 完成世界文件夹初始化
                     ClientWorldFolderManager.finalizeWorldInitialization(worldName);
 
+                    // 每次进入服务器都向服务端询问配置和历史审批回复，并保存到已确认的世界目录。
+                    areahint.approval.ApprovalClientManager.onWorldReady();
+
                     // 正式目录确定后先回放登录阶段暂存的域名数据，避免检测器读取空目录
                     ClientNetworking.flushPendingAreaData(client, handler);
 

@@ -1,6 +1,7 @@
 package areahint.addhint;
 
 import areahint.data.AreaData;
+import areahint.approval.ApprovalManager;
 import areahint.file.FileManager;
 import areahint.management.AreaManagementCapabilityService;
 import areahint.network.Channel;
@@ -97,6 +98,12 @@ public class AddHintServerNetworking {
 
             if (!found) {
                 sendResponse(player, false, key("addhint.message.area_3"), lit(updatedArea.getName()));
+                return;
+            }
+
+            // 普通玩家通过原有校验后只提交候选数据，审批通过之前不覆盖服务器域名文件。
+            if (ApprovalManager.submitAreasIfRequired(player, "addhint", areaFile, areas)) {
+                sendResponse(player, true, key("approval.message.submitted"));
                 return;
             }
 

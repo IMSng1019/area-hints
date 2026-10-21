@@ -1,6 +1,7 @@
 package areahint.network;
 
 import areahint.Areashint;
+import areahint.approval.ApprovalManager;
 import areahint.file.FileManager;
 import areahint.map.BlueMapCompat;
 import areahint.i18n.ServerI18nManager;
@@ -545,6 +546,12 @@ public class ServerNetworking {
             Areashint.LOGGER.info(ServerI18nManager.translate("message.message.area.list_2") + areaName);
 
             // 保存文件
+            // 删除申请只保存候选列表，审批完成之前不广播删除结果。
+            if (ApprovalManager.submitAreasIfRequired(player, "delete", areaFile, areas)) {
+                sendDeleteResponse(player, true, key("approval.message.submitted"));
+                return;
+            }
+
             FileManager.writeAreaData(areaFile, areas);
 
             // 向所有客户端发送更新后的区域数据

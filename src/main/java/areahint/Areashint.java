@@ -92,6 +92,9 @@ public class Areashint implements ModInitializer {
 		// 初始化服务端网络处理
 		ServerNetworking.init();
 
+		// 审批通道独立注册，正式域名写入仍由原功能入口完成权限校验。
+		areahint.approval.ApprovalNetworking.register();
+
 		// 初始化 Xaero 世界地图域名管理能力查询
 		areahint.management.AreaManagementServerNetworking.register();
 		
@@ -187,6 +190,8 @@ public class Areashint implements ModInitializer {
 		
 		// 初始化世界文件夹管理器
 		areahint.world.WorldFolderManager.initializeServerWorld(minecraftServer);
+		areahint.config.ServerConfig.load();
+		areahint.approval.ApprovalManager.initialize(minecraftServer);
 
 		// 世界文件夹就绪后重新加载维度域名（init时世界路径尚未初始化）
 		areahint.dimensional.DimensionalNameManager.loadDimensionalNames();
@@ -201,6 +206,7 @@ public class Areashint implements ModInitializer {
 	 */
 	private void onServerStopped(MinecraftServer minecraftServer) {
 		BlueMapCompat.onServerStopped();
+		areahint.approval.ApprovalManager.reset();
 		server = null;
 		LOGGER.info("区域提示模组: 服务器已停止");
 

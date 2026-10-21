@@ -118,6 +118,10 @@ public final class Channel {
     public static final Channel C2S_DESCRIPTION_WRITE = of("c2s_description_write");
     public static final Channel C2S_DESCRIPTION_DELETE = of("c2s_description_delete");
     public static final Channel S2C_DESCRIPTION_MUTATION_RESPONSE = of("s2c_description_mutation_response");
+    public static final Channel C2S_APPROVAL_ACTION = of("c2s_approval_action");
+    public static final Channel C2S_APPROVAL_CHUNK = of("c2s_approval_chunk");
+    public static final Channel S2C_APPROVAL_DATA = of("s2c_approval_data");
+    public static final Channel S2C_APPROVAL_RESULT = of("s2c_approval_result");
 
     /** 全部通道清单：1.20.5+ 的网络实现按它逐个注册 PayloadType（顺序无关） */
     public static final java.util.List<Channel> ALL = java.util.List.of(
@@ -137,5 +141,5 @@ public final class Channel {
             C2S_DESCRIPTION_QUERY, C2S_DESCRIPTION_CURRENT_QUERY, S2C_DESCRIPTION_QUERY_RESPONSE,
             C2S_DESCRIPTION_LIST_REQUEST, S2C_DESCRIPTION_AREA_LIST, C2S_DESCRIPTION_EDIT_QUERY,
             S2C_DESCRIPTION_EDIT_RESPONSE, C2S_DESCRIPTION_WRITE, C2S_DESCRIPTION_DELETE,
-            S2C_DESCRIPTION_MUTATION_RESPONSE);
+            S2C_DESCRIPTION_MUTATION_RESPONSE, C2S_APPROVAL_ACTION, C2S_APPROVAL_CHUNK, S2C_APPROVAL_DATA, S2C_APPROVAL_RESULT);
 }

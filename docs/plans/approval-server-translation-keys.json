@@ -1,0 +1,17 @@
+{
+  "approval.message.submitted": "修改申请已提交，管理员同意后才会生效。",
+  "approval.message.saved": "临时修改已更新，尚未写入正式域名。",
+  "approval.message.reviewed": "审批结果已保存并发送给申请人。",
+  "approval.message.resubmitted": "已携带全部历史审批意见重新提交申请。",
+  "approval.message.reply_received": "你收到了新的域名审批回复，请长按功能键查看。",
+  "approval.error.disabled": "服务器未开启提交审批。",
+  "approval.error.denied": "你没有处理此申请的权限。",
+  "approval.error.missing": "此申请不存在或不属于当前世界。",
+  "approval.error.stale": "申请已被更新，请刷新面板后再操作。",
+  "approval.error.conflict": "相关域名已发生变化，无法覆盖新数据。请打回申请并重新修改。",
+  "approval.error.invalid": "申请数据无效，操作未执行。",
+  "approval.error.no_changes": "没有需要提交的域名修改。",
+  "approval.error.preview_unavailable": "此申请没有可预览或可编辑的域名几何数据。",
+  "approval.error.storage": "保存审批数据失败，请检查服务端日志。",
+  "approval.error.history": "审批意见记录已变化，请刷新后重新提交。"
+}

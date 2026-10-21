@@ -3,6 +3,7 @@ package areahint.command;
 import areahint.Areashint;
 import areahint.command.AreasHintCommandRoot;
 import areahint.data.AreaData;
+import areahint.approval.ApprovalManager;
 import areahint.data.ConfigData;
 import areahint.file.FileManager;
 import areahint.dimensional.DimensionalNameManager;
@@ -514,6 +515,7 @@ public class ServerCommands {
             .then(literal("tcp")
                 .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.TELEPORT, 0))
                 .executes(context -> executeTeleportStart(context, "tcp"))
+                .then(areahint.approval.ApprovalCommands.branch("tcp"))
                 .then(argument("areaName", StringArgumentType.greedyString())
                     .suggests(TELEPORT_AREA_SUGGESTIONS)
                     .executes(context -> executeTeleportSelect(context, "tcp", StringArgumentType.getString(context, "areaName")))))
@@ -553,6 +555,7 @@ public class ServerCommands {
             .then(literal("addhint")
                 .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.ADDHINT, 0))
                 .executes(ServerCommands::executeAddHintStart)
+                .then(areahint.approval.ApprovalCommands.branch("addhint"))
                 .then(literal("select")
                     .then(argument("areaName", StringArgumentType.greedyString())
                         .executes(context -> executeAddHintSelect(context,
@@ -568,6 +571,7 @@ public class ServerCommands {
             .then(literal("deletehint")
                 .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.DELETEHINT, 0))
                 .executes(ServerCommands::executeDeleteHintStart)
+                .then(areahint.approval.ApprovalCommands.branch("deletehint"))
                 .then(literal("select")
                     .then(argument("areaName", StringArgumentType.greedyString())
                         .executes(context -> executeDeleteHintSelect(context,
@@ -950,6 +954,28 @@ public class ServerCommands {
             areaData.setSignature(source.getName());
         }
         
+        // /add 也可能由拥有权限节点的非管理员调用，因此不能绕过服务器审批。
+        if (source.isExecutedByPlayer() && ApprovalManager.requiresApproval(source.getPlayer())) {
+            // 保留 FileManager.addAreaData 对一级、二级顶点的原有格式限制。
+            if (areaData.getVertices() == null || areaData.getVertices().size() < 3
+                || areaData.getSecondVertices() == null || areaData.getSecondVertices().size() != 4) {
+                source.sendMessage(Text.translatable("command.error.area.add"));
+                return 0;
+            }
+            List<AreaData> proposed = FileManager.readAreaData(filePath);
+            proposed.add(areaData);
+            try {
+                if (ApprovalManager.submitAreasIfRequired(source.getPlayer(), "add", filePath, proposed)) {
+                    source.sendMessage(Text.translatable("approval.message.submitted"));
+                    return Command.SINGLE_SUCCESS;
+                }
+            } catch (java.io.IOException e) {
+                Areashint.LOGGER.error("提交添加域名审批失败", e);
+                source.sendMessage(Text.translatable("command.error.area.add"));
+                return 0;
+            }
+        }
+
         // 添加区域数据
         if (FileManager.addAreaData(filePath, areaData)) {
             source.sendMessage(Text.translatable("command.success.area.add").append(Text.literal(areaData.getName())));

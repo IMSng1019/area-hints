@@ -90,6 +90,11 @@ public class AreashintClient implements ClientModInitializer {
 		// 安装当前版本的客户端网络实现：机制 ② 的唯一交接点（实现类在各版本目录里）
 		areahint.network.ClientNetworkCompat.install(areahint.network.ClientNetworkCompatFactory.create());
 
+		// 登录握手在进入世界前完成，域名游戏模式通知与编辑界面使用独立的游玩通道。
+		areahint.handshake.ClientModHandshake.register();
+		areahint.gamemode.AreaGamemodeClient.register();
+		areahint.gamemode.ReplaceAreaGamemodeVisualController.register();
+
 		// 初始化网络处理
 		ClientNetworking.init();
 		// 审批快照与结果使用独立通道，正式世界目录就绪后再拉取并持久化。

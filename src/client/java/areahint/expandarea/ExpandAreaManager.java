@@ -651,7 +651,7 @@ public class ExpandAreaManager {
      * 创建扩展后的域名
      */
     private AreaData createExpandedArea(List<Double[]> vertices, List<Double[]> secondVertices, AreaData.AltitudeData altitude) {
-        return new AreaData(
+        AreaData expandedArea = new AreaData(
             selectedArea.getName(),
             convertToVertexList(vertices),
             convertToVertexList(secondVertices),
@@ -662,6 +662,9 @@ public class ExpandAreaManager {
             selectedArea.getColor(),
             selectedArea.getSurfacename()
         );
+        // 本地预览保留原游戏模式，实际保存时服务端仍会从自己的存档重新取值。
+        expandedArea.setGamemode(selectedArea.getGamemode());
+        return expandedArea;
     }
     
     /**

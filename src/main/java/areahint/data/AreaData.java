@@ -3,6 +3,7 @@ package areahint.data;
 import java.util.List;
 import java.util.ArrayList;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.annotations.JsonAdapter;
 
 /**
  * 区域数据模型
@@ -23,6 +24,8 @@ public class AreaData {
     private String surfacename;            // 联合域名（表面域名）
     private String subtitle;               // 副字幕文本；字段不存在或为空时不显示
     private String subtitlecolor;          // 副字幕颜色（十六进制格式或闪烁颜色）
+    @JsonAdapter(GamemodeAdapter.class)
+    private String gamemode;               // 域名要求的游戏模式；未设置时使用服务端默认值
 
     // 预计算缓存（transient确保Gson序列化时忽略）
     private transient double cachedMinX, cachedMaxX, cachedMinZ, cachedMaxZ;
@@ -230,6 +233,23 @@ public class AreaData {
 
     public boolean hasSubtitle() {
         return subtitle != null && !subtitle.trim().isEmpty();
+    }
+
+    public String getGamemode() {
+        return gamemode;
+    }
+
+    public void setGamemode(String gamemode) {
+        this.gamemode = gamemode;
+    }
+
+    // FileManager 等直接使用 Gson 的入口同样忽略错误类型，避免一项模式属性损坏整份域名列表。
+    public static final class GamemodeAdapter implements com.google.gson.JsonDeserializer<String> {
+        @Override
+        public String deserialize(com.google.gson.JsonElement json, java.lang.reflect.Type type,
+                                  com.google.gson.JsonDeserializationContext context) {
+            return json.isJsonPrimitive() && json.getAsJsonPrimitive().isString() ? json.getAsString() : null;
+        }
     }
 
     private static String cleanOptionalText(String value) {

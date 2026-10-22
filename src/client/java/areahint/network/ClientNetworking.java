@@ -273,6 +273,7 @@ public class ClientNetworking {
             //?}
                 AreashintClient.LOGGER.info("[调试] 重新加载当前维度的区域数据: " + fileName);
                 AreashintClient.getAreaDetector().loadAreaData(fileName);
+                areahint.gamemode.AreaGamemodeClient.invalidate();
                 areahint.boundviz.BoundVizManager.getInstance().reload();
             }
             return true;

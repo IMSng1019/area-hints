@@ -465,6 +465,8 @@ public final class ApprovalManager {
             JsonElement current = readDocument(file);
             originals.put(file, current);
             if ("areas".equals(change.kind)) {
+                // 审批只批准原操作允许的属性变化，不能把历史申请中的夹带字段转成模式授权。
+                validateGamemodeChange(request.operation, change);
                 JsonArray merged = mergeAreas(change, current);
                 validateRelationships(merged, change);
                 replacements.put(file, merged);
@@ -529,6 +531,34 @@ public final class ApprovalManager {
 
     private static JsonArray mergeAreas(ApprovalRequest.Change change, JsonElement current) throws IOException, ApprovalException {
         return mergeCollection(change, current, canonicalAreas(current), "name");
+    }
+
+    private static void validateGamemodeChange(String operation, ApprovalRequest.Change change)
+            throws IOException, ApprovalException {
+        // 原有 add JSON 指令本身要求管理员权限，继续允许其显式配置游戏模式。
+        if ("add".equals(operation)) {
+            return;
+        }
+        Map<String, JsonObject> before = index(change.before.getAsJsonArray());
+        Map<String, JsonObject> after = index(change.after.getAsJsonArray());
+        Set<String> removedNames = new HashSet<>(before.keySet());
+        removedNames.removeAll(after.keySet());
+        JsonObject original = "dividearea".equals(operation) && before.size() == 1
+            ? before.values().iterator().next()
+            : "rename".equals(operation) && removedNames.size() == 1
+                ? before.get(removedNames.iterator().next()) : null;
+        for (var entry : after.entrySet()) {
+            JsonObject prior = before.getOrDefault(entry.getKey(), original);
+            JsonElement expectedMode = prior == null ? JsonNull.INSTANCE : gamemodeValue(prior);
+            if (!expectedMode.equals(gamemodeValue(entry.getValue()))) {
+                throw error("invalid");
+            }
+        }
+    }
+
+    private static JsonElement gamemodeValue(JsonObject area) {
+        JsonElement value = area.get("gamemode");
+        return value == null ? JsonNull.INSTANCE : value;
     }
 
     // 按稳定主键检查申请涉及的记录，保留当前文件中所有无关记录及其扩展字段。
@@ -611,6 +641,8 @@ public final class ApprovalManager {
             addedNames.removeAll(before.keySet());
             String renamedFrom = "rename".equals(request.operation) && removedNames.size() == 1 && addedNames.size() == 1
                 ? removedNames.iterator().next() : null;
+            String dividedFrom = "dividearea".equals(request.operation) && before.size() == 1
+                ? before.keySet().iterator().next() : null;
             JsonArray newBefore = new JsonArray();
             JsonArray newAfter = new JsonArray();
             for (String name : before.keySet()) {
@@ -626,8 +658,13 @@ public final class ApprovalManager {
                         throw error("conflict");
                     }
                     // 改名后重新申请仍继承旧域名最新的未修改字段，避免覆盖后来更新的颜色或签名。
-                    newAfter.add(renamedFrom == null ? entry.getValue().deepCopy()
-                        : rebaseObject(before.get(renamedFrom), entry.getValue(), actual.get(renamedFrom)));
+                    JsonObject added = renamedFrom == null ? entry.getValue().deepCopy()
+                        : rebaseObject(before.get(renamedFrom), entry.getValue(), actual.get(renamedFrom));
+                    // 分割申请被打回期间管理员可能更新原域名模式，再提交时两个结果都继承最新值。
+                    if (dividedFrom != null) {
+                        added.add("gamemode", gamemodeValue(actual.get(dividedFrom)).deepCopy());
+                    }
+                    newAfter.add(added);
                     continue;
                 }
                 newAfter.add(rebaseObject(before.get(name), entry.getValue(), actual.get(name)));
@@ -871,8 +908,24 @@ public final class ApprovalManager {
         for (ApprovalRequest.Change change : request.changes) {
             if (change.before == null) change.before = JsonNull.INSTANCE;
             if (change.after == null) change.after = JsonNull.INSTANCE;
+            if ("areas".equals(change.kind)) {
+                // 旧版审批快照没有新增字段，补为显式空值以匹配当前模型的 serializeNulls 规范化结果。
+                normalizeGamemodeSnapshot(change.before);
+                normalizeGamemodeSnapshot(change.after);
+            }
         }
         return request;
+    }
+
+    private static void normalizeGamemodeSnapshot(JsonElement snapshot) {
+        if (!snapshot.isJsonArray()) {
+            return;
+        }
+        for (JsonElement element : snapshot.getAsJsonArray()) {
+            if (element.isJsonObject() && !element.getAsJsonObject().has("gamemode")) {
+                element.getAsJsonObject().add("gamemode", JsonNull.INSTANCE);
+            }
+        }
     }
 
     private static boolean validId(String id) {

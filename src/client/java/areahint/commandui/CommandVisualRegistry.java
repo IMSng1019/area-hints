@@ -85,6 +85,8 @@ public final class CommandVisualRegistry {
             areahint.recolor.RecolorVisualController::openFromCommandUi));
         handlers.add(visual("rename", "areahint rename", "help.command.rename", CATEGORY_AREA_EDIT,
             areahint.rename.RenameVisualController::openFromCommandUi));
+        handlers.add(visual("replaceareagamemode", "areahint replaceareagamemode", "help.command.replaceareagamemode", CATEGORY_AREA_EDIT,
+            areahint.gamemode.ReplaceAreaGamemodeVisualController::openFromCommandUi));
         handlers.add(visual("sethigh", "areahint sethigh", "help.command.sethigh", CATEGORY_AREA_EDIT,
             areahint.command.SetHighVisualController::openFromCommandUi));
         handlers.add(visual("tcp", "areahint tcp", "help.command.tcp", CATEGORY_TELEPORT,

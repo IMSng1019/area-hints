@@ -178,6 +178,11 @@ public class AreaDetector {
         return findArea(x, y, z);
     }
 
+    // 服务端要求的游戏模式独立于客户端提示开关，仍使用与标题完全一致的域名层级判定。
+    public AreaData findAreaForGamemode(double x, double y, double z) {
+        return findArea(x, y, z);
+    }
+
     /**
      * 查找玩家所在的区域
      * 全程只读一次索引快照，不再重建HashMap分组、不再拷贝排序列表，也不再逐级新建子域名列表

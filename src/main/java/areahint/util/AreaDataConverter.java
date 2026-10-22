@@ -37,6 +37,10 @@ public class AreaDataConverter {
         }
         jsonObject.addProperty("color", areaData.getColor());
         jsonObject.addProperty("surfacename", areaData.getSurfacename());
+        // 未设置的模式保持字段缺省，显式模式则在编辑与同步转换中完整保留。
+        if (areaData.getGamemode() != null) {
+            jsonObject.addProperty("gamemode", areaData.getGamemode());
+        }
         
         // vertices数组
         if (areaData.getVertices() != null) {
@@ -117,6 +121,11 @@ public class AreaDataConverter {
         }
         if (jsonObject.has("surfacename") && !jsonObject.get("surfacename").isJsonNull()) {
             areaData.setSurfacename(jsonObject.get("surfacename").getAsString());
+        }
+        // 与 JsonHelper 的宽容读取规则一致，无效模式由实际判定阶段回退默认值。
+        com.google.gson.JsonElement gamemode = jsonObject.get("gamemode");
+        if (gamemode != null && gamemode.isJsonPrimitive() && gamemode.getAsJsonPrimitive().isString()) {
+            areaData.setGamemode(gamemode.getAsString());
         }
         
         // vertices数组
@@ -218,4 +227,4 @@ public class AreaDataConverter {
         
         return areaData.getSurfacename();
     }
-} 
+}

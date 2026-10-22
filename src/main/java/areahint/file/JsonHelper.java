@@ -150,6 +150,12 @@ public class JsonHelper {
                 }
             }
 
+            // 非字符串模式按未设置处理，避免一个错误属性导致整个维度的域名无法加载。
+            JsonElement gamemode = jsonObject.get("gamemode");
+            if (gamemode != null && gamemode.isJsonPrimitive() && gamemode.getAsJsonPrimitive().isString()) {
+                areaData.setGamemode(gamemode.getAsString());
+            }
+
             // 反序列化副字幕字段；客户端聊天按钮的悬浮提示依赖这里保留 subtitle。
             if (jsonObject.has("subtitle")) {
                 JsonElement subtitleElement = jsonObject.get("subtitle");

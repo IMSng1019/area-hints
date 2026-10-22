@@ -86,6 +86,9 @@ public class DeleteHintServerNetworking {
                 return;
             }
 
+            // 顶点编辑不授予游戏模式权限，提交审批和直接保存都使用服务器当前的原值。
+            updatedArea.setGamemode(existingArea.getGamemode());
+
             boolean found = false;
             for (int i = 0; i < areas.size(); i++) {
                 if (areas.get(i).getName().equals(updatedArea.getName())) {

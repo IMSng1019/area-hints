@@ -85,6 +85,9 @@ public class ShrinkAreaServerNetworking {
                 return;
             }
 
+            // 游戏模式始终继承服务端存档，防止几何编辑丢失该字段或借客户端载荷越权修改。
+            shrunkArea.setGamemode(existingArea.getGamemode());
+
             // 验证域名数据
             if (!validateAreaData(shrunkArea)) {
                 sendResponse(player, false, key("shrinkarea.server.error.validation"));

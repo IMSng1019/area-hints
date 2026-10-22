@@ -26,6 +26,7 @@ public final class PermissionNodes {
     public static final String DIVIDEAREA = "areahint.command.dividearea";
     public static final String RECOLOR = "areahint.command.recolor";
     public static final String RENAME = "areahint.command.rename";
+    public static final String REPLACE_AREA_GAMEMODE = "areahint.command.replaceareagamemode";
     public static final String SETHIGH = "areahint.command.sethigh";
     public static final String TELEPORT = "areahint.command.teleport";
     public static final String SETTP = "areahint.command.settp";
@@ -71,6 +72,7 @@ public final class PermissionNodes {
         DIVIDEAREA,
         RECOLOR,
         RENAME,
+        REPLACE_AREA_GAMEMODE,
         SETHIGH,
         TELEPORT,
         SETTP,

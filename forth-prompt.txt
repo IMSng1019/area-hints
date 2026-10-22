@@ -12,7 +12,21 @@
 每一个回复窗口应该有如下要素：审批玩家名 审批类型（添加域名、删除域名、添加顶点、修改颜色等等） 审批结果（同意/不同意/打回） 审批回复 修改按钮（如果意见是打回则出现此按钮 点击进入新界面 有addhint按钮（使用特殊的addhint指令直接修改该临时域名 注意修改完并不保存 而是继续保持这个状态） delete按钮（使用特殊的deletehint指令直接修改该临时域名 注意修改完并不保存 而是继续保持这个状态）重新申请按钮（要把之前的所有审批意见上传））
 申请的消息文件放在全局文件夹中（处于服务端 供所有op查看）  回复的消息文件放在对应世界的世界文件夹中（用于非op的客户端 供普通玩家查看）
 
+服务端配置功能：每次启动服务端检查配置项是否完整合法 如有没有的选项则填入其以及默认值（不局限于当前提供的选项 后续还会增加）
+
+服务端配置选项：强制要求客户端使用域名模组（force_use_areahint）
+可配置项：true/false（默认为false）
+当该配置项为true时 客户端进入服务器时 客户端域名模组与服务端模组进行一次握手 握手成功进入服务器（客户端版本大于等于服务器版本） 握手失败则显示界面（不准进入服务器）：该服务器要求安装域名模组（显示服务端模组版本） 为确保游戏体验 请移步至modrinth下载最新版本 （/n 换行） 下载地址：https://modrinth.com/mod/area-hints（点击该网址打开浏览器跳到该页面）
+
 服务端配置选项：域名默认游戏模式（default_gamemode）
-指令：设定域名的游戏模式
+可配置项：survival/creative/adventure/spectator (默认跟随 server.properties的gamemode的选项)
+
+功能：设定域名的游戏模式
+每个域名可以添加一个属性gamemode 没有属性使用default_gamemode 后面可以跟survival/creative/adventure/spectator 当玩家进入一个带有gamemode或者离开一个带有gamemode属性的域名时（玩家所处域名要求的gamemode有变化时） 玩家客户端向服务端发送信息 服务端用当前该玩家在服务端的坐标进行一次该维度的域名判断 如果在域名内则给予服务器内域名文件的对应域名的gamemode属性（该操作在服务端配置选项force_use_areahint开启时才能用）
+子指令 : `/areahint replaceareagamemode`
+1.  名称：`replaceareagamemode`
+2.  功能：使用此指令时 首先查询服务端配置选项force_use_areahint是否开启 开启才能继续后续操作 向玩家列出所处的维度所有的域名 选择域名后给出survival/creative/adventure/spectator四个按钮 选择后将调整后的参数展示给玩家，并且执行一次/areahint reload 此指令需要同步可视化gui和luckperms权限节点
+目标选择器：作用于服务端自己的本地文件
+权限等级：2（管理员）
 
 服务端配置选项：城市化审批

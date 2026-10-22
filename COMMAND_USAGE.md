@@ -140,15 +140,19 @@
 
 ## 服务端配置与域名提交审批
 
-服务端启动时会读取全局目录下的 `areas-hint/server-config.json`。文件不存在时自动生成如下默认配置；缺少 `submit_approval` 选项时同样按 `true` 处理。
+服务端每次启动时会读取全局目录下的 `areas-hint/server-config.json`，按配置项定义补齐缺失选项、修复非法类型或值并回写文件。未来新增的配置项同样使用此机制；已有合法值和未知字段会保留。整个 JSON 损坏时会先保存 `server-config.invalid-*.json.bak` 备份，再重建默认配置。
 
 ```json
 {
-  "submit_approval": true
+  "submit_approval": true,
+  "force_use_areahint": false,
+  "default_gamemode": "survival"
 }
 ```
 
 `submit_approval` 只接受布尔值 `true` 或 `false`。设置为 `true` 后，普通玩家已有权限允许的域名修改会先形成申请，由管理员审批后生效；OP 玩家仍沿用原来的即时修改流程。设置为 `false` 后，恢复原有的直接修改行为。修改服务端配置后重启服务端即可重新加载。
+
+`default_gamemode` 的示例值为 `survival`，实际补齐或修复时采用服务器默认游戏模式（专用服务端来自 `server.properties` 的 `gamemode`）。已保存的合法值会继续使用；如需重新采用服务器默认值，可删除此项后重启。
 
 审批保留原有域名签名、上级域名和权限节点规则，不会让普通玩家申请原本无权进行的修改。只有 OP 可以查看并处理公共申请；获得某条命令的权限节点不会自动获得审批权限。
 
@@ -192,10 +196,34 @@
 
 | 文件 | 位置与用途 |
 | --- | --- |
-| 服务端配置 | 服务端全局 `areas-hint/server-config.json`，决定是否启用审批 |
+| 服务端配置 | 服务端全局 `areas-hint/server-config.json`，控制审批、强制模组和域名默认游戏模式 |
 | 申请及审批历史 | 服务端全局 `areas-hint/approval-requests/<worldKey>/<申请UUID>.json`，按世界标识隔离，供全部 OP 查看 |
 | 客户端配置副本 | 客户端 `areas-hint/<服务器地址_世界名称>/server-config.json`，连接时更新 |
 | 客户端回复 | 客户端 `areas-hint/<服务器地址_世界名称>/approval-replies.json`，同步当前玩家的回复及审批历史 |
 
 `worldKey` 由服务端存档路径生成，不是玩家名称。客户端沿用现有世界目录命名规则，回复文件同时记录当前玩家 UUID，避免切换账号时混淆回复。
+
+## 强制客户端模组与域名游戏模式
+
+`force_use_areahint` 只接受 `true` / `false`，默认 `false`。开启后，客户端在进入世界前与服务端进行一次登录握手，必须安装支持此握手的域名模组，且客户端模组版本大于或等于服务端版本。缺少模组、版本过旧或握手不合法时会拒绝进入，并显示服务端模组版本及下载地址 `https://modrinth.com/mod/area-hints`。
+
+支持此功能的客户端会在断开界面增加下载网址按钮，点击后打开浏览器。未安装模组的原版客户端只能显示完整网址，原版断开界面本身不支持点击文字链接。
+
+`default_gamemode` 只接受 `survival` / `creative` / `adventure` / `spectator`。域名 JSON 可添加同名 `gamemode` 属性，例如：
+
+```json
+"gamemode": "adventure"
+```
+
+玩家所在域名按既有高度、多边形、层级与重叠距离规则决定，取最深层域名。该域名没有合法的 `gamemode` 时使用 `default_gamemode`，不继承父域名模式；离开所有域名也使用默认值。此功能仅在 `force_use_areahint` 开启时生效。客户端只发送重新判断的通知，服务端始终以自己的玩家坐标、当前维度和本地域名文件决定实际模式。关闭客户端标题提示不会关闭此功能。
+
+### `/areahint replaceareagamemode`
+
+1. 执行指令，列出服务端当前维度内的域名。
+2. 选择域名，再点击生存、创造、冒险、旁观四个按钮之一。
+3. 服务端保存 `gamemode`，展示域名与调整后的值，并执行一次完整域名重载与同步。
+
+命令可视化 GUI 的域名编辑分类提供同一向导。命令作用于服务端自己的当前世界文件，不读取客户端上传的目标文件；切换维度后旧按钮会被拒绝。默认要求管理员等级 2，并支持 LuckPerms 节点 `areahint.command.replaceareagamemode`。每一步都会重新检查权限和强制模组配置，内部重载无需额外获得 `areahint.command.reload` 权限。
+
+扩大、缩小、分割和增删顶点等几何编辑会保留服务端已有的 `gamemode`，普通客户端不能借这些编辑请求覆盖游戏模式。
 

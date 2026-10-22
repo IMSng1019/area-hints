@@ -53,10 +53,17 @@ public class DivideAreaServerNetworking {
             AreaData area2 = AreaDataConverter.fromJsonObject(JsonParser.parseString(a2Json).getAsJsonObject());
             String dimType = convertDimId(dimension);
 
-            if (!validatePermission(player, origName, dimType)) {
+            List<AreaData> storedAreas = readAreas(dimType);
+            AreaData originalArea = AreaPermissionUtil.findByName(storedAreas, origName);
+            if (!AreaManagementCapabilityService.canPerform(
+                    player, AreaManagementCapabilityService.DIVIDE_AREA, originalArea, storedAreas)) {
                 sendResponse(player, false, key("dividearea.error.permission"));
                 return;
             }
+
+            // 两个分割结果继承服务器原域名的模式，客户端不得通过分割创建任意游戏模式的域名。
+            area1.setGamemode(originalArea.getGamemode());
+            area2.setGamemode(originalArea.getGamemode());
             // 分割涉及删除原域名并新增两个域名，必须作为同一份候选结果审批。
             if (ApprovalManager.requiresApproval(player)) {
                 String fileName = Packets.getFileNameForDimension(dimType);
@@ -89,13 +96,6 @@ public class DivideAreaServerNetworking {
             System.err.println("处理分割域名请求失败: " + e.getMessage());
             sendResponse(player, false, key("dividearea.error.process"), lit(e.getMessage()));
         }
-    }
-
-    private static boolean validatePermission(ServerPlayerEntity player, String areaName, String dimType) {
-        List<AreaData> areas = readAreas(dimType);
-        AreaData area = AreaPermissionUtil.findByName(areas, areaName);
-        return AreaManagementCapabilityService.canPerform(
-            player, AreaManagementCapabilityService.DIVIDE_AREA, area, areas);
     }
 
     private static boolean saveDividedAreas(AreaData area1, AreaData area2, String origName, String dimension) {

@@ -750,6 +750,8 @@ public class DivideAreaManager {
             selectedArea.getColor(),
             selectedArea.getSurfacename()
         );
+        // 两个分割预览继承原域名模式，最终值由服务端原始存档再次确认。
+        config.setGamemode(selectedArea.getGamemode());
         return config;
     }
 

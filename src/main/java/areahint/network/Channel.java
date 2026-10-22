@@ -122,9 +122,15 @@ public final class Channel {
     public static final Channel C2S_APPROVAL_CHUNK = of("c2s_approval_chunk");
     public static final Channel S2C_APPROVAL_DATA = of("s2c_approval_data");
     public static final Channel S2C_APPROVAL_RESULT = of("s2c_approval_result");
+    // 游戏模式策略只发给主动请求的新客户端，位置通知不携带客户端指定的域名或模式。
+    public static final Channel C2S_AREA_GAMEMODE_POLICY = of("c2s_area_gamemode_policy");
+    public static final Channel S2C_AREA_GAMEMODE_POLICY = of("s2c_area_gamemode_policy");
+    public static final Channel C2S_AREA_GAMEMODE_CHECK = of("c2s_area_gamemode_check");
+    public static final Channel S2C_AREA_GAMEMODE_EDITOR = of("s2c_area_gamemode_editor");
 
     /** 全部通道清单：1.20.5+ 的网络实现按它逐个注册 PayloadType（顺序无关） */
     public static final java.util.List<Channel> ALL = java.util.List.of(
+            C2S_AREA_GAMEMODE_POLICY, S2C_AREA_GAMEMODE_POLICY, C2S_AREA_GAMEMODE_CHECK, S2C_AREA_GAMEMODE_EDITOR,
             S2C_AREA_DATA, S2C_CLIENT_COMMAND, S2C_DEBUG_COMMAND, C2S_REQUEST_AREA_DATA,
             DIMENSIONAL_NAMES, C2S_REQUEST_WORLD_INFO, S2C_WORLD_INFO,
             AREA_DATA_CHANNEL, CLIENT_COMMAND_CHANNEL, C2S_RECOLOR_REQUEST, S2C_RECOLOR_RESPONSE,

@@ -702,6 +702,9 @@ public class ShrinkGeometryCalculator {
             originalArea.getColor(),       // 保持原颜色
             originalArea.getSurfacename()  // 保持原surfacename
         );
+
+        // 收缩预览仅改变几何范围，游戏模式继续显示原域名设置。
+        shrunkArea.setGamemode(originalArea.getGamemode());
         
         return shrunkArea;
     }
@@ -1115,4 +1118,4 @@ public class ShrinkGeometryCalculator {
         double dz = p1.getZ() - p2.getZ();
         return Math.sqrt(dx * dx + dz * dz);
     }
-} 
+}

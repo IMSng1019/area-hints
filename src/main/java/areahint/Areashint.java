@@ -54,6 +54,10 @@ public class Areashint implements ModInitializer {
 		// 安装当前版本的网络实现：必须先于任何会注册接收器的初始化（机制 ② 的唯一交接点）
 		areahint.network.NetworkCompat.install(areahint.network.NetworkCompatFactory.create());
 
+		// 登录阶段检查模组版本，游戏阶段仅接收客户端的域名游戏模式复核通知。
+		areahint.handshake.ServerModHandshake.register();
+		areahint.gamemode.AreaGamemodeManager.register();
+
 		// 初始化服务端国际化
 		ServerI18nManager.init();
 

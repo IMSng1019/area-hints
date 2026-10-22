@@ -477,6 +477,9 @@ public class ServerCommands {
                 .then(literal("cancel")
                     .executes(ServerCommands::executeDivideAreaCancel)))
 
+            // 域名游戏模式编辑由服务端直接校验配置、权限与本地文件。
+            .then(areahint.gamemode.ReplaceAreaGamemodeCommand.createCommand())
+
             // recolor 命令
             .then(literal("recolor")
                 .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.RECOLOR, 0))
@@ -828,6 +831,7 @@ public class ServerCommands {
         source.sendMessage(Text.translatable("help.command.addarea"));
         source.sendMessage(Text.translatable("help.command.recolor"));
         source.sendMessage(Text.translatable("help.command.rename"));
+        source.sendMessage(Text.translatable("help.command.replaceareagamemode"));
         source.sendMessage(Text.translatable("help.command.sethigh"));
         source.sendMessage(Text.translatable("help.command.tcp"));
         source.sendMessage(Text.translatable("help.command.udp"));
@@ -865,10 +869,17 @@ public class ServerCommands {
      * @return 执行结果
      */
     private static int executeReload(CommandContext<ServerCommandSource> context) {
-        ServerCommandSource source = context.getSource();
+        return reload(context.getSource());
+    }
+
+    // 已完成自身权限检查的编辑命令可复用完整重载，不额外依赖 reload 节点授权。
+    public static int reload(ServerCommandSource source) {
         
         // 重新加载区域数据并发送给所有客户端
         ServerNetworking.sendAllAreaDataToAll();
+
+        // 重载域名缓存、同步游戏模式策略并重新裁定在线玩家，不在运行中切换登录强制开关。
+        areahint.gamemode.AreaGamemodeManager.reload(source.getServer());
         
         // 重新发送维度域名配置给所有客户端
         try {

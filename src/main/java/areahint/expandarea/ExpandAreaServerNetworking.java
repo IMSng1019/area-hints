@@ -82,6 +82,9 @@ public class ExpandAreaServerNetworking {
                 return;
             }
 
+            // 游戏模式始终继承服务端存档，防止几何编辑丢失该字段或借客户端载荷越权修改。
+            expandedArea.setGamemode(existingArea.getGamemode());
+
             // 验证域名数据
             if (!validateAreaData(expandedArea)) {
                 sendResponse(player, false, key("easyadd.error.area_4"));

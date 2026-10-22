@@ -64,6 +64,9 @@ public class EasyAddServerNetworking {
                 return;
             }
 
+            // 快捷创建只负责新增域名，客户端不能借普通创建权限夹带管理员专属的游戏模式。
+            areaData.setGamemode(null);
+
             // 获取维度文件名 - 使用统一的命名规则
             String dimensionType = convertDimensionIdToType(dimension);
             String fileName = Packets.getFileNameForDimension(dimensionType);

@@ -90,12 +90,13 @@ public final class ApprovalDetailScreen extends CommandUiScreen {
     public void tick() {
         var session = ApprovalClientManager.getSession();
         if (session == null) { if (client != null) client.setScreen(null); return; }
-        boolean available = !ApprovalClientManager.isBusy() && !session.stale && ApprovalClientManager.isEnabled();
-        for (ButtonWidget button : mutationButtons) button.active = available;
+        boolean available = !ApprovalClientManager.isBusy() && !session.stale;
+        boolean editable = available && ApprovalClientManager.isSessionOperationEnabled();
+        for (ButtonWidget button : mutationButtons) button.active = editable;
         if (previewButton != null) previewButton.active = available && !session.areas.isEmpty();
         if (addButton != null) addButton.active = available && ApprovalClientManager.canEdit(session.areaIndex);
         if (deleteButton != null) deleteButton.active = available && ApprovalClientManager.canEdit(session.areaIndex);
-        if (comment != null) comment.setEditable(available);
+        if (comment != null) comment.setEditable(editable);
     }
 
     @Override

@@ -101,7 +101,7 @@ final class AreaManagementScreen extends Screen {
     private static Map<String, List<String>> createGroups() {
         Map<String, List<String>> groups = new LinkedHashMap<>();
         groups.put("xaero.areahint.group.teleport", List.of("tcp", "udp"));
-        groups.put("xaero.areahint.group.properties", List.of("rename", "recolor", "sethigh"));
+        groups.put("xaero.areahint.group.properties", List.of("rename", "recolor", "applyurbanarea", "sethigh"));
         groups.put("xaero.areahint.group.text", List.of("adddescription", "replacedescription", "deletedescription",
             "addsubtitle", "replacesubtitle", "deletesubtitle", "replacesubtitlecolor", "replacesubtitlesize",
             "addsignature", "deletesignature"));

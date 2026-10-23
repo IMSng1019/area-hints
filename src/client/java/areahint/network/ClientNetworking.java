@@ -62,6 +62,9 @@ public class ClientNetworking {
         // 注册rename响应接收处理器（由 RenameNetworking 处理）
         areahint.rename.RenameNetworking.registerClientReceivers();
 
+        // 城市化列表和申请结果使用独立响应通道，避免与现有游戏模式向导混用状态。
+        areahint.urban.ApplyUrbanAreaVisualController.register();
+
         // 注册Teleport响应接收处理器
         ClientNetworkCompat.get().registerClientReceiver(
                 Channel.S2C_TELEPORT_RESPONSE,

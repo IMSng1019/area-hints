@@ -151,6 +151,11 @@ public class JsonHelper {
             }
 
             // 非字符串模式按未设置处理，避免一个错误属性导致整个维度的域名无法加载。
+            // 保留服务端确认的域名类型，旧文件缺失时由 AreaData 返回 rural。
+            JsonElement areaType = jsonObject.get("type");
+            if (areaType != null && areaType.isJsonPrimitive() && areaType.getAsJsonPrimitive().isString()) {
+                areaData.setType(areaType.getAsString());
+            }
             JsonElement gamemode = jsonObject.get("gamemode");
             if (gamemode != null && gamemode.isJsonPrimitive() && gamemode.getAsJsonPrimitive().isString()) {
                 areaData.setGamemode(gamemode.getAsString());

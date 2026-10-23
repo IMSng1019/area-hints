@@ -479,6 +479,7 @@ public class ServerCommands {
 
             // 域名游戏模式编辑由服务端直接校验配置、权限与本地文件。
             .then(areahint.gamemode.ReplaceAreaGamemodeCommand.createCommand())
+            .then(areahint.urban.ApplyUrbanAreaCommand.createCommand())
 
             // recolor 命令
             .then(literal("recolor")
@@ -832,6 +833,10 @@ public class ServerCommands {
         source.sendMessage(Text.translatable("help.command.recolor"));
         source.sendMessage(Text.translatable("help.command.rename"));
         source.sendMessage(Text.translatable("help.command.replaceareagamemode"));
+        if (areahint.config.ServerConfig.isSubmitUrbanArea()
+            && PermissionService.hasCommandPermission(source, PermissionNodes.APPLY_URBAN_AREA, 0)) {
+            source.sendMessage(Text.translatable("help.command.applyurbanarea"));
+        }
         source.sendMessage(Text.translatable("help.command.sethigh"));
         source.sendMessage(Text.translatable("help.command.tcp"));
         source.sendMessage(Text.translatable("help.command.udp"));
@@ -874,6 +879,10 @@ public class ServerCommands {
 
     // 已完成自身权限检查的编辑命令可复用完整重载，不额外依赖 reload 节点授权。
     public static int reload(ServerCommandSource source) {
+        // 重发按配置与权限过滤的命令树，让聊天补全和城市化可视化入口保持一致。
+        for (ServerPlayerEntity player : source.getServer().getPlayerManager().getPlayerList()) {
+            source.getServer().getCommandManager().sendCommandTree(player);
+        }
         
         // 重新加载区域数据并发送给所有客户端
         ServerNetworking.sendAllAreaDataToAll();
@@ -939,6 +948,10 @@ public class ServerCommands {
         
         // 规范化颜色，确保 /add JSON 与 EasyAdd/Recolor 一致写入静态色或 FLASH_* 语义
         areaData.setColor(areahint.util.ColorUtil.normalizeColor(areaData.getColor()));
+        // 非管理员即使获准使用 add，也不能通过 JSON 预置 urban 绕过独立城市化审批。
+        if (source.isExecutedByPlayer() && !ApprovalManager.isOperator(source.getPlayer())) {
+            areaData.setType(AreaData.RURAL_TYPE);
+        }
 
         if (!areaData.isValid()) {
             source.sendMessage(Text.translatable("command.error.area.level"));

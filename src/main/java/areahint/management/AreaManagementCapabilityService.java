@@ -21,6 +21,7 @@ public final class AreaManagementCapabilityService {
     public static final String UDP = "udp";
     public static final String RENAME = "rename";
     public static final String RECOLOR = "recolor";
+    public static final String APPLY_URBAN_AREA = "applyurbanarea";
     public static final String SET_HIGH = "sethigh";
     public static final String ADD_DESCRIPTION = "adddescription";
     public static final String REPLACE_DESCRIPTION = "replacedescription";
@@ -41,7 +42,7 @@ public final class AreaManagementCapabilityService {
 
     public static final List<String> ORDERED_OPERATIONS = List.of(
         TCP, UDP,
-        RENAME, RECOLOR, SET_HIGH,
+        RENAME, RECOLOR, APPLY_URBAN_AREA, SET_HIGH,
         ADD_DESCRIPTION, REPLACE_DESCRIPTION, DELETE_DESCRIPTION,
         ADD_SUBTITLE, REPLACE_SUBTITLE, DELETE_SUBTITLE, REPLACE_SUBTITLE_COLOR, REPLACE_SUBTITLE_SIZE,
         ADD_SIGNATURE, DELETE_SIGNATURE,
@@ -53,7 +54,7 @@ public final class AreaManagementCapabilityService {
     }
 
     public static List<String> getAllowedOperations(ServerPlayerEntity player, AreaData area, List<AreaData> allAreas) {
-        // 21 个操作共用同一份局部索引，避免每个操作内部反复全表扫描
+        // 各个管理操作共用同一份局部索引，避免每个操作内部反复全表扫描。
         AreaIndex index = AreaIndex.of(allAreas);
         List<String> allowed = new ArrayList<>();
         for (String operation : ORDERED_OPERATIONS) {
@@ -94,6 +95,11 @@ public final class AreaManagementCapabilityService {
                 () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
             case RECOLOR -> PermissionService.hasNodeOr(player, PermissionNodes.RECOLOR,
                 () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
+            // 城市化的域名归属按 base-name 精确匹配玩家名，命令节点不能绕过归属或审批。
+            case APPLY_URBAN_AREA -> areahint.config.ServerConfig.isSubmitUrbanArea()
+                && PermissionService.hasCommandPermission(player, PermissionNodes.APPLY_URBAN_AREA, 0)
+                && AreaData.RURAL_TYPE.equals(area.getType())
+                && (areahint.approval.ApprovalManager.isOperator(player) || playerName.equals(area.getBaseName()));
             case SET_HIGH -> canSetHigh(player, area, index, playerName);
             case ADD_DESCRIPTION, REPLACE_DESCRIPTION ->
                 PermissionService.hasCommandPermission(player, PermissionNodes.ADD_DESCRIPTION, 0)

@@ -246,6 +246,9 @@ Areas Hint 是一个适用于 **Minecraft Fabric 1.20.4** 的区域提示模组�
 ### 9. 副字幕 `subtitle` / `subtitlecolor`
 副字幕会显示在域名标题下方。没有 `subtitle` 字段或内容为空时不会显示副字幕；`subtitlecolor` 支持十六进制颜色，也支持模组内的闪烁颜色值。
 
+### 10. 域名类型 `type`
+缺少 `type` 的域名按 `rural`（乡村）处理。通过城市化申请并获批，或由权限等级至少为 2 的 OP 执行城市化后，域名保存为 `"type": "urban"`（城市）。城市化申请由服务端配置 `submit_urban_area` 独立控制，默认关闭。
+
 ---
 
 <a id="commands"></a>
@@ -310,6 +313,16 @@ Areas Hint 是一个适用于 **Minecraft Fabric 1.20.4** 的区域提示模组�
 | `/areahint shrinkarea` | 从列表中选择域名收缩 | 所有人 |
 | `/areahint shrinkarea <域名>` | 直接指定域名进行收缩（推荐） | 所有人 |
 | `/areahint dividearea` | 启动交互式域名分割 | 所有人 |
+
+### 域名城市化
+
+| 命令 | 说明 | 常见权限 |
+|---|---|---|
+| `/areahint applyurbanarea` | 选择服务端当前维度的域名申请城市化；需要开启 `submit_urban_area` | 默认等级 0；普通玩家限 `base-name` 为本人名字的域名，OP 等级至少 2 可操作全部域名 |
+
+服务端全局 `areas-hint/server-config.json` 中的 `submit_urban_area` 默认 `false`，关闭时隐藏指令与可视化入口。开启后，普通玩家提交申请，OP 审批同意后才会写入 `"type": "urban"`；OP 自己操作则立即写入并重载。即使普通修改审批 `submit_approval` 关闭，城市化仍按此流程审批。
+
+LuckPerms 节点为 `areahint.command.applyurbanarea`，不会替代域名归属检查或授予 OP 审批身份。城市化申请复用可视化预览、临时顶点编辑、打回修改、历史意见和离线回复，详见 [城市化与审批使用说明](COMMAND_USAGE.md#域名城市化)。
 
 ### 单个顶点编辑
 

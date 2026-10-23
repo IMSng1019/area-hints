@@ -65,6 +65,7 @@ public final class ApprovalManager {
 
     public static boolean isOperator(ServerPlayerEntity player) {
         return player != null && player.getServer() != null
+            && player.hasPermissionLevel(2)
             && player.getServer().getPlayerManager().isOperator(player.getGameProfile());
     }
 
@@ -72,9 +73,21 @@ public final class ApprovalManager {
         return player != null && ServerConfig.isSubmitApproval() && !isOperator(player);
     }
 
+    // 城市化审批拥有独立开关，不能因为普通提交审批关闭而直接修改正式域名。
+    public static boolean requiresApproval(ServerPlayerEntity player, String operation) {
+        return player != null && isOperationEnabled(operation) && !isOperator(player);
+    }
+
+    private static boolean isOperationEnabled(String operation) {
+        return "applyurbanarea".equals(operation) ? ServerConfig.isSubmitUrbanArea() : ServerConfig.isSubmitApproval();
+    }
+
     public static boolean submitAreasIfRequired(ServerPlayerEntity player, String operation,
                                                Path file, List<AreaData> proposed) throws IOException {
-        if (!requiresApproval(player)) {
+        if ("applyurbanarea".equals(operation) && !isOperationEnabled(operation)) {
+            throw new IOException("approval.error.disabled");
+        }
+        if (!requiresApproval(player, operation)) {
             return false;
         }
         JsonArray before = canonicalAreas(readDocument(file));
@@ -178,9 +191,7 @@ public final class ApprovalManager {
     }
 
     public static ApprovalRequest findVisible(ServerPlayerEntity player, String id) throws ApprovalException {
-        if (!ServerConfig.isSubmitApproval()) {
-            throw error("disabled");
-        }
+        // 关闭提交开关后仍允许读取已经收到的回复，开关校验只限制后续修改和审批。
         ApprovalRequest request = REQUESTS.get(id);
         if (request == null || !Objects.equals(worldKey, request.worldKey)) {
             throw error("missing");
@@ -193,6 +204,9 @@ public final class ApprovalManager {
 
     private static ApprovalRequest editable(ServerPlayerEntity player, String id, int revision) throws ApprovalException {
         ApprovalRequest stored = findVisible(player, id);
+        if (!isOperationEnabled(stored.operation)) {
+            throw error("disabled");
+        }
         if (stored.revision != revision) {
             throw error("stale");
         }
@@ -239,7 +253,7 @@ public final class ApprovalManager {
         request.status = result;
         // 批准先验证整个差异再写入，同一申请涉及的域名必须作为整体处理。
         if ("approved".equals(result)) {
-            applyApproved(request);
+            applyApproved(player, request);
         } else {
             update(request);
         }
@@ -260,6 +274,10 @@ public final class ApprovalManager {
         validateResubmitPermission(player, request);
         applyDraft(player, request, action.get("areas"));
         rebase(request);
+        if ("applyurbanarea".equals(request.operation)) {
+            // 重提以最新正式记录为基线，再次核验类型变化，已被其他申请城市化的域名不能重复提交。
+            for (ApprovalRequest.Change change : request.changes) validateUrbanChange(change);
+        }
         request.status = "pending";
         update(request);
         ApprovalNetworking.sendResult(player, true, "approval.message.resubmitted", "resubmit", request.id);
@@ -293,6 +311,7 @@ public final class ApprovalManager {
         for (int i = 0; i < request.previewAreas.size(); i++) {
             AreaData original = request.previewAreas.get(i);
             original.setSignatures(original.getSignatures());
+            original.setType(original.getType());
             JsonObject draft = drafts.get(original.getName());
             if (draft == null) {
                 throw error("invalid");
@@ -382,6 +401,13 @@ public final class ApprovalManager {
             if (!"areas".equals(change.kind)) continue;
             List<AreaData> currentAreas = toAreas(canonicalAreas(readDocument(resolve(change.path))));
             AreaData current = AreaPermissionUtil.findByName(currentAreas, before.getName());
+            if ("applyurbanarea".equals(request.operation)) {
+                // 城市化临时草稿沿用该申请的域名归属，录点命令的显式拒绝仍由上面的节点校验拦截。
+                if (current == null || !areahint.urban.ApplyUrbanAreaCommand.canUrbanize(player, current)) {
+                    throw error("denied");
+                }
+                continue;
+            }
             if (current != null && (added && !AreaManagementCapabilityService.canPerform(player,
                 AreaManagementCapabilityService.ADD_HINT, current, currentAreas)
                 || removed && !AreaManagementCapabilityService.canPerform(player,
@@ -404,6 +430,10 @@ public final class ApprovalManager {
     // 打回后再次申请重新使用原功能的权限规则，签名或权限节点已撤销时不能继续沿用旧资格。
     private static void validateResubmitPermission(ServerPlayerEntity player, ApprovalRequest request)
         throws IOException, ApprovalException {
+        if ("applyurbanarea".equals(request.operation)) {
+            validateUrbanResubmitPermission(player, request);
+            return;
+        }
         if (isOperator(player)) {
             return;
         }
@@ -457,17 +487,37 @@ public final class ApprovalManager {
         }
     }
 
-    private static void applyApproved(ApprovalRequest request) throws IOException, ApprovalException {
+    private static void validateUrbanResubmitPermission(ServerPlayerEntity player, ApprovalRequest request)
+            throws IOException, ApprovalException {
+        if (!ServerConfig.isSubmitUrbanArea()) throw error("disabled");
+        if (!PermissionService.hasCommandPermission(player, PermissionNodes.APPLY_URBAN_AREA, 0)) throw error("denied");
+        if (request.changes.isEmpty()) throw error("invalid");
+        for (ApprovalRequest.Change change : request.changes) {
+            validateUrbanChange(change);
+            List<AreaData> currentAreas = toAreas(canonicalAreas(readDocument(resolve(change.path))));
+            for (JsonElement item : change.before.getAsJsonArray()) {
+                AreaData current = AreaPermissionUtil.findByName(currentAreas, item.getAsJsonObject().get("name").getAsString());
+                if (current == null) throw error("conflict");
+                if (!areahint.urban.ApplyUrbanAreaCommand.canUrbanize(player, current)) throw error("denied");
+                if (!AreaData.RURAL_TYPE.equals(current.getType())) throw error("conflict");
+            }
+        }
+    }
+
+    private static void applyApproved(ServerPlayerEntity reviewer, ApprovalRequest request) throws IOException, ApprovalException {
         Map<Path, JsonElement> originals = new LinkedHashMap<>();
         Map<Path, JsonElement> replacements = new LinkedHashMap<>();
         for (ApprovalRequest.Change change : request.changes) {
+            if ("applyurbanarea".equals(request.operation)) validateUrbanChange(change);
             Path file = resolve(change.path);
             JsonElement current = readDocument(file);
             originals.put(file, current);
             if ("areas".equals(change.kind)) {
                 // 审批只批准原操作允许的属性变化，不能把历史申请中的夹带字段转成模式授权。
                 validateGamemodeChange(request.operation, change);
-                JsonArray merged = mergeAreas(change, current);
+                validateAreaTypeChange(request.operation, change);
+                JsonArray merged = "applyurbanarea".equals(request.operation)
+                    ? mergeUrbanAreas(change, current) : mergeAreas(change, current);
                 validateRelationships(merged, change);
                 replacements.put(file, merged);
             } else if ("dimensions".equals(change.kind)) {
@@ -520,6 +570,11 @@ public final class ApprovalManager {
             Areashint.LOGGER.warn("审批已完成，事务日志将在下次启动时清理: {}", journal, e);
         }
         areahint.dimensional.DimensionalNameManager.loadDimensionalNames();
+        if ("applyurbanarea".equals(request.operation) && Areashint.getServer() != null) {
+            // 城市化成功后复用完整 reload，令客户端数据、域名缓存及现有模式策略同步刷新。
+            areahint.command.ServerCommands.reload(reviewer.getCommandSource());
+            return;
+        }
         ServerNetworking.sendAllAreaDataToAll();
         MinecraftServer server = Areashint.getServer();
         if (server != null) {
@@ -531,6 +586,77 @@ public final class ApprovalManager {
 
     private static JsonArray mergeAreas(ApprovalRequest.Change change, JsonElement current) throws IOException, ApprovalException {
         return mergeCollection(change, current, canonicalAreas(current), "name");
+    }
+
+    // 城市化先复用完整冲突检查，再从当前原始对象覆盖获批字段，保留模型未识别的自定义属性。
+    private static JsonArray mergeUrbanAreas(ApprovalRequest.Change change, JsonElement current)
+            throws IOException, ApprovalException {
+        JsonArray merged = mergeAreas(change, current);
+        Map<String, JsonObject> rawAreas = index(current.getAsJsonArray());
+        Map<String, JsonObject> before = index(change.before.getAsJsonArray());
+        Map<String, JsonObject> after = index(change.after.getAsJsonArray());
+        for (int i = 0; i < merged.size(); i++) {
+            String name = merged.get(i).getAsJsonObject().get("name").getAsString();
+            JsonObject proposed = after.get(name);
+            if (proposed == null) continue;
+            JsonObject preserved = rawAreas.get(name).deepCopy();
+            preserved.add("type", proposed.get("type").deepCopy());
+            for (String key : List.of("vertices", "second-vertices")) {
+                // 未实际编辑的几何字段也保留原始 JSON，避免仅城市化时重写顶点中的扩展属性。
+                if (!Objects.equals(before.get(name).get(key), proposed.get(key))) {
+                    preserved.add(key, proposed.get(key).deepCopy());
+                }
+            }
+            merged.set(i, preserved);
+        }
+        return merged;
+    }
+
+    // 城市化仅能把既有农村域名改为城市，审批内的特殊编辑只额外允许调整一级和二级顶点。
+    private static void validateUrbanChange(ApprovalRequest.Change change) throws IOException, ApprovalException {
+        if (!"areas".equals(change.kind) || !change.before.isJsonArray() || !change.after.isJsonArray()) {
+            throw error("invalid");
+        }
+        Map<String, JsonObject> before = index(change.before.getAsJsonArray());
+        Map<String, JsonObject> after = index(change.after.getAsJsonArray());
+        if (before.isEmpty() || !before.keySet().equals(after.keySet())) throw error("invalid");
+        for (var entry : before.entrySet()) {
+            JsonObject original = entry.getValue();
+            JsonObject proposed = after.get(entry.getKey());
+            if (!AreaData.RURAL_TYPE.equals(typeValue(original)) || !AreaData.URBAN_TYPE.equals(typeValue(proposed))) {
+                throw error("invalid");
+            }
+            JsonObject expectedAttributes = original.deepCopy();
+            JsonObject actualAttributes = proposed.deepCopy();
+            for (String key : List.of("type", "vertices", "second-vertices")) {
+                expectedAttributes.remove(key);
+                actualAttributes.remove(key);
+            }
+            if (!expectedAttributes.equals(actualAttributes)) throw error("invalid");
+        }
+    }
+
+    // 普通审批不能夹带城市化，改名和分割仍从原域名继承类型，新建域名默认保持农村类型。
+    private static void validateAreaTypeChange(String operation, ApprovalRequest.Change change)
+            throws IOException, ApprovalException {
+        if ("applyurbanarea".equals(operation)) return;
+        Map<String, JsonObject> before = index(change.before.getAsJsonArray());
+        Map<String, JsonObject> after = index(change.after.getAsJsonArray());
+        Set<String> removedNames = new HashSet<>(before.keySet());
+        removedNames.removeAll(after.keySet());
+        JsonObject original = "dividearea".equals(operation) && before.size() == 1
+            ? before.values().iterator().next()
+            : "rename".equals(operation) && removedNames.size() == 1
+                ? before.get(removedNames.iterator().next()) : null;
+        for (var entry : after.entrySet()) {
+            JsonObject prior = before.getOrDefault(entry.getKey(), original);
+            String expectedType = prior == null ? AreaData.RURAL_TYPE : typeValue(prior);
+            if (!expectedType.equals(typeValue(entry.getValue()))) throw error("invalid");
+        }
+    }
+
+    private static String typeValue(JsonObject area) {
+        return GSON.fromJson(area, AreaData.class).getType();
     }
 
     private static void validateGamemodeChange(String operation, ApprovalRequest.Change change)
@@ -663,6 +789,7 @@ public final class ApprovalManager {
                     // 分割申请被打回期间管理员可能更新原域名模式，再提交时两个结果都继承最新值。
                     if (dividedFrom != null) {
                         added.add("gamemode", gamemodeValue(actual.get(dividedFrom)).deepCopy());
+                        added.addProperty("type", typeValue(actual.get(dividedFrom)));
                     }
                     newAfter.add(added);
                     continue;
@@ -826,6 +953,8 @@ public final class ApprovalManager {
             }
             // getter统一空签名列表，避免客户端展示签名时的清理影响草稿一致性校验。
             area.setSignatures(area.getSignatures());
+            // 缺失类型与显式 rural 等价，统一后不会把升级前的域名误判为并发修改。
+            area.setType(area.getType());
             result.add(GSON.toJsonTree(area));
         }
         return result;
@@ -905,26 +1034,29 @@ public final class ApprovalManager {
         if (request.changes == null) request.changes = new ArrayList<>();
         if (request.reviews == null) request.reviews = new ArrayList<>();
         if (request.previewAreas == null) request.previewAreas = new ArrayList<>();
+        for (AreaData area : request.previewAreas) area.setType(area.getType());
         for (ApprovalRequest.Change change : request.changes) {
             if (change.before == null) change.before = JsonNull.INSTANCE;
             if (change.after == null) change.after = JsonNull.INSTANCE;
             if ("areas".equals(change.kind)) {
-                // 旧版审批快照没有新增字段，补为显式空值以匹配当前模型的 serializeNulls 规范化结果。
-                normalizeGamemodeSnapshot(change.before);
-                normalizeGamemodeSnapshot(change.after);
+                // 旧版审批快照缺失的模式和类型补齐默认值，匹配当前模型的规范化结果。
+                normalizeAreaSnapshot(change.before);
+                normalizeAreaSnapshot(change.after);
             }
         }
         return request;
     }
 
-    private static void normalizeGamemodeSnapshot(JsonElement snapshot) {
+    private static void normalizeAreaSnapshot(JsonElement snapshot) {
         if (!snapshot.isJsonArray()) {
             return;
         }
         for (JsonElement element : snapshot.getAsJsonArray()) {
-            if (element.isJsonObject() && !element.getAsJsonObject().has("gamemode")) {
-                element.getAsJsonObject().add("gamemode", JsonNull.INSTANCE);
-            }
+            if (!element.isJsonObject()) continue;
+            JsonObject area = element.getAsJsonObject();
+            if (!area.has("gamemode")) area.add("gamemode", JsonNull.INSTANCE);
+            // 历史申请缺失或空白的 type 都补为农村类型，与当前模型规范化后的快照保持一致。
+            area.addProperty("type", typeValue(area));
         }
     }
 

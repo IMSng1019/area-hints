@@ -17,6 +17,7 @@ import java.util.List;
 public class HelpCommandScreen extends CommandUiScreen {
     private HelpListWidget list;
     private Text hoveredDescription;
+    private boolean urbanVisible;
 
     public HelpCommandScreen(net.minecraft.client.gui.screen.Screen parent) {
         super("commandui.help.title", parent);
@@ -26,9 +27,7 @@ public class HelpCommandScreen extends CommandUiScreen {
     protected void init() {
         this.list = new HelpListWidget(this.client, this.width, this.height, 32, this.height - 32);
         this.addDrawableChild(this.list);
-        for (CommandVisualHandler handler : CommandVisualRegistry.getHandlers()) {
-            this.list.addCommand(handler);
-        }
+        rebuildCommandList();
 
         int y = this.height - FOOTER_Y_OFFSET;
         int buttonWidth = 90;
@@ -37,6 +36,26 @@ public class HelpCommandScreen extends CommandUiScreen {
             .dimensions(x, y, buttonWidth, BUTTON_HEIGHT).build());
         this.addDrawableChild(ButtonWidget.builder(Text.literal(t("commandui.button.close")), button -> closeToGameFromBoundKey())
             .dimensions(x + buttonWidth + 4, y, buttonWidth, BUTTON_HEIGHT).build());
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        // 与命令列表同步响应服务端命令树变化，避免帮助页继续保留已经隐藏的城市化入口。
+        if (this.list != null && this.urbanVisible != areahint.urban.ApplyUrbanAreaVisualController.isAvailable()) {
+            double scroll = this.list.getScrollOffset();
+            rebuildCommandList();
+            this.list.setScrollOffset(scroll);
+        }
+    }
+
+    private void rebuildCommandList() {
+        if (this.list == null) return;
+        this.urbanVisible = areahint.urban.ApplyUrbanAreaVisualController.isAvailable();
+        this.list.clearCommandEntries();
+        for (CommandVisualHandler handler : CommandVisualRegistry.getHandlers()) {
+            this.list.addCommand(handler);
+        }
     }
 
     @Override
@@ -59,6 +78,10 @@ public class HelpCommandScreen extends CommandUiScreen {
 
         void addCommand(CommandVisualHandler handler) {
             this.addEntry(new Entry(handler));
+        }
+
+        void clearCommandEntries() {
+            this.clearEntries();
         }
 
         @Override

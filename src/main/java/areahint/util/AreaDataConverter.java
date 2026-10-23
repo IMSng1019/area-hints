@@ -37,6 +37,8 @@ public class AreaDataConverter {
         }
         jsonObject.addProperty("color", areaData.getColor());
         jsonObject.addProperty("surfacename", areaData.getSurfacename());
+        // 类型随域名同步和几何编辑一并传递，旧记录在保存时明确为 rural。
+        jsonObject.addProperty("type", areaData.getType());
         // 未设置的模式保持字段缺省，显式模式则在编辑与同步转换中完整保留。
         if (areaData.getGamemode() != null) {
             jsonObject.addProperty("gamemode", areaData.getGamemode());
@@ -123,6 +125,10 @@ public class AreaDataConverter {
             areaData.setSurfacename(jsonObject.get("surfacename").getAsString());
         }
         // 与 JsonHelper 的宽容读取规则一致，无效模式由实际判定阶段回退默认值。
+        com.google.gson.JsonElement type = jsonObject.get("type");
+        if (type != null && type.isJsonPrimitive() && type.getAsJsonPrimitive().isString()) {
+            areaData.setType(type.getAsString());
+        }
         com.google.gson.JsonElement gamemode = jsonObject.get("gamemode");
         if (gamemode != null && gamemode.isJsonPrimitive() && gamemode.getAsJsonPrimitive().isString()) {
             areaData.setGamemode(gamemode.getAsString());

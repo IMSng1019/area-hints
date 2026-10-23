@@ -64,6 +64,9 @@ public class DivideAreaServerNetworking {
             // 两个分割结果继承服务器原域名的模式，客户端不得通过分割创建任意游戏模式的域名。
             area1.setGamemode(originalArea.getGamemode());
             area2.setGamemode(originalArea.getGamemode());
+            // 划分产生的两个域名继承原域名类型，客户端不能上传新的城市化状态。
+            area1.setType(originalArea.getType());
+            area2.setType(originalArea.getType());
             // 分割涉及删除原域名并新增两个域名，必须作为同一份候选结果审批。
             if (ApprovalManager.requiresApproval(player)) {
                 String fileName = Packets.getFileNameForDimension(dimType);

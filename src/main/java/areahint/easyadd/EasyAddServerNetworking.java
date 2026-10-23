@@ -66,6 +66,8 @@ public class EasyAddServerNetworking {
 
             // 快捷创建只负责新增域名，客户端不能借普通创建权限夹带管理员专属的游戏模式。
             areaData.setGamemode(null);
+            // 快捷新增统一从 rural 开始，城市化必须通过专门命令及审批入口。
+            areaData.setType(AreaData.RURAL_TYPE);
 
             // 获取维度文件名 - 使用统一的命名规则
             String dimensionType = convertDimensionIdToType(dimension);

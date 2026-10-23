@@ -27,6 +27,7 @@ public class CommandListScreen extends CommandUiScreen {
     private TextFieldWidget searchField;
     private String searchQuery = "";
     private Text hoveredDescription;
+    private boolean urbanVisible;
 
     public CommandListScreen(Screen parent) {
         super("commandui.commands.title", parent);
@@ -60,6 +61,17 @@ public class CommandListScreen extends CommandUiScreen {
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        // 命令树可能晚于页面打开或被服务端刷新，仅入口可见性变化时重新筛选并保留滚动位置。
+        if (this.list != null && this.urbanVisible != areahint.urban.ApplyUrbanAreaVisualController.isAvailable()) {
+            double scroll = this.list.getScrollOffset();
+            rebuildCommandList();
+            this.list.setScrollOffset(scroll);
+        }
+    }
+
+    @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (this.searchField != null && this.searchField.isFocused()
                 && this.searchField.keyPressed(keyCode, scanCode, modifiers)) {
@@ -90,6 +102,7 @@ public class CommandListScreen extends CommandUiScreen {
             return;
         }
 
+        this.urbanVisible = areahint.urban.ApplyUrbanAreaVisualController.isAvailable();
         this.list.clearCommandEntries();
         String normalizedSearch = normalize(this.searchQuery);
         String currentCategory = null;

@@ -89,6 +89,8 @@ public class AddHintServerNetworking {
 
             // 顶点编辑不授予游戏模式权限，提交审批和直接保存都使用服务器当前的原值。
             updatedArea.setGamemode(existingArea.getGamemode());
+            // 普通顶点编辑只能继承服务端类型，不能借上传 JSON 绕过城市化审批。
+            updatedArea.setType(existingArea.getType());
 
             boolean found = false;
             for (int i = 0; i < areas.size(); i++) {

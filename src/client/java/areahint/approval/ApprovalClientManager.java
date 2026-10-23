@@ -41,6 +41,8 @@ public final class ApprovalClientManager {
     private static final List<ApprovalRequest> REQUESTS = new ArrayList<>();
     private static ClientPlayNetworkHandler connection;
     private static boolean enabled;
+    private static boolean submitApprovalEnabled;
+    private static boolean urbanApprovalEnabled;
     private static boolean operator;
     private static int version;
     private static Session session;
@@ -135,7 +137,9 @@ public final class ApprovalClientManager {
 
     private static void applySnapshot(JsonObject snapshot) {
         JsonObject config = snapshot.has("config") ? snapshot.getAsJsonObject("config") : new JsonObject();
-        enabled = !config.has("submit_approval") || config.get("submit_approval").getAsBoolean();
+        submitApprovalEnabled = !config.has("submit_approval") || config.get("submit_approval").getAsBoolean();
+        urbanApprovalEnabled = config.has("submit_urban_area") && config.get("submit_urban_area").getAsBoolean();
+        enabled = submitApprovalEnabled || urbanApprovalEnabled;
         operator = snapshot.has("operator") && snapshot.get("operator").getAsBoolean();
         REQUESTS.clear();
         if (snapshot.has("requests")) {
@@ -152,7 +156,7 @@ public final class ApprovalClientManager {
             session.stale = latest == null || latest.revision != session.request.revision
                 || !Objects.equals(latest.status, session.request.status);
         }
-        if (!enabled && session != null) endSession();
+        // 关闭审批后保留已打开的回复详情，具体申请的修改按钮单独检查其开关。
         version++;
         completeDraftWhenReady();
     }
@@ -164,6 +168,7 @@ public final class ApprovalClientManager {
             Files.createDirectories(folder);
             JsonObject config = snapshot.has("config") ? snapshot.getAsJsonObject("config").deepCopy() : new JsonObject();
             if (!config.has("submit_approval")) config.addProperty("submit_approval", true);
+            if (!config.has("submit_urban_area")) config.addProperty("submit_urban_area", false);
             Files.writeString(folder.resolve("server-config.json"), GSON.toJson(config), StandardCharsets.UTF_8);
             // 回复包含账号标识，避免同一个本地世界目录切换账号后误把旧回复当作当前玩家内容。
             JsonObject replies = new JsonObject();
@@ -183,6 +188,11 @@ public final class ApprovalClientManager {
     }
 
     public static boolean isEnabled() { return enabled; }
+    public static boolean canOpenPanel() { return enabled || !getVisibleRequests().isEmpty(); }
+    public static boolean isSessionOperationEnabled() {
+        return session != null && ("applyurbanarea".equals(session.request.operation)
+            ? urbanApprovalEnabled : submitApprovalEnabled);
+    }
     public static boolean isOperator() { return operator; }
     public static int getVersion() { return version; }
     public static boolean isBusy() { return awaitingAction != null; }
@@ -194,7 +204,7 @@ public final class ApprovalClientManager {
     }
 
     public static void openList(Screen parent) {
-        if (!enabled) {
+        if (!canOpenPanel()) {
             message("approval.client.unavailable");
             return;
         }
@@ -214,7 +224,7 @@ public final class ApprovalClientManager {
     }
 
     public static boolean restorePanel() {
-        if (session == null || !enabled) return false;
+        if (session == null || !canOpenPanel()) return false;
         MinecraftClient.getInstance().setScreen(new ApprovalDetailScreen());
         return true;
     }
@@ -316,7 +326,7 @@ public final class ApprovalClientManager {
     }
 
     public static boolean canEdit(int index) {
-        if (session == null || session.stale || !validIndex(index)) return false;
+        if (session == null || session.stale || !isSessionOperationEnabled() || !validIndex(index)) return false;
         if (!(operator && "pending".equals(session.request.status)
                 || !operator && "returned".equals(session.request.status) && session.editMode)) return false;
         String name = session.areas.get(index).getName();
@@ -331,7 +341,7 @@ public final class ApprovalClientManager {
     }
 
     public static void decide(String result) {
-        if (session == null || session.stale || !operator || !"pending".equals(session.request.status)) return;
+        if (session == null || session.stale || !isSessionOperationEnabled() || !operator || !"pending".equals(session.request.status)) return;
         JsonObject action = actionForSession("decision");
         action.addProperty("result", result);
         action.addProperty("comment", session.comment);
@@ -339,12 +349,13 @@ public final class ApprovalClientManager {
     }
 
     public static void resubmit() {
-        if (session == null || session.stale || operator || !"returned".equals(session.request.status)) return;
+        if (session == null || session.stale || !isSessionOperationEnabled() || operator || !"returned".equals(session.request.status)) return;
         sendMutation(actionForSession("resubmit"), null);
     }
 
     private static void saveDraftThen(Runnable action) {
         if (session == null || session.stale) { message("approval.client.stale"); return; }
+        if (!isSessionOperationEnabled()) { message("approval.error.disabled"); return; }
         sendMutation(actionForSession("draft"), action);
     }
 
@@ -511,6 +522,8 @@ public final class ApprovalClientManager {
         REQUESTS.clear();
         connection = null;
         enabled = false;
+        submitApprovalEnabled = false;
+        urbanApprovalEnabled = false;
         operator = false;
         lastSnapshot = null;
         version++;

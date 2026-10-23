@@ -25,11 +25,13 @@ public final class CommandVisualRegistry {
     }
 
     public static List<CommandVisualHandler> getHandlers() {
-        return HANDLERS;
+        // 城市化入口跟随服务端开关及权限实时筛选，指令列表和帮助界面统一使用此结果。
+        return HANDLERS.stream().filter(handler -> !"applyurbanarea".equals(handler.id())
+            || areahint.urban.ApplyUrbanAreaVisualController.isAvailable()).toList();
     }
 
     public static CommandVisualHandler getById(String id) {
-        for (CommandVisualHandler handler : HANDLERS) {
+        for (CommandVisualHandler handler : getHandlers()) {
             if (handler.id().equals(id)) {
                 return handler;
             }
@@ -87,6 +89,8 @@ public final class CommandVisualRegistry {
             areahint.rename.RenameVisualController::openFromCommandUi));
         handlers.add(visual("replaceareagamemode", "areahint replaceareagamemode", "help.command.replaceareagamemode", CATEGORY_AREA_EDIT,
             areahint.gamemode.ReplaceAreaGamemodeVisualController::openFromCommandUi));
+        handlers.add(visual("applyurbanarea", "areahint applyurbanarea", "help.command.applyurbanarea", CATEGORY_AREA_EDIT,
+            areahint.urban.ApplyUrbanAreaVisualController::openFromCommandUi));
         handlers.add(visual("sethigh", "areahint sethigh", "help.command.sethigh", CATEGORY_AREA_EDIT,
             areahint.command.SetHighVisualController::openFromCommandUi));
         handlers.add(visual("tcp", "areahint tcp", "help.command.tcp", CATEGORY_TELEPORT,

@@ -705,6 +705,8 @@ public class ShrinkGeometryCalculator {
 
         // 收缩预览仅改变几何范围，游戏模式继续显示原域名设置。
         shrunkArea.setGamemode(originalArea.getGamemode());
+        // 收缩预览完整继承原域名类型。
+        shrunkArea.setType(originalArea.getType());
         
         return shrunkArea;
     }

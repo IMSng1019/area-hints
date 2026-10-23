@@ -31,6 +31,7 @@ public final class ServerConfig {
     // 新增选项只需登记默认值、类型检查和转换规则，加载时会自动补齐或修复。
     private static final Map<String, Option<?>> OPTIONS = new LinkedHashMap<>();
     private static final Option<Boolean> SUBMIT_APPROVAL = booleanOption("submit_approval", true);
+    private static final Option<Boolean> SUBMIT_URBAN_AREA = booleanOption("submit_urban_area", false);
     private static final Option<Boolean> FORCE_USE_AREAHINT = booleanOption("force_use_areahint", false);
     private static final Option<GameMode> DEFAULT_GAMEMODE = register(new Option<>(
             "default_gamemode", ServerConfig::serverDefaultGamemode, ServerConfig::isValidGamemode,
@@ -92,6 +93,11 @@ public final class ServerConfig {
 
     public static boolean isSubmitApproval() {
         return SUBMIT_APPROVAL.read(current);
+    }
+
+    // 城市化拥有独立开关，关闭普通审批不会让城市化申请跳过管理员审核。
+    public static boolean isSubmitUrbanArea() {
+        return SUBMIT_URBAN_AREA.read(current);
     }
 
     public static boolean isForceUseAreahint() {

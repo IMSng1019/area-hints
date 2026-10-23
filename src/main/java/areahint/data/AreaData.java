@@ -10,6 +10,8 @@ import com.google.gson.annotations.JsonAdapter;
  * 包含区域的基本信息：名称、顶点、边界框、高度范围、等级、基础名称、颜色和副字幕
  */
 public class AreaData {
+    public static final String RURAL_TYPE = "rural";
+    public static final String URBAN_TYPE = "urban";
     private String name;                    // 区域名称
     private List<Vertex> vertices;          // 多边形顶点列表
     @SerializedName("second-vertices")
@@ -26,6 +28,7 @@ public class AreaData {
     private String subtitlecolor;          // 副字幕颜色（十六进制格式或闪烁颜色）
     @JsonAdapter(GamemodeAdapter.class)
     private String gamemode;               // 域名要求的游戏模式；未设置时使用服务端默认值
+    private String type;                   // 域名类型；旧文件缺失时按 rural 处理，城市化后为 urban
 
     // 预计算缓存（transient确保Gson序列化时忽略）
     private transient double cachedMinX, cachedMaxX, cachedMinZ, cachedMaxZ;
@@ -241,6 +244,15 @@ public class AreaData {
 
     public void setGamemode(String gamemode) {
         this.gamemode = gamemode;
+    }
+
+    // 不强制改写旧文件，仅在实际保存或类型转换时写入类型字段。
+    public String getType() {
+        return type == null || type.isBlank() ? RURAL_TYPE : type;
+    }
+
+    public void setType(String type) {
+        this.type = type == null || type.isBlank() ? RURAL_TYPE : type;
     }
 
     // FileManager 等直接使用 Gson 的入口同样忽略错误类型，避免一项模式属性损坏整份域名列表。

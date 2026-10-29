@@ -324,8 +324,8 @@ Areas Hint 是一个适用于 **Minecraft Fabric** 的区域提示模组，当�
 | `/areahint easyadd` | 启动交互式域名添加 | 所有人 |
 | `/areahint addarea` | `easyadd` 的完整别名，支持同一套交互子命令 | 所有人 |
 | `/areahint rename` | 启动交互式域名重命名 | 所有人 |
-| `/areahint addsignature` | 为域名添加扩展签名 | 管理员或可操作签名者 |
-| `/areahint deletesignature` | 删除域名扩展签名 | 管理员或可操作签名者 |
+| `/areahint addsignature` | 为域名添加扩展签名 | 默认要求当前域名主签名或扩展签名包含当前玩家，或管理员等级至少 2 |
+| `/areahint deletesignature` | 删除域名扩展签名 | 默认要求当前域名主签名或扩展签名包含当前玩家，或管理员等级至少 2 |
 | `/areahint replaceareagamemode` | 选择域名并设置生存 / 创造 / 冒险 / 旁观模式；需要开启 `force_use_areahint` | 默认管理员等级 2，可由 LuckPerms 配置 |
 
 ### 域名几何编辑
@@ -334,19 +334,21 @@ Areas Hint 是一个适用于 **Minecraft Fabric** 的区域提示模组，当�
 |---|---|---|
 | `/areahint expandarea` | 从列表中选择域名扩展 | 所有人 |
 | `/areahint expandarea <域名>` | 直接指定域名进行扩展（推荐） | 所有人 |
-| `/areahint shrinkarea` | 从列表中选择域名收缩 | 所有人 |
-| `/areahint shrinkarea <域名>` | 直接指定域名进行收缩（推荐） | 所有人 |
+| `/areahint shrinkarea` | 从列表中选择域名收缩 | 默认要求当前域名主签名或扩展签名包含当前玩家，或管理员等级至少 2 |
+| `/areahint shrinkarea <域名>` | 直接指定域名进行收缩（推荐） | 默认要求当前域名主签名或扩展签名包含当前玩家，或管理员等级至少 2 |
 | `/areahint dividearea` | 启动交互式域名分割 | 所有人 |
+
+`shrinkarea`、`addsignature`、`deletesignature` 的默认归属判断只检查当前域名自己的 `signature` 与 `signatures`，不采用上级域名的签名。`expandarea` 保留原有的当前域名或直属上级域名签名规则，管理员等级至少为 2 时也可操作。这些编辑命令仍优先使用明确配置的 LuckPerms 节点结果。
 
 ### 域名城市化
 
 | 命令 | 说明 | 常见权限 |
 |---|---|---|
-| `/areahint applyurbanarea` | 选择服务端当前维度的域名申请城市化；需要开启 `submit_urban_area` | 默认等级 0；普通玩家限 `base-name` 为本人名字的域名，OP 等级至少 2 可操作全部域名 |
+| `/areahint applyurbanarea` | 选择服务端当前维度的域名申请城市化；需要开启 `submit_urban_area` | 默认等级 0；普通玩家限当前域名的 `signature` 为本人或 `signatures` 包含本人，OP 等级至少 2 可操作全部符合条件的域名 |
 
 服务端全局 `areas-hint/server-config.json` 中的 `submit_urban_area` 默认 `false`，关闭时隐藏指令与可视化入口。开启后，普通玩家提交申请，OP 审批同意后才会写入 `"type": "urban"`；OP 自己操作则立即写入并重载。即使普通修改审批 `submit_approval` 关闭，城市化仍按此流程审批。
 
-LuckPerms 节点为 `areahint.command.applyurbanarea`，不会替代域名归属检查或授予 OP 审批身份。城市化申请复用可视化预览、临时顶点编辑、打回修改、历史意见和离线回复，详见 [城市化与审批使用说明](COMMAND_USAGE.md#域名城市化)。
+LuckPerms 节点为 `areahint.command.applyurbanarea`，不会替代当前域名主签名或扩展签名的归属检查，也不会授予 OP 审批身份。上级域名的签名不授予城市化权限。城市化申请复用可视化预览、临时顶点编辑、打回修改、历史意见和离线回复，详见 [城市化与审批使用说明](COMMAND_USAGE.md#域名城市化)。
 
 ### 单个顶点编辑
 

@@ -2,7 +2,6 @@ package areahint.signature;
 
 import areahint.commandui.CommandVisualLaunchContext;
 import areahint.data.AreaData;
-import areahint.dimensional.ClientDimensionalNameManager;
 import areahint.file.FileManager;
 import areahint.i18n.I18nManager;
 import areahint.network.Packets;
@@ -21,7 +20,7 @@ import java.util.Locale;
  * Signature客户端交互状态管理。
  *
  * <p>此类只负责客户端交互和最终请求发送，真正的权限判断、文件读取和写入仍由服务端再次执行。
- * 这样玩家即使伪造客户端数据，也不能绕过服务端的basename引用权限检查。</p>
+ * 这样玩家即使伪造客户端数据，也不能绕过服务端的本域名签名权限检查。</p>
  */
 public class SignatureManager {
     private static SignatureManager instance;
@@ -282,12 +281,7 @@ public class SignatureManager {
         reset();
     }
 
-    /**
-     * 读取当前维度中客户端认为可修改签名的域名。
-     *
-     * <p>普通玩家只显示其签名域名被base-name引用的下级域名；管理员显示当前维度全部域名。
-     * 服务端仍会执行同样的权限判断作为最终依据。</p>
-     */
+    // 普通玩家可管理本域名的创建者签名或扩展签名包含自己的域名，管理员可管理当前维度所有域名。
     private List<AreaData> loadModifiableAreas() {
         List<AreaData> result = new ArrayList<>();
         if (client.player == null || client.world == null) {
@@ -301,7 +295,7 @@ public class SignatureManager {
             if (area == null || area.getName() == null) {
                 continue;
             }
-            if (currentPlayerAdmin || isBaseSignedByPlayer(area, allAreas, playerName)) {
+            if (currentPlayerAdmin || area.hasSignature(playerName)) {
                 result.add(area);
             }
         }
@@ -309,41 +303,6 @@ public class SignatureManager {
         String operationId = operation == Operation.DELETE ? "deletesignature" : "addsignature";
         // 地图入口的单个目标已由服务端能力查询确认，客户端只在本轮流程中补入它。
         return CommandVisualLaunchContext.ensureTargetIncluded(operationId, result, allAreas);
-    }
-
-    private boolean isBaseSignedByPlayer(AreaData area, List<AreaData> allAreas, String playerName) {
-        if (area == null || area.getBaseName() == null || area.getBaseName().trim().isEmpty()) {
-            return false;
-        }
-        AreaData baseArea = findAreaByName(area.getBaseName(), allAreas);
-        return baseArea != null && baseArea.hasSignature(playerName)
-            || isDimensionalBaseSignedByPlayer(area.getBaseName(), playerName);
-    }
-
-    /**
-     * 客户端预筛选也要识别维度域名签名。
-     *
-     * <p>最终权限仍由服务端判断；这里仅用于让普通玩家在交互列表里看到
-     * base-name 指向其维度域名签名的域名。</p>
-     */
-    private boolean isDimensionalBaseSignedByPlayer(String baseName, String playerName) {
-        String cleanedBaseName = cleanSignature(baseName);
-        String cleanedPlayerName = cleanSignature(playerName);
-        if (cleanedBaseName == null || cleanedPlayerName == null) {
-            return false;
-        }
-
-        if (ClientDimensionalNameManager.isSignedBy(cleanedBaseName, cleanedPlayerName)) {
-            return true;
-        }
-
-        for (java.util.Map.Entry<String, String> entry : ClientDimensionalNameManager.getAllDimensionalNames().entrySet()) {
-            if (cleanedBaseName.equals(entry.getKey()) || cleanedBaseName.equals(entry.getValue())) {
-                return ClientDimensionalNameManager.isSignedBy(entry.getKey(), cleanedPlayerName);
-            }
-        }
-
-        return false;
     }
 
     private List<AreaData> loadCurrentDimensionAreas() {

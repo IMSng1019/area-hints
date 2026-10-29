@@ -31,12 +31,10 @@ import java.util.List;
  * - 在原域名内部标记收缩区域，缩小域名范围
  * - 删除外部顶点，保留内部顶点
  *
- * === 权限规则（与 expandarea 一致）===
+ * === 权限规则 ===
  *
- * 1. 管理员（权限等级2）：可以收缩所有域名
- * 2. 普通玩家：
- *    - 可以收缩自己创建的域名（signature 等于玩家名）
- *    - 可以收缩 basename 引用自己的域名（basename 对应域名的 signature 等于玩家名）
+ * 1. 管理员（权限等级至少为2）：可以收缩所有域名
+ * 2. 普通玩家：可以收缩本域名 signature 或 signatures 包含自己名字的域名
  *
  * === 工作流程 ===
  *
@@ -230,44 +228,6 @@ public class ShrinkAreaManager {
     }
 
     /**
-     * 检查玩家是否有权限修改指定域名
-     */
-    private boolean checkPermission(AreaData area) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null) {
-            return false;
-        }
-
-        String playerName = client.player.getGameProfile().getName();
-
-        // 检查是否为管理员（权限等级2）
-        if (client.player.hasPermissionLevel(2)) {
-            return true;
-        }
-
-        // 收缩权限与服务端保持一致：普通玩家需要签名在上级域名上
-        if (area.getBaseName() != null) {
-            AreaData baseArea = findAreaByName(area.getBaseName());
-            return baseArea != null && baseArea.hasSignature(playerName);
-        }
-
-        return false;
-    }
-
-    /**
-     * 根据名称查找域名
-     */
-    private AreaData findAreaByName(String name) {
-        List<AreaData> areas = loadAllAreas();
-        for (AreaData area : areas) {
-            if (area.getName().equals(name)) {
-                return area;
-            }
-        }
-        return null;
-    }
-
-    /**
      * 加载当前维度的所有域名
      */
     private List<AreaData> loadAllAreas() {
@@ -333,12 +293,7 @@ public class ShrinkAreaManager {
         areahint.boundviz.BoundVizManager.getInstance().clearTemporaryVertices();
     }
     
-    /**
-     * 加载可用域名
-     * 按照提示词：
-     * - 如果是管理员（权限等级为2），列出所有域名
-     * - 如果是普通玩家，列出被basename引用的玩家的域名（即signature等于玩家名的域名）
-     */
+    // 聊天和图形入口共用本域名签名筛选，管理员可选择当前维度的所有域名。
     private void loadAvailableAreas() {
         try {
             // 使用 loadAllAreas 方法加载所有域名
@@ -347,17 +302,9 @@ public class ShrinkAreaManager {
             availableAreas.clear();
 
             for (AreaData area : allAreas) {
-                // 如果是管理员，显示所有域名
-                if (isAdmin) {
+                // hasSignature 同时检查创建者签名和扩展签名，不从上级域名继承收缩权限。
+                if (isAdmin || area.hasSignature(playerName)) {
                     availableAreas.add(area);
-                } else {
-                    // 收缩权限与服务端保持一致：普通玩家只能收缩上级域名由自己签名的域名
-                    if (area.getBaseName() != null) {
-                        AreaData baseArea = findAreaByNameInList(area.getBaseName(), allAreas);
-                        if (baseArea != null && baseArea.hasSignature(playerName)) {
-                            availableAreas.add(area);
-                        }
-                    }
                 }
             }
 
@@ -382,19 +329,6 @@ public class ShrinkAreaManager {
             stop();
         }
     }
-
-    /**
-     * 在指定列表中查找域名（辅助方法）
-     */
-    private AreaData findAreaByNameInList(String name, List<AreaData> areas) {
-        for (AreaData area : areas) {
-            if (area.getName().equals(name)) {
-                return area;
-            }
-        }
-        return null;
-    }
-
 
     /**
      * 处理X键按下事件

@@ -85,6 +85,9 @@ public class ShrinkAreaServerNetworking {
                 return;
             }
 
+            // 收缩只调整几何范围，主签名及扩展签名始终取服务端原值，防止客户端旧副本清空授权。
+            shrunkArea.setSignature(existingArea.getSignature());
+            shrunkArea.setSignatures(existingArea.getSignatures());
             // 游戏模式始终继承服务端存档，防止几何编辑丢失该字段或借客户端载荷越权修改。
             shrunkArea.setGamemode(existingArea.getGamemode());
             // 收缩范围只能沿用正式域名已有的类型。

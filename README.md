@@ -198,7 +198,9 @@ Teleportation uses `areahint.command.teleport`; configuring its command prefix u
 
 Direct selection with `expandarea` and `shrinkarea` supports Tab completion filtered to areas the player may edit. With no area argument, a clickable list is shown. During either workflow, use `continue`, `save`, or `cancel` as prompted.
 
-For urbanization, non-OP players can select only areas whose `base-name` equals their current player name. OPs with permission level 2 or above can select any eligible area. Non-OP requests require approval even when ordinary edit approval is disabled; OP changes apply immediately. The permission node `areahint.command.applyurbanarea` does not bypass the ownership check or grant approval authority.
+Unless LuckPerms explicitly configures the command node, `shrinkarea`, `addsignature`, and `deletesignature` require the player's name in the current area's own `signature` or `signatures`, or operator permission level 2 or above. A parent's signature does not grant access to these three commands. Expansion retains its existing rule: a signature on the current area or its immediate parent grants access, as does operator permission level 2 or above. Explicit LuckPerms node results retain their existing precedence for these editing commands.
+
+For urbanization, non-OP players can select rural areas whose own `signature` names them or whose `signatures` list includes them. A parent's signature does not grant access. OPs with permission level 2 or above can select any eligible area. Non-OP requests require approval even when ordinary edit approval is disabled; OP changes apply immediately. The permission node `areahint.command.applyurbanarea` does not bypass the ownership check or grant approval authority.
 
 ### Titles and display
 

@@ -703,6 +703,8 @@ public class ShrinkGeometryCalculator {
             originalArea.getSurfacename()  // 保持原surfacename
         );
 
+        // 收缩后的候选保留扩展签名，避免扩展签名者完成一次收缩就丢失后续操作资格。
+        shrunkArea.setSignatures(originalArea.getSignatures());
         // 收缩预览仅改变几何范围，游戏模式继续显示原域名设置。
         shrunkArea.setGamemode(originalArea.getGamemode());
         // 收缩预览完整继承原域名类型。

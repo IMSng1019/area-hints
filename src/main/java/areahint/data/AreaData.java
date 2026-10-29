@@ -256,11 +256,18 @@ public class AreaData {
     }
 
     // FileManager 等直接使用 Gson 的入口同样忽略错误类型，避免一项模式属性损坏整份域名列表。
-    public static final class GamemodeAdapter implements com.google.gson.JsonDeserializer<String> {
+    public static final class GamemodeAdapter implements com.google.gson.JsonDeserializer<String>, com.google.gson.JsonSerializer<String> {
         @Override
         public String deserialize(com.google.gson.JsonElement json, java.lang.reflect.Type type,
                                   com.google.gson.JsonDeserializationContext context) {
             return json.isJsonPrimitive() && json.getAsJsonPrimitive().isString() ? json.getAsString() : null;
+        }
+
+        // 显式写出字符串或空值，避免 Gson 2.10.1 将仅有读取实现的字段适配器回退为 String 反射序列化。
+        @Override
+        public com.google.gson.JsonElement serialize(String value, java.lang.reflect.Type type,
+                                                     com.google.gson.JsonSerializationContext context) {
+            return value == null ? com.google.gson.JsonNull.INSTANCE : new com.google.gson.JsonPrimitive(value);
         }
     }
 

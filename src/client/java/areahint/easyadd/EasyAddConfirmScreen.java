@@ -31,8 +31,11 @@ public class EasyAddConfirmScreen extends CommandWizardScreen {
         int totalWidth = buttonWidth * 2 + 4;
         int x = (this.width - totalWidth) / 2;
         this.addDrawableChild(ButtonWidget.builder(Text.literal(t("commandui.button.save")), button -> {
+            // 发送失败时保留确认页和取消回调，允许玩家重试保存或主动放弃本次创建。
+            if (!EasyAddManager.getInstance().confirmSave()) {
+                return;
+            }
             markFlowHandled();
-            EasyAddManager.getInstance().confirmSave();
             if (this.client != null) {
                 this.client.setScreen(null);
             }

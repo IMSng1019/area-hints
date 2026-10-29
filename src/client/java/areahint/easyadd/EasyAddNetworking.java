@@ -18,8 +18,9 @@ public class EasyAddNetworking {
      * 发送域名数据到服务端
      * @param areaData 域名数据
      * @param dimension 维度标识
+     * @return 数据包是否已成功提交发送；服务端是否保存成功仍由响应消息确认
      */
-    public static void sendAreaDataToServer(AreaData areaData, String dimension) {
+    public static boolean sendAreaDataToServer(AreaData areaData, String dimension) {
         try {
             // 序列化域名数据
             String jsonData = JsonHelper.toJsonSingle(areaData);
@@ -34,13 +35,15 @@ public class EasyAddNetworking {
             
             ClientDebugManager.sendDebugInfo(ClientDebugManager.DebugCategory.EASY_ADD,
                 "向服务端发送域名数据: " + areaData.getName() + " (维度: " + dimension + ")");
-            
+            return true;
+
         } catch (Exception e) {
             MinecraftClient.getInstance().player.sendMessage(
                 net.minecraft.text.Text.of(areahint.i18n.I18nManager.translate("easyadd.error.area") + e.getMessage()), false);
             
             ClientDebugManager.sendDebugInfo(ClientDebugManager.DebugCategory.EASY_ADD,
                 "发送域名数据失败: " + e.getMessage());
+            return false;
         }
     }
     
@@ -78,4 +81,4 @@ public class EasyAddNetworking {
                 }
             });
     }
-} 
+}

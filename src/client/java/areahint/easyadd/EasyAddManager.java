@@ -631,28 +631,33 @@ public class EasyAddManager {
     
     /**
      * 确认保存域名
+     * @return 数据是否已提交发送并结束本次创建流程，不表示服务端已保存成功
      */
-    public void confirmSave() {
+    public boolean confirmSave() {
         if (currentState != EasyAddState.CONFIRM_SAVE) {
-            return;
+            return false;
         }
         
         try {
             AreaData areaData = buildAreaData();
             
-            // 发送到服务端
-            EasyAddNetworking.sendAreaDataToServer(areaData, currentDimension);
+            // 发送失败时保留确认状态和已记录的域名数据，避免误报成功并清空本次创建内容。
+            if (!EasyAddNetworking.sendAreaDataToServer(areaData, currentDimension)) {
+                return false;
+            }
             
             MinecraftClient.getInstance().player.sendMessage(
                 Text.of(I18nManager.translate("easyadd.message.area_3") + areaName + I18nManager.translate("easyadd.message.general")), false);
             
             resetState();
+            return true;
             
         } catch (Exception e) {
             MinecraftClient.getInstance().player.sendMessage(
                 Text.of(I18nManager.translate("easyadd.error.area.save") + e.getMessage()), false);
             ClientDebugManager.sendDebugInfo(ClientDebugManager.DebugCategory.EASY_ADD, 
                 "保存失败: " + e.getMessage());
+            return false;
         }
     }
     

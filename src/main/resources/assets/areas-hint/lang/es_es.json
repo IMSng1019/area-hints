@@ -1,4 +1,9 @@
 {
+  "approval.ui.reviewer": "Revisor: %s",
+  "approval.ui.review_type": "Tipo de solicitud revisada: %s",
+  "urban.error.no_eligible_areas": "No hay dominios válidos en esta dimensión. Los jugadores pueden elegir dominios rural cuyo campo signature sea «{0}». Los operadores necesitan un nivel de permisos de 2 o superior.",
+  "urban.error.no_areas": "El archivo de dominios del servidor para la dimensión actual {0} no contiene dominios.",
+  "urban.error.no_rural_areas": "Esta dimensión no tiene dominios rural que urbanizar (si falta type, se considera rural).",
   "help.command.applyurbanarea": "§a/areahint applyurbanarea §7- Solicitar la urbanización de un dominio (requiere submit_urban_area)",
   "approval.type.applyurbanarea": "Solicitar urbanización",
   "urban.message.select_area": "Selecciona el dominio que quieres urbanizar:",

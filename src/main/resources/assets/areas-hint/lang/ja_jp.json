@@ -1,4 +1,9 @@
 {
+  "approval.ui.reviewer": "審査したプレイヤー：%s",
+  "approval.ui.review_type": "審査の種類：%s",
+  "urban.error.no_eligible_areas": "このディメンションには申請可能な領域がありません。一般プレイヤーが選べるのは signature が「{0}」の rural 領域のみです。管理者には権限レベル 2 以上が必要です。",
+  "urban.error.no_areas": "サーバー上の現在のディメンション {0} の領域ファイルに領域がありません。",
+  "urban.error.no_rural_areas": "このディメンションには都市化できる rural 領域がありません（type がない領域は rural として扱います）。",
   "help.command.applyurbanarea": "§a/areahint applyurbanarea §7- 領域の都市化を申請（submit_urban_area の有効化が必要）",
   "approval.type.applyurbanarea": "都市化を申請",
   "urban.message.select_area": "都市化する領域を選択してください：",

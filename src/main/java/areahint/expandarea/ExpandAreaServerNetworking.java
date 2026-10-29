@@ -85,7 +85,7 @@ public class ExpandAreaServerNetworking {
             // 游戏模式始终继承服务端存档，防止几何编辑丢失该字段或借客户端载荷越权修改。
             expandedArea.setGamemode(existingArea.getGamemode());
             // 扩展范围不能修改类型，避免通过几何上传跳过城市化审批。
-            expandedArea.setType(existingArea.getType());
+            expandedArea.setType(existingArea.getExplicitType());
 
             // 验证域名数据
             if (!validateAreaData(expandedArea)) {

@@ -517,7 +517,7 @@ public final class ApprovalManager {
                 validateGamemodeChange(request.operation, change);
                 validateAreaTypeChange(request.operation, change);
                 JsonArray merged = "applyurbanarea".equals(request.operation)
-                    ? mergeUrbanAreas(change, current) : mergeAreas(change, current);
+                    ? mergeUrbanAreas(change, current) : mergeAreas(change, current, request.operation);
                 validateRelationships(merged, change);
                 replacements.put(file, merged);
             } else if ("dimensions".equals(change.kind)) {
@@ -584,14 +584,38 @@ public final class ApprovalManager {
         }
     }
 
-    private static JsonArray mergeAreas(ApprovalRequest.Change change, JsonElement current) throws IOException, ApprovalException {
-        return mergeCollection(change, current, canonicalAreas(current), "name");
+    private static JsonArray mergeAreas(ApprovalRequest.Change change, JsonElement current, String operation)
+            throws IOException, ApprovalException {
+        JsonArray merged = mergeCollection(change, current, canonicalAreas(current), "name");
+        Map<String, JsonObject> rawAreas = current.isJsonNull() ? Map.of() : index(current.getAsJsonArray());
+        Map<String, JsonObject> before = index(change.before.getAsJsonArray());
+        Map<String, JsonObject> after = index(change.after.getAsJsonArray());
+        Set<String> removedNames = new HashSet<>(before.keySet());
+        removedNames.removeAll(after.keySet());
+        // 改名与划分产生的新名称仍继承原域名是否显式声明类型，不能把原有显式 rural 丢掉。
+        String inheritedName = "dividearea".equals(operation) && before.size() == 1
+            ? before.keySet().iterator().next()
+            : "rename".equals(operation) && removedNames.size() == 1
+                ? removedNames.iterator().next() : null;
+        for (JsonElement element : merged) {
+            JsonObject area = element.getAsJsonObject();
+            String name = area.get("name").getAsString();
+            if (!after.containsKey(name) || !AreaData.RURAL_TYPE.equals(typeValue(area))) continue;
+            JsonObject original = rawAreas.get(name);
+            if (original == null && inheritedName != null) original = rawAreas.get(inheritedName);
+            JsonElement explicitType = original == null ? null : original.get("type");
+            // 快照为冲突校验补齐的 rural 只存在于审批记录，正式新域名及原本省略类型的域名继续不写 type。
+            if (explicitType == null || explicitType.isJsonNull() || explicitType.getAsString().isBlank()) {
+                area.remove("type");
+            }
+        }
+        return merged;
     }
 
     // 城市化先复用完整冲突检查，再从当前原始对象覆盖获批字段，保留模型未识别的自定义属性。
     private static JsonArray mergeUrbanAreas(ApprovalRequest.Change change, JsonElement current)
             throws IOException, ApprovalException {
-        JsonArray merged = mergeAreas(change, current);
+        JsonArray merged = mergeAreas(change, current, "applyurbanarea");
         Map<String, JsonObject> rawAreas = index(current.getAsJsonArray());
         Map<String, JsonObject> before = index(change.before.getAsJsonArray());
         Map<String, JsonObject> after = index(change.after.getAsJsonArray());

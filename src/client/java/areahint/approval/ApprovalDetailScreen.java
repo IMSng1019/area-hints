@@ -5,6 +5,7 @@ import areahint.i18n.I18nManager;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
@@ -30,6 +31,9 @@ public final class ApprovalDetailScreen extends CommandUiScreen {
         var session = ApprovalClientManager.getSession();
         if (session == null) return;
         mutationButtons.clear();
+        comment = null;
+        addButton = null;
+        deleteButton = null;
         contentWidth = Math.min(520, width - 28);
         contentX = (width - contentWidth) / 2;
         int columns = (contentWidth - 8) / 3;
@@ -40,11 +44,16 @@ public final class ApprovalDetailScreen extends CommandUiScreen {
         addDrawableChild(ButtonWidget.builder(Text.literal(">"), button -> {
             if (!session.areas.isEmpty()) session.areaIndex = (session.areaIndex + 1) % session.areas.size();
         }).dimensions(contentX + contentWidth - 20, 76, 20, BUTTON_HEIGHT).build());
-        previewButton = button("approval.ui.preview", contentX, 100, columns, () -> ApprovalClientManager.preview(session.areaIndex));
-        addButton = button("approval.ui.addhint", contentX + columns + 4, 100, columns,
-            () -> ApprovalClientManager.editGeometry(true, session.areaIndex));
-        deleteButton = button("approval.ui.deletehint", contentX + (columns + 4) * 2, 100, columns,
-            () -> ApprovalClientManager.editGeometry(false, session.areaIndex));
+        boolean editing = ApprovalClientManager.isOperator() || session.editMode;
+        previewButton = button("approval.ui.preview", contentX, 100, editing ? columns : contentWidth,
+            () -> ApprovalClientManager.preview(session.areaIndex));
+        // 回复只展示查看入口，打回后进入独立的修改页面才提供临时顶点编辑按钮。
+        if (editing) {
+            addButton = button("approval.ui.addhint", contentX + columns + 4, 100, columns,
+                () -> ApprovalClientManager.editGeometry(true, session.areaIndex));
+            deleteButton = button("approval.ui.deletehint", contentX + (columns + 4) * 2, 100, columns,
+                () -> ApprovalClientManager.editGeometry(false, session.areaIndex));
+        }
         int halfWidth = (contentWidth - 4) / 2;
         button("approval.ui.history", contentX, 124, halfWidth, () -> {
             if (client != null) client.setScreen(new ApprovalHistoryScreen(this));
@@ -122,10 +131,16 @@ public final class ApprovalDetailScreen extends CommandUiScreen {
         var session = ApprovalClientManager.getSession();
         if (session == null) return;
         var request = session.request;
-        line(context, "approval.ui.applicant", 30, request.applicantName);
-        line(context, "approval.ui.type", 42, ApprovalClientManager.operationName(request.operation));
-        line(context, "approval.ui.result", 54, ApprovalClientManager.statusName(request.status));
+        boolean reply = !ApprovalClientManager.isOperator() && !request.reviews.isEmpty();
+        var latestReview = reply ? request.reviews.get(request.reviews.size() - 1) : null;
+        line(context, reply ? "approval.ui.reviewer" : "approval.ui.applicant", 30,
+            reply ? latestReview.reviewerName : request.applicantName);
+        line(context, reply ? "approval.ui.review_type" : "approval.ui.type", 42,
+            ApprovalClientManager.operationName(request.operation));
+        // 重新申请后请求状态会变成待审批，回复仍展示上一轮实际结果，不能把打回意见标成待审批结果。
+        line(context, "approval.ui.result", 54, ApprovalClientManager.statusName(reply ? latestReview.result : request.status));
         String state = ApprovalClientManager.isBusy() ? "approval.ui.busy" : session.stale ? "approval.ui.changed" : null;
+        if (state == null && reply && "pending".equals(request.status)) state = "approval.ui.status.pending";
         if (state == null) line(context, "approval.ui.dimension", 66, request.dimensionId);
         else drawTrimmed(context, Text.literal(t(state)), contentX, 66, contentWidth, 0xFFAA55);
         String areaLabel = session.areas.isEmpty() ? t("approval.ui.no_preview") : I18nManager.translate("approval.ui.area",
@@ -133,12 +148,18 @@ public final class ApprovalDetailScreen extends CommandUiScreen {
         drawTrimmed(context, Text.literal(areaLabel), contentX + 24, 82, contentWidth - 48, BRIGHT_YELLOW);
         if (ApprovalClientManager.isOperator()) {
             drawTrimmed(context, Text.literal(t("approval.ui.comment")), contentX, height - 92, contentWidth, 0xAAAAAA);
-        } else if (!request.reviews.isEmpty()) {
-            var review = request.reviews.get(request.reviews.size() - 1);
-            String reviewText = I18nManager.translate("approval.ui.review", review.reviewerName, ApprovalClientManager.statusName(review.result));
-            drawTrimmed(context, Text.literal(reviewText), contentX, 150, contentWidth, 0xAAAAAA);
-            drawTrimmed(context, Text.literal(review.comment == null || review.comment.isBlank() ? t("approval.ui.no_comment") : review.comment),
-                contentX, 162, contentWidth, 0xFFFFFF);
+        } else if (latestReview != null) {
+            drawTrimmed(context, Text.literal(t("approval.ui.comment")), contentX, 150, contentWidth, 0xAAAAAA);
+            String replyText = latestReview.comment == null || latestReview.comment.isBlank()
+                ? t("approval.ui.no_comment") : latestReview.comment;
+            int bottom = "returned".equals(request.status) ? height - 60 : height - 34;
+            int y = 162;
+            // 意见按窗口可用高度换行，剩余内容和此前各轮意见仍可从历史页面完整查看。
+            for (OrderedText line : textRenderer.wrapLines(Text.literal(replyText), contentWidth)) {
+                if (y + textRenderer.fontHeight > bottom) break;
+                context.drawTextWithShadow(textRenderer, line, contentX, y, 0xFFFFFF);
+                y += 12;
+            }
         }
         // 禁用的编辑按钮提供原因提示，回复详情要先点击修改才进入可编辑草稿。
         if (addButton != null && !addButton.active && addButton.isHovered()

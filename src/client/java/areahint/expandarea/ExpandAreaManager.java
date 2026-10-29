@@ -665,7 +665,7 @@ public class ExpandAreaManager {
         // 本地预览保留原游戏模式，实际保存时服务端仍会从自己的存档重新取值。
         expandedArea.setGamemode(selectedArea.getGamemode());
         // 预览保留城市化状态，避免几何重建把类型恢复为 rural。
-        expandedArea.setType(selectedArea.getType());
+        expandedArea.setType(selectedArea.getExplicitType());
         return expandedArea;
     }
     

@@ -1,4 +1,9 @@
 {
+  "approval.ui.reviewer": "검토 플레이어: %s",
+  "approval.ui.review_type": "검토 유형: %s",
+  "urban.error.no_eligible_areas": "현재 차원에 신청 가능한 영역이 없습니다. 일반 플레이어는 signature가 \"{0}\"인 rural 영역만 선택할 수 있습니다. 관리자는 권한 레벨 2 이상이어야 합니다.",
+  "urban.error.no_areas": "서버의 현재 차원 {0} 영역 파일에 영역이 없습니다.",
+  "urban.error.no_rural_areas": "현재 차원에 도시화할 rural 영역이 없습니다(type이 없는 영역은 rural로 간주합니다).",
   "help.command.applyurbanarea": "§a/areahint applyurbanarea §7- 영역 도시화 신청 (submit_urban_area 활성화 필요)",
   "approval.type.applyurbanarea": "도시화 신청",
   "urban.message.select_area": "도시화할 영역을 선택하세요:",

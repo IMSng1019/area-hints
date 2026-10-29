@@ -950,7 +950,7 @@ public class ServerCommands {
         areaData.setColor(areahint.util.ColorUtil.normalizeColor(areaData.getColor()));
         // 非管理员即使获准使用 add，也不能通过 JSON 预置 urban 绕过独立城市化审批。
         if (source.isExecutedByPlayer() && !ApprovalManager.isOperator(source.getPlayer())) {
-            areaData.setType(AreaData.RURAL_TYPE);
+            areaData.setType(null);
         }
 
         if (!areaData.isValid()) {

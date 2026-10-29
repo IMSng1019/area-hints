@@ -1,4 +1,9 @@
 {
+  "approval.ui.reviewer": "審批玩家：%s",
+  "approval.ui.review_type": "審批類型：%s",
+  "urban.error.no_eligible_areas": "目前維度沒有可申請都市化的域名：一般玩家只能選擇 signature 為「{0}」的 rural 域名；管理員需要至少 2 級權限。",
+  "urban.error.no_areas": "伺服器目前維度 {0} 的域名檔案中沒有域名。",
+  "urban.error.no_rural_areas": "目前維度沒有 rural 域名可申請都市化（未設定 type 的域名視為 rural）。",
   "help.command.applyurbanarea": "§a/areahint applyurbanarea §7- 申請域名都市化（需要開啟 submit_urban_area）",
   "approval.type.applyurbanarea": "申請都市化",
   "urban.message.select_area": "選擇要都市化的域名：",

@@ -1,4 +1,9 @@
 {
+  "approval.ui.reviewer": "REVIEWER: %s",
+  "approval.ui.review_type": "REVIEW TYPE: %s",
+  "urban.error.no_eligible_areas": "NO ELIGIBLE DOMAINZ IN DIS DIMENSHUN. PICK RURAL DOMAINZ WITH signature \"{0}\". OPZ NEED PERMISHUN LEVEL 2 OR HIGHER.",
+  "urban.error.no_areas": "TEH SERVR DOMAIN FILE FER UR DIMENSHUN {0} HAZ NO DOMAINZ.",
+  "urban.error.no_rural_areas": "DIS DIMENSHUN HAZ NO rural DOMAINZ TO URBANIZE (NO type MEANZ rural).",
   "help.command.applyurbanarea": "§a/areahint applyurbanarea §7- ASK TO MAKE A DOMAIN URBAN (NEEDZ submit_urban_area)",
   "approval.type.applyurbanarea": "ASK FER URBANIZASHUN",
   "urban.message.select_area": "PICK A DOMAIN TO MAKE URBAN:",

@@ -1,4 +1,9 @@
 {
+  "approval.ui.reviewer": "Проверяющий игрок: %s",
+  "approval.ui.review_type": "Тип рассматриваемой заявки: %s",
+  "urban.error.no_eligible_areas": "В этом измерении нет подходящих областей. Игроки могут выбирать области rural со значением signature «{0}». Операторам нужен уровень разрешений не ниже 2.",
+  "urban.error.no_areas": "Файл областей сервера для текущего измерения {0} не содержит областей.",
+  "urban.error.no_rural_areas": "В этом измерении нет областей rural для урбанизации (если type отсутствует, область считается rural).",
   "help.command.applyurbanarea": "§a/areahint applyurbanarea §7- Подать заявку на урбанизацию области (требуется submit_urban_area)",
   "approval.type.applyurbanarea": "Заявка на урбанизацию",
   "urban.message.select_area": "Выберите область для урбанизации:",

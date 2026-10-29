@@ -1,4 +1,9 @@
 {
+  "approval.ui.reviewer": "Joueur chargé de l'examen : %s",
+  "approval.ui.review_type": "Type de demande examinée : %s",
+  "urban.error.no_eligible_areas": "Aucun domaine admissible dans cette dimension. Les joueurs peuvent choisir les domaines rural dont signature vaut « {0} ». Les opérateurs doivent avoir un niveau de permission d'au moins 2.",
+  "urban.error.no_areas": "Le fichier des domaines du serveur pour la dimension actuelle {0} ne contient aucun domaine.",
+  "urban.error.no_rural_areas": "Cette dimension ne contient aucun domaine rural à urbaniser (si type est absent, le domaine est considéré comme rural).",
   "help.command.applyurbanarea": "§a/areahint applyurbanarea §7- Demander l'urbanisation d'un domaine (nécessite submit_urban_area)",
   "approval.type.applyurbanarea": "Demander une urbanisation",
   "urban.message.select_area": "Sélectionnez le domaine à urbaniser :",

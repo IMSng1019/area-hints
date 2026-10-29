@@ -246,13 +246,18 @@ public class AreaData {
         this.gamemode = gamemode;
     }
 
-    // 不强制改写旧文件，仅在实际保存或类型转换时写入类型字段。
+    // 缺省类型只在读取语义上视为 rural，不因为查询或复制就给旧文件补写字段。
     public String getType() {
         return type == null || type.isBlank() ? RURAL_TYPE : type;
     }
 
+    // 序列化和几何复制使用原始设置，区分缺省 rural 与文件中显式设置的 rural。
+    public String getExplicitType() {
+        return type == null || type.isBlank() ? null : type;
+    }
+
     public void setType(String type) {
-        this.type = type == null || type.isBlank() ? RURAL_TYPE : type;
+        this.type = type == null || type.isBlank() ? null : type;
     }
 
     // FileManager 等直接使用 Gson 的入口同样忽略错误类型，避免一项模式属性损坏整份域名列表。

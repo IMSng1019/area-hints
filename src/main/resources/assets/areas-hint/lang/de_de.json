@@ -1,4 +1,9 @@
 {
+  "approval.ui.reviewer": "Prüfer: %s",
+  "approval.ui.review_type": "Prüfungstyp: %s",
+  "urban.error.no_eligible_areas": "Keine geeigneten Domänen in dieser Dimension. Spieler können rural-Domänen mit signature „{0}“ wählen. Operatoren benötigen mindestens Berechtigungsstufe 2.",
+  "urban.error.no_areas": "Die Domänendatei des Servers für die aktuelle Dimension {0} enthält keine Domänen.",
+  "urban.error.no_rural_areas": "Diese Dimension enthält keine rural-Domänen zur Urbanisierung (ein fehlendes type gilt als rural).",
   "help.command.applyurbanarea": "§a/areahint applyurbanarea §7- Urbanisierung einer Domäne beantragen (erfordert submit_urban_area)",
   "approval.type.applyurbanarea": "Urbanisierung beantragen",
   "urban.message.select_area": "Wähle eine Domäne für die Urbanisierung:",

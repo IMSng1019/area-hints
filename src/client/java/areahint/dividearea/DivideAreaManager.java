@@ -753,7 +753,7 @@ public class DivideAreaManager {
         // 两个分割预览继承原域名模式，最终值由服务端原始存档再次确认。
         config.setGamemode(selectedArea.getGamemode());
         // 临时分割预览同步保留类型，正式写入仍由服务端复核。
-        config.setType(selectedArea.getType());
+        config.setType(selectedArea.getExplicitType());
         return config;
     }
 

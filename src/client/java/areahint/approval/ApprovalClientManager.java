@@ -487,13 +487,20 @@ public final class ApprovalClientManager {
     private static void updateOverlay() {
         if (session == null || !session.previewActive) return;
         Set<String> hidden = new HashSet<>();
+        Set<String> removed = new HashSet<>();
+        Set<String> remaining = new HashSet<>();
         for (ApprovalRequest.Change change : session.request.changes) {
             if (!"areas".equals(change.kind)) continue;
             addNames(hidden, change.before);
             addNames(hidden, change.after);
+            addNames(removed, change.before);
+            addNames(remaining, change.after);
         }
+        removed.removeAll(remaining);
         for (AreaData area : session.areas) hidden.add(area.getName());
-        BoundVizManager.getInstance().setApprovalPreview(session.request.dimensionId, session.areas, hidden);
+        // 删除申请仍保留原几何供 tcp 定位，但修改后预览不能把已经删除的域名边界重新叠加回来。
+        List<AreaData> visible = session.areas.stream().filter(area -> !removed.contains(area.getName())).toList();
+        BoundVizManager.getInstance().setApprovalPreview(session.request.dimensionId, visible, hidden);
     }
 
     private static void addNames(Set<String> names, JsonElement data) {

@@ -37,8 +37,10 @@ public class AreaDataConverter {
         }
         jsonObject.addProperty("color", areaData.getColor());
         jsonObject.addProperty("surfacename", areaData.getSurfacename());
-        // 类型随域名同步和几何编辑一并传递，旧记录在保存时明确为 rural。
-        jsonObject.addProperty("type", areaData.getType());
+        // 显式类型随编辑保留，旧记录和新建农村域名继续省略 type 字段。
+        if (areaData.getExplicitType() != null) {
+            jsonObject.addProperty("type", areaData.getExplicitType());
+        }
         // 未设置的模式保持字段缺省，显式模式则在编辑与同步转换中完整保留。
         if (areaData.getGamemode() != null) {
             jsonObject.addProperty("gamemode", areaData.getGamemode());

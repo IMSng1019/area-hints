@@ -95,11 +95,11 @@ public final class AreaManagementCapabilityService {
                 () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
             case RECOLOR -> PermissionService.hasNodeOr(player, PermissionNodes.RECOLOR,
                 () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
-            // 城市化的域名归属按 base-name 精确匹配玩家名，命令节点不能绕过归属或审批。
+            // 城市化的域名归属按 signature 精确匹配玩家名，命令节点不能绕过签名归属或审批。
             case APPLY_URBAN_AREA -> areahint.config.ServerConfig.isSubmitUrbanArea()
                 && PermissionService.hasCommandPermission(player, PermissionNodes.APPLY_URBAN_AREA, 0)
                 && AreaData.RURAL_TYPE.equals(area.getType())
-                && (areahint.approval.ApprovalManager.isOperator(player) || playerName.equals(area.getBaseName()));
+                && (areahint.approval.ApprovalManager.isOperator(player) || playerName.equals(area.getSignature()));
             case SET_HIGH -> canSetHigh(player, area, index, playerName);
             case ADD_DESCRIPTION, REPLACE_DESCRIPTION ->
                 PermissionService.hasCommandPermission(player, PermissionNodes.ADD_DESCRIPTION, 0)

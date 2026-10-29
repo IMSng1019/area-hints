@@ -1,4 +1,9 @@
 {
+  "approval.ui.reviewer": "Reviewer: %s",
+  "approval.ui.review_type": "Review type: %s",
+  "urban.error.no_eligible_areas": "No eligible domains in this dimension. Players can select rural domains with signature equal to \"{0}\". Operators need permission level 2 or higher.",
+  "urban.error.no_areas": "The server domain file for the current dimension {0} contains no domains.",
+  "urban.error.no_rural_areas": "This dimension has no rural domains to urbanize (a missing type is treated as rural).",
   "help.command.applyurbanarea": "§a/areahint applyurbanarea §7- Apply to urbanize a domain (requires submit_urban_area)",
   "approval.type.applyurbanarea": "Apply for Urbanization",
   "urban.message.select_area": "Select a domain to urbanize:",

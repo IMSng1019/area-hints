@@ -63,12 +63,27 @@ public final class ApplyUrbanAreaCommand {
         if (!validate(source, null)) return 0;
         String dimension = currentDimension(source);
         try {
+            List<JsonObject> areas = namedAreas(readAreas(dimension));
             List<JsonObject> available = new ArrayList<>();
-            for (JsonObject area : namedAreas(readAreas(dimension))) {
-                if (canUrbanize(source.getPlayer(), model(area))) available.add(area);
+            int ruralCount = 0;
+            for (JsonObject area : areas) {
+                AreaData data = model(area);
+                if (AreaData.RURAL_TYPE.equals(data.getType())) ruralCount++;
+                if (canUrbanize(source.getPlayer(), data)) available.add(area);
             }
             if (available.isEmpty()) {
-                source.sendMessage(message(source, "commandui.common.no_areas"));
+                // 区分文件无域名、无农村域名和归属不匹配，避免把权限过滤误报为文件不存在。
+                if (areas.isEmpty()) {
+                    source.sendMessage(message(source, "urban.error.no_areas", dimension));
+                } else if (ruralCount == 0) {
+                    source.sendMessage(message(source, "urban.error.no_rural_areas"));
+                } else {
+                    source.sendMessage(message(source, "urban.error.no_eligible_areas",
+                        source.getPlayer().getGameProfile().getName()));
+                }
+                Areashint.LOGGER.info("城市化无可用域名：玩家={}，维度={}，文件={}，总数={}，农村域名={}，管理员={}",
+                    source.getPlayer().getGameProfile().getName(), dimension, areaFile(dimension),
+                    areas.size(), ruralCount, ApprovalManager.isOperator(source.getPlayer()));
                 return 0;
             }
             if (visual) {

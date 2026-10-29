@@ -89,7 +89,7 @@ public class DeleteHintServerNetworking {
             // 顶点编辑不授予游戏模式权限，提交审批和直接保存都使用服务器当前的原值。
             updatedArea.setGamemode(existingArea.getGamemode());
             // 删除顶点后仍保留服务端确认的城市化状态。
-            updatedArea.setType(existingArea.getType());
+            updatedArea.setType(existingArea.getExplicitType());
 
             boolean found = false;
             for (int i = 0; i < areas.size(); i++) {

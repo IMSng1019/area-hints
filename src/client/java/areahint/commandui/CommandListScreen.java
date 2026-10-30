@@ -11,6 +11,7 @@ import net.minecraft.client.gui.widget.ElementListWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -44,6 +45,10 @@ public class CommandListScreen extends CommandUiScreen {
         this.searchField.setChangedListener(value -> {
             this.searchQuery = value == null ? "" : value;
             rebuildCommandList();
+            // 搜索条件变化后回到首条结果，避免沿用旧滚动位置而错过匹配项。
+            if (this.list != null) {
+                this.list.setScrollOffset(0);
+            }
         });
 
         this.list = new CommandListWidget(this.client, this.width, this.height, LIST_TOP, this.height - 32);
@@ -105,10 +110,12 @@ public class CommandListScreen extends CommandUiScreen {
         this.urbanVisible = areahint.urban.ApplyUrbanAreaVisualController.isAvailable();
         this.list.clearCommandEntries();
         String normalizedSearch = normalize(this.searchQuery);
+        // 空搜索不产生关键词，多个关键词可分别匹配同一命令的名称、说明和分类。
+        String[] searchTerms = normalizedSearch.isBlank() ? new String[0] : normalizedSearch.split("\\s+");
         String currentCategory = null;
         int matchedCommands = 0;
         for (CommandVisualHandler handler : CommandVisualRegistry.getHandlers()) {
-            if (!matchesSearch(handler, normalizedSearch)) {
+            if (!matchesSearch(handler, searchTerms)) {
                 continue;
             }
             if (!handler.categoryKey().equals(currentCategory)) {
@@ -124,8 +131,8 @@ public class CommandListScreen extends CommandUiScreen {
         }
     }
 
-    private boolean matchesSearch(CommandVisualHandler handler, String normalizedSearch) {
-        if (normalizedSearch.isBlank()) {
+    private boolean matchesSearch(CommandVisualHandler handler, String[] searchTerms) {
+        if (searchTerms.length == 0) {
             return true;
         }
 
@@ -136,16 +143,45 @@ public class CommandListScreen extends CommandUiScreen {
         searchTargets.add(handler.displayName().getString());
         searchTargets.add(handler.description().getString());
         searchTargets.add(t(handler.categoryKey()));
-        for (String target : searchTargets) {
-            if (normalize(target).contains(normalizedSearch)) {
-                return true;
+        searchTargets.replaceAll(this::normalize);
+        // 每个关键词都要命中，但不要求关键词的输入顺序与说明中的顺序一致。
+        for (String term : searchTerms) {
+            boolean matched = false;
+            for (String target : searchTargets) {
+                if (matchesFuzzy(target, term)) {
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                return false;
             }
         }
-        return false;
+        return true;
+    }
+
+    private boolean matchesFuzzy(String target, String term) {
+        // 连续片段直接命中；缩写则按字符顺序逐个查找，例如 adsg 可以匹配 addsignature。
+        if (target.contains(term)) {
+            return true;
+        }
+        int targetIndex = 0;
+        for (int termIndex = 0; termIndex < term.length();) {
+            int codePoint = term.codePointAt(termIndex);
+            int matchIndex = target.indexOf(codePoint, targetIndex);
+            if (matchIndex < 0) {
+                return false;
+            }
+            targetIndex = matchIndex + Character.charCount(codePoint);
+            termIndex += Character.charCount(codePoint);
+        }
+        return true;
     }
 
     private String normalize(String value) {
-        return value == null ? "" : value.toLowerCase(Locale.ROOT).trim();
+        // 统一全角输入、大小写及空白，并移除颜色格式码，避免格式字符干扰文字匹配。
+        return value == null ? "" : Normalizer.normalize(value, Normalizer.Form.NFKC)
+            .toLowerCase(Locale.ROOT).replaceAll("§[0-9a-fk-or]", "").replaceAll("(?U)\\s+", " ").trim();
     }
 
     private class CommandListWidget extends CompatEntryListWidget<CommandListWidget.Entry> {

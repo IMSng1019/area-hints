@@ -139,13 +139,14 @@ public final class DeleteSignatureVisualController {
 
     private static List<WizardSelectionListScreen.SelectionItem<AreaData>> areaItems(List<AreaData> areas, boolean admin) {
         List<WizardSelectionListScreen.SelectionItem<AreaData>> items = new ArrayList<>();
-        String mode = I18nManager.translate(admin ? "signature.ui.mode.admin" : "signature.ui.mode.normal");
+        // 图形列表隐藏管理员模式说明，普通玩家仍显示可选域名范围提示。
+        String modeSuffix = admin ? "" : "  " + I18nManager.translate("signature.ui.mode.normal");
         for (AreaData area : areas) {
             String displayName = AreaDataConverter.getDisplayName(area);
             String detail = I18nManager.translate("signature.ui.hover.realname") + nullText(area.getName()) + "  "
                 + I18nManager.translate("signature.ui.hover.level") + area.getLevel() + "  "
-                + I18nManager.translate("signature.ui.hover.signatures") + formatSignatures(area.getSignatures()) + "  "
-                + mode;
+                + I18nManager.translate("signature.ui.hover.signatures") + formatSignatures(area.getSignatures())
+                + modeSuffix;
             items.add(new WizardSelectionListScreen.SelectionItem<>(area, displayName, detail));
         }
         return items;

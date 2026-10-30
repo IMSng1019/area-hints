@@ -13,6 +13,7 @@ import net.minecraft.text.Text;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -23,6 +24,12 @@ public class CommandListScreen extends CommandUiScreen {
     private static final int SEARCH_WIDTH = 260;
     private static final int SEARCH_Y = 30;
     private static final int LIST_TOP = 58;
+    // 匹配等级越小越靠前，无匹配的命令不进入结果列表。
+    private static final int MATCH_NONE = -1;
+    private static final int MATCH_EXACT = 0;
+    private static final int MATCH_PHRASE = 1;
+    private static final int MATCH_TERMS = 2;
+    private static final int MATCH_FUZZY = 3;
 
     private CommandListWidget list;
     private TextFieldWidget searchField;
@@ -112,28 +119,33 @@ public class CommandListScreen extends CommandUiScreen {
         String normalizedSearch = normalize(this.searchQuery);
         // 空搜索不产生关键词，多个关键词可分别匹配同一命令的名称、说明和分类。
         String[] searchTerms = normalizedSearch.isBlank() ? new String[0] : normalizedSearch.split("\\s+");
-        String currentCategory = null;
-        int matchedCommands = 0;
+        List<CommandSearchResult> results = new ArrayList<>();
         for (CommandVisualHandler handler : CommandVisualRegistry.getHandlers()) {
-            if (!matchesSearch(handler, searchTerms)) {
-                continue;
+            int priority = searchPriority(handler, normalizedSearch, searchTerms);
+            if (priority != MATCH_NONE) {
+                results.add(new CommandSearchResult(handler, priority));
             }
+        }
+        // 稳定排序让连续文字优先，同级及空搜索仍沿用注册顺序，分类标题随排序结果显示。
+        results.sort(Comparator.comparingInt(CommandSearchResult::priority));
+        String currentCategory = null;
+        for (CommandSearchResult result : results) {
+            CommandVisualHandler handler = result.handler();
             if (!handler.categoryKey().equals(currentCategory)) {
                 currentCategory = handler.categoryKey();
                 this.list.addCategory(currentCategory);
             }
             this.list.addCommand(handler);
-            matchedCommands++;
         }
 
-        if (matchedCommands == 0) {
+        if (results.isEmpty()) {
             this.list.addEmptyResult();
         }
     }
 
-    private boolean matchesSearch(CommandVisualHandler handler, String[] searchTerms) {
+    private int searchPriority(CommandVisualHandler handler, String normalizedSearch, String[] searchTerms) {
         if (searchTerms.length == 0) {
-            return true;
+            return MATCH_EXACT;
         }
 
         List<String> searchTargets = new ArrayList<>();
@@ -144,20 +156,42 @@ public class CommandListScreen extends CommandUiScreen {
         searchTargets.add(handler.description().getString());
         searchTargets.add(t(handler.categoryKey()));
         searchTargets.replaceAll(this::normalize);
-        // 每个关键词都要命中，但不要求关键词的输入顺序与说明中的顺序一致。
-        for (String term : searchTerms) {
-            boolean matched = false;
-            for (String target : searchTargets) {
-                if (matchesFuzzy(target, term)) {
-                    matched = true;
-                    break;
-                }
-            }
-            if (!matched) {
-                return false;
+        // 先检查所有字段的完全相同匹配，避免较早字段的包含匹配掩盖较后字段的精确匹配。
+        if (searchTargets.contains(normalizedSearch)) {
+            return MATCH_EXACT;
+        }
+        for (String target : searchTargets) {
+            if (target.contains(normalizedSearch)) {
+                return MATCH_PHRASE;
             }
         }
-        return true;
+        // 每个关键词都要命中，但不要求关键词的输入顺序与说明中的顺序一致。
+        int priority = MATCH_TERMS;
+        for (String term : searchTerms) {
+            boolean continuousMatch = false;
+            boolean fuzzyMatch = false;
+            for (String target : searchTargets) {
+                if (target.contains(term)) {
+                    continuousMatch = true;
+                    break;
+                }
+                // 模糊命中后继续检查其他字段，后续字段仍可能提供更优的连续匹配。
+                if (!fuzzyMatch && matchesFuzzy(target, term)) {
+                    fuzzyMatch = true;
+                }
+            }
+            if (!continuousMatch) {
+                if (!fuzzyMatch) {
+                    return MATCH_NONE;
+                }
+                priority = MATCH_FUZZY;
+            }
+        }
+        return priority;
+    }
+
+    // 保存已经计算的匹配等级，避免排序时反复翻译文本或执行模糊匹配。
+    private record CommandSearchResult(CommandVisualHandler handler, int priority) {
     }
 
     private boolean matchesFuzzy(String target, String term) {

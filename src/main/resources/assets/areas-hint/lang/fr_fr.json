@@ -2492,7 +2492,7 @@
   "vizedit.ui.undo": "Annuler",
   "vizedit.ui.redo": "Rétablir",
   "vizedit.ui.simplify": "Simplifier la limite",
-  "vizedit.ui.simplify_hint": "Précision des coordonnées : 0,1 bloc. Écart maximal : 0,5 bloc. Annulable.",
+  "vizedit.ui.simplify_hint": "Précision des coordonnées : 0,1 bloc. Écart maximal : 1 bloc. Annulable.",
   "vizedit.ui.grid": "Grille de coordonnées",
   "vizedit.ui.map": "Carte du terrain",
   "vizedit.ui.search": "Rechercher des domaines",

@@ -9,10 +9,10 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-// 只优化有效的单环草稿；坐标量化与轮廓简化共用半格误差预算，任何退化或资源超限均保留原稿。
+// 只优化有效的单环草稿；坐标量化与轮廓简化共用一格误差预算，任何退化或资源超限均保留原稿。
 final class BoundaryOptimizer {
     private static final double SCALE = 10;
-    private static final double MAX_ERROR_SQUARED = 0.5 * 0.5;
+    private static final double MAX_ERROR_SQUARED = 1.0 * 1.0;
     private static final double OLD_EDGE_EPSILON = 0.00000001;
     private static final int MAX_WORK = 8_000_000;
 
@@ -54,7 +54,7 @@ final class BoundaryOptimizer {
             source[i * 2] = point;
             rounded[i * 2] = protectedPoint ? point : round(point);
             keep[i * 2] = protectedPoint || count <= 4 || sharpCorner(ring.get((i + count - 1) % count), point, next);
-            // 原边中点为阶梯轮廓提供居中的直线端点，否则仅保留旧拐点时一格斜阶梯很难满足半格误差。
+            // 原边中点为阶梯轮廓提供居中的直线端点，避免只有旧拐点可选时生成不必要的短折线。
             Vertex middle = new Vertex(point.getX() + (next.getX() - point.getX()) / 2,
                 point.getZ() + (next.getZ() - point.getZ()) / 2);
             source[i * 2 + 1] = middle;
@@ -98,7 +98,7 @@ final class BoundaryOptimizer {
         return VizEditGeometry.simplify(result);
     }
 
-    // 原始链在新线段半径半格的凸胶囊内，则每条原边都在误差内；链连续且端点误差不超过0.071格，反向覆盖同样成立。
+    // 原始链在新线段半径一格的凸胶囊内，则每条原边都在误差内；链连续且端点误差不超过0.071格，反向覆盖同样成立。
     private static double segmentDistanceSquared(Vertex point, Vertex start, Vertex end) {
         double dx = end.getX() - start.getX(), dz = end.getZ() - start.getZ();
         double squaredLength = dx * dx + dz * dz;

@@ -2492,7 +2492,7 @@
   "vizedit.ui.undo": "Deshacer",
   "vizedit.ui.redo": "Rehacer",
   "vizedit.ui.simplify": "Simplificar límite",
-  "vizedit.ui.simplify_hint": "Precisión de coordenadas: 0,1 bloques. Desviación máxima: 0,5 bloques. Se puede deshacer.",
+  "vizedit.ui.simplify_hint": "Precisión de coordenadas: 0,1 bloques. Desviación máxima: 1 bloque. Se puede deshacer.",
   "vizedit.ui.grid": "Cuadrícula de coordenadas",
   "vizedit.ui.map": "Mapa del terreno",
   "vizedit.ui.search": "Buscar dominios",

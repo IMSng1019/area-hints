@@ -2492,7 +2492,7 @@
   "vizedit.ui.undo": "元に戻す",
   "vizedit.ui.redo": "やり直す",
   "vizedit.ui.simplify": "境界を簡略化",
-  "vizedit.ui.simplify_hint": "座標精度は0.1ブロック、最大偏差は0.5ブロックです。元に戻せます。",
+  "vizedit.ui.simplify_hint": "座標精度は0.1ブロック、最大偏差は1ブロックです。元に戻せます。",
   "vizedit.ui.grid": "座標グリッド",
   "vizedit.ui.map": "地形マップ",
   "vizedit.ui.search": "領域を検索",

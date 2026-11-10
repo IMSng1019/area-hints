@@ -2492,7 +2492,7 @@
   "vizedit.ui.undo": "Rückgängig",
   "vizedit.ui.redo": "Wiederholen",
   "vizedit.ui.simplify": "Grenze vereinfachen",
-  "vizedit.ui.simplify_hint": "Koordinatengenauigkeit: 0,1 Blöcke. Maximale Abweichung: 0,5 Blöcke. Rückgängig möglich.",
+  "vizedit.ui.simplify_hint": "Koordinatengenauigkeit: 0,1 Blöcke. Maximale Abweichung: 1 Block. Rückgängig möglich.",
   "vizedit.ui.grid": "Koordinatenraster",
   "vizedit.ui.map": "Geländekarte",
   "vizedit.ui.search": "Gebiete suchen",

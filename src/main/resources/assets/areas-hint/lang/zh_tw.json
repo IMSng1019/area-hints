@@ -2492,7 +2492,7 @@
   "vizedit.ui.undo": "復原",
   "vizedit.ui.redo": "重做",
   "vizedit.ui.simplify": "簡化邊界",
-  "vizedit.ui.simplify_hint": "座標精度 0.1 格，最大偏移 0.5 格；可復原。",
+  "vizedit.ui.simplify_hint": "座標精度 0.1 格，最大偏移 1 格；可復原。",
   "vizedit.ui.grid": "座標網格",
   "vizedit.ui.map": "地形地圖",
   "vizedit.ui.search": "搜尋域名",

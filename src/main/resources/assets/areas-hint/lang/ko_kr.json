@@ -2492,7 +2492,7 @@
   "vizedit.ui.undo": "실행 취소",
   "vizedit.ui.redo": "다시 실행",
   "vizedit.ui.simplify": "경계 단순화",
-  "vizedit.ui.simplify_hint": "좌표 정밀도 0.1블록, 최대 편차 0.5블록. 실행 취소할 수 있습니다.",
+  "vizedit.ui.simplify_hint": "좌표 정밀도 0.1블록, 최대 편차 1블록. 실행 취소할 수 있습니다.",
   "vizedit.ui.grid": "좌표 격자",
   "vizedit.ui.map": "지형 지도",
   "vizedit.ui.search": "영역 검색",

@@ -2492,7 +2492,7 @@
   "vizedit.ui.undo": "Undo",
   "vizedit.ui.redo": "Redo",
   "vizedit.ui.simplify": "Simplify boundary",
-  "vizedit.ui.simplify_hint": "Coordinate precision: 0.1 blocks. Maximum deviation: 0.5 blocks. Can be undone.",
+  "vizedit.ui.simplify_hint": "Coordinate precision: 0.1 blocks. Maximum deviation: 1 block. Can be undone.",
   "vizedit.ui.grid": "Coordinate grid",
   "vizedit.ui.map": "Terrain map",
   "vizedit.ui.search": "Search areas",

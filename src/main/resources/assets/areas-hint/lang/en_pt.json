@@ -2492,7 +2492,7 @@
   "vizedit.ui.undo": "UNDO",
   "vizedit.ui.redo": "REDO",
   "vizedit.ui.simplify": "SIMPLIFY BORDR",
-  "vizedit.ui.simplify_hint": "COORD PRECISION: 0.1 BLOCKZ. MAX WIGGL: 0.5 BLOCKZ. U CAN UNDO DIS.",
+  "vizedit.ui.simplify_hint": "COORD PRECISION: 0.1 BLOCKZ. MAX WIGGL: 1 BLOCK. U CAN UNDO DIS.",
   "vizedit.ui.grid": "COORDINATE GRID",
   "vizedit.ui.map": "TERRAIN MAP",
   "vizedit.ui.search": "FIND DOMAINZ",

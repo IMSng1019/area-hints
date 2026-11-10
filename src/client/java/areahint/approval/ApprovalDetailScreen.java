@@ -45,10 +45,17 @@ public final class ApprovalDetailScreen extends CommandUiScreen {
             if (!session.areas.isEmpty()) session.areaIndex = (session.areaIndex + 1) % session.areas.size();
         }).dimensions(contentX + contentWidth - 20, 76, 20, BUTTON_HEIGHT).build());
         boolean editing = ApprovalClientManager.isOperator() || session.editMode;
-        previewButton = button("approval.ui.preview", contentX, 100, editing ? columns : contentWidth,
-            () -> ApprovalClientManager.preview(session.areaIndex));
+        boolean visualEditor = "vizedit".equals(session.request.operation);
+        previewButton = button(visualEditor ? "vizedit.ui.preview" : "approval.ui.preview", contentX, 100, editing ? columns : contentWidth,
+            () -> {
+                if (visualEditor) areahint.vizedit.VizEditClientManager.preview(session.request, this);
+                else ApprovalClientManager.preview(session.areaIndex);
+            });
         // 回复只展示查看入口，打回后进入独立的修改页面才提供临时顶点编辑按钮。
-        if (editing) {
+        if (editing && visualEditor) {
+            addButton = button("vizedit.ui.edit", contentX + columns + 4, 100, columns * 2 + 4,
+                () -> areahint.vizedit.VizEditClientManager.openApproval(session.request, this));
+        } else if (editing) {
             addButton = button("approval.ui.addhint", contentX + columns + 4, 100, columns,
                 () -> ApprovalClientManager.editGeometry(true, session.areaIndex));
             deleteButton = button("approval.ui.deletehint", contentX + (columns + 4) * 2, 100, columns,
@@ -77,6 +84,10 @@ public final class ApprovalDetailScreen extends CommandUiScreen {
                 mutationButtons.add(button("approval.ui.resubmit", contentX, actionsY, contentWidth, ApprovalClientManager::resubmit));
             } else {
                 mutationButtons.add(button("approval.ui.modify", contentX, actionsY, contentWidth, () -> {
+                    if (visualEditor) {
+                        areahint.vizedit.VizEditClientManager.openApproval(session.request, this);
+                        return;
+                    }
                     session.editMode = true;
                     if (client != null) client.setScreen(new ApprovalDetailScreen());
                 }));
@@ -103,7 +114,9 @@ public final class ApprovalDetailScreen extends CommandUiScreen {
         boolean editable = available && ApprovalClientManager.isSessionOperationEnabled();
         for (ButtonWidget button : mutationButtons) button.active = editable;
         if (previewButton != null) previewButton.active = available && !session.areas.isEmpty();
-        if (addButton != null) addButton.active = available && ApprovalClientManager.canEdit(session.areaIndex);
+        if (addButton != null) addButton.active = available && ("vizedit".equals(session.request.operation)
+            ? editable && (ApprovalClientManager.isOperator() && "pending".equals(session.request.status)
+                || "returned".equals(session.request.status)) : ApprovalClientManager.canEdit(session.areaIndex));
         if (deleteButton != null) deleteButton.active = available && ApprovalClientManager.canEdit(session.areaIndex);
         if (comment != null) comment.setEditable(editable);
     }

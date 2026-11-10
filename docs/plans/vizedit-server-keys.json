@@ -1,0 +1,22 @@
+{
+  "vizedit.error.invalid": ["无效的编辑内容，请检查名称、属性和数据格式。", "Invalid edit. Check the name, properties and data format."],
+  "vizedit.error.conflict": ["目标或受影响后代已发生变化，请重新打开编辑器；当前草稿仍保留。", "The target or affected descendants changed. Reopen the editor; your draft is preserved."],
+  "vizedit.error.duplicate": ["此维度已存在同名域名。", "An area with this name already exists in this dimension."],
+  "vizedit.error.children": ["存在子域名，不能删除此域名。", "This area has children and cannot be deleted."],
+  "vizedit.error.level": ["域名等级必须为正整数，且改级后的后代等级不能溢出。", "Area levels must be positive integers; descendant levels must remain within range."],
+  "vizedit.error.parent": ["上级域名必须比本域名高一级；一级域名只能挂接当前维度或不设置上级。", "The parent must be exactly one level above; level 1 areas may only use the current dimension or no parent."],
+  "vizedit.error.cycle": ["域名层级存在循环引用。", "The area hierarchy contains a cycle."],
+  "vizedit.error.denied": ["缺少本次变更所需权限，整笔修改未保存。", "You lack a permission required for this change. Nothing was saved."],
+  "vizedit.error.color": ["颜色必须是 #RRGGBB 或受支持的闪烁颜色。", "Use a #RRGGBB color or a supported flashing color."],
+  "vizedit.error.altitude": ["高度必须介于 -64 与 320 之间，且下限不能高于上限。", "Height limits must be between -64 and 320, with the minimum no greater than the maximum."],
+  "vizedit.error.no_changes": ["没有可保存的修改。", "There are no changes to save."],
+  "vizedit.error.dimension": ["此编辑仅支持玩家当前的主世界、下界或末地。", "Editing supports only the player's current Overworld, Nether or End."],
+  "vizedit.error.session": ["编辑会话已失效，请重新打开编辑器；当前草稿仍保留。", "The editing session expired. Reopen the editor; your draft is preserved."],
+  "vizedit.error.size": ["编辑数据超过传输大小限制。", "The editing data exceeds the transfer limit."],
+  "vizedit.error.timeout": ["数据传输超时，当前草稿仍保留。", "The transfer timed out. Your draft is preserved."],
+  "vizedit.error.storage": ["保存文件失败，当前草稿仍保留。", "The file could not be saved. Your draft is preserved."],
+  "vizedit.message.saved": ["域名及必要后代已一起保存。", "The area and affected descendants were saved together."],
+  "vizedit.message.submitted": ["可视化编辑申请已提交审批，正式域名尚未改变。", "The visual edit was submitted for approval. Published areas are unchanged."],
+  "vizedit.message.draft": ["可视化审批草稿已保存。", "The visual approval draft was saved."],
+  "vizedit.message.resubmitted": ["可视化编辑申请已重新提交审批。", "The visual edit was resubmitted for approval."]
+}

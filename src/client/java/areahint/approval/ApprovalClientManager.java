@@ -52,6 +52,9 @@ public final class ApprovalClientManager {
     private static Runnable afterDraft;
     private static boolean draftAcknowledged;
     private static JsonObject lastSnapshot;
+    private static String visualDraftId;
+    private static int visualDraftRevision;
+    private static Screen visualDraftParent;
 
     private ApprovalClientManager() { }
 
@@ -159,6 +162,7 @@ public final class ApprovalClientManager {
         // 关闭审批后保留已打开的回复详情，具体申请的修改按钮单独检查其开关。
         version++;
         completeDraftWhenReady();
+        completeVisualDraftWhenReady();
     }
 
     private static void persistSnapshot(JsonObject snapshot) {
@@ -214,6 +218,25 @@ public final class ApprovalClientManager {
     }
 
     public static void refresh() { requestSnapshot("list"); }
+
+    // 可视化草稿确认与审批快照可按任意先后顺序到达，等到对应新版再恢复审批详情。
+    public static void afterVisualDraft(String id, int revision, Screen parent) {
+        visualDraftId = id; visualDraftRevision = revision; visualDraftParent = parent;
+        if (session != null) session.stale = true;
+        MinecraftClient.getInstance().setScreen(parent);
+        requestSnapshot("list");
+        completeVisualDraftWhenReady();
+    }
+
+    private static void completeVisualDraftWhenReady() {
+        if (visualDraftId == null) return;
+        ApprovalRequest latest = find(visualDraftId);
+        if (latest == null || latest.revision < visualDraftRevision) return;
+        String id = visualDraftId;
+        Screen parent = session != null ? session.parent : visualDraftParent;
+        visualDraftId = null; visualDraftParent = null;
+        openRequest(id, parent);
+    }
 
     public static void openRequest(String id, Screen parent) {
         ApprovalRequest request = find(id);
@@ -327,6 +350,8 @@ public final class ApprovalClientManager {
 
     public static boolean canEdit(int index) {
         if (session == null || session.stale || !isSessionOperationEnabled() || !validIndex(index)) return false;
+        // 可视化申请必须由专用白名单与层级事务重建，不能走旧的单域名临时顶点编辑。
+        if ("vizedit".equals(session.request.operation)) return false;
         if (!(operator && "pending".equals(session.request.status)
                 || !operator && "returned".equals(session.request.status) && session.editMode)) return false;
         String name = session.areas.get(index).getName();
@@ -533,6 +558,8 @@ public final class ApprovalClientManager {
         urbanApprovalEnabled = false;
         operator = false;
         lastSnapshot = null;
+        visualDraftId = null;
+        visualDraftParent = null;
         version++;
     }
 

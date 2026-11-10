@@ -30,6 +30,7 @@ public final class XaeroWorldMapBridge {
 
     public static void initialize() {
         resolveReflection();
+        if (!failed) VizEditXaeroBridge.initialize();
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             // 先处理右键双击安排好的域名管理打开，再补齐渲染器注册
             AreaWorldMapRightClick.tick();

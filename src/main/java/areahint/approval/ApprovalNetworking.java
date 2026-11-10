@@ -82,6 +82,8 @@ public final class ApprovalNetworking {
         } catch (ApprovalManager.ApprovalException e) {
             sendResult(player, false, e.getMessage(), operation, requestId);
             sendSnapshot(player);
+        } catch (areahint.vizedit.VizEditChangeService.EditException e) {
+            sendResult(player, false, e.getMessage(), operation, requestId);
         } catch (java.io.IOException e) {
             Areashint.LOGGER.error("保存审批操作失败", e);
             sendResult(player, false, "approval.error.storage", operation, requestId);

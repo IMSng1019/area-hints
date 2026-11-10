@@ -21,6 +21,8 @@ public final class ApprovalRequest {
     public List<Change> changes = new ArrayList<>();
     public List<Review> reviews = new ArrayList<>();
     public List<AreaData> previewAreas = new ArrayList<>();
+    // 可视化编辑保留操作身份和依赖快照，旧审批记录不需要补写此可选字段。
+    public areahint.vizedit.VizEditMetadata vizEdit;
 
     // areas 为域名数组差异，document 为描述或维度配置；相对路径仅由服务端生成。
     public static final class Change {

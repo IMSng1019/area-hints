@@ -28,6 +28,7 @@ public class ClientNetworking {
     private static final Object PENDING_AREA_DATA_LOCK = new Object();
     private static final Map<String, String> PENDING_AREA_DATA = new LinkedHashMap<>();
     private static ClientPlayNetworkHandler pendingAreaDataHandler;
+    private static final AreaDataChunkAssembler AREA_DATA_CHUNKS = new AreaDataChunkAssembler();
 
     /**
      * 初始化客户端网络处理
@@ -40,6 +41,10 @@ public class ClientNetworking {
                 Channel.S2C_AREA_DATA,
                 ClientNetworking::handleAreaData
         );
+        // 大型多边形文件只有完整组包后才复用正式数据写入与刷新流程。
+        ClientNetworkCompat.get().registerClientReceiver(Channel.S2C_AREA_DATA_CHUNK, ClientNetworking::handleAreaDataChunk);
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(
+            client -> AREA_DATA_CHUNKS.expire(System.currentTimeMillis()));
         
         // 注册客户端命令接收处理器
         ClientNetworkCompat.get().registerClientReceiver(
@@ -92,6 +97,12 @@ public class ClientNetworking {
             (handler, sender, client) -> {
                 adaptLanguageOnJoinIfUnlocked();
                 sendLanguageToServer();
+                // 向支持分片的新服务端声明协议版本；旧服务器仍走原单包通道。
+                if (ClientNetworkCompat.get().canSend(Channel.C2S_AREA_DATA_CHUNK_READY)) {
+                    NetworkBuf ready = ClientNetworkCompat.get().newBuffer();
+                    ready.writeInt(1);
+                    ClientNetworkCompat.get().sendToServer(Channel.C2S_AREA_DATA_CHUNK_READY, ready);
+                }
             }
         );
     }
@@ -155,6 +166,7 @@ public class ClientNetworking {
                 return;
             }
             registerAreaDataConnection(handler);
+            AREA_DATA_CHUNKS.discard(dimensionName);
             if (!isActiveAreaDataConnection(handler)) {
                 AreashintClient.LOGGER.debug("已忽略失效连接发送的区域数据: {}", dimensionName);
                 return;
@@ -167,6 +179,33 @@ public class ClientNetworking {
         });
     }
 
+    private static void handleAreaDataChunk(MinecraftClient client, NetworkReader reader) {
+        try {
+            String transfer = reader.readString(128);
+            String dimension = reader.readString(32);
+            int index = reader.readInt(), count = reader.readInt();
+            String chunk = reader.readString(24_000);
+            ClientPlayNetworkHandler receivedOn = client.getNetworkHandler();
+            client.execute(() -> {
+                if (receivedOn == null || receivedOn != client.getNetworkHandler()) return;
+                registerAreaDataConnection(receivedOn);
+                String document = AREA_DATA_CHUNKS.accept(dimension, transfer, index, count, chunk, System.currentTimeMillis());
+                if (document == null || !isActiveAreaDataConnection(receivedOn)) return;
+                // 格式损坏或尚未完整传输的数据不能截断现有正式文件。
+                try {
+                    if (!com.google.gson.JsonParser.parseString(document).isJsonArray()) return;
+                } catch (com.google.gson.JsonParseException exception) {
+                    AreashintClient.LOGGER.warn("拒绝损坏的域名分片数据: {}", dimension, exception);
+                    return;
+                }
+                if (!areahint.world.ClientWorldFolderManager.isInitialized()) cachePendingAreaData(receivedOn, dimension, document);
+                else processAreaData(client, dimension, document);
+            });
+        } catch (RuntimeException exception) {
+            AreashintClient.LOGGER.warn("读取域名数据分片失败", exception);
+        }
+    }
+
     /**
      * 为当前网络连接建立独立缓存，连接对象变化时立即丢弃上一连接遗留的数据。
      */
@@ -175,6 +214,7 @@ public class ClientNetworking {
             if (pendingAreaDataHandler != handler) {
                 pendingAreaDataHandler = handler;
                 PENDING_AREA_DATA.clear();
+                AREA_DATA_CHUNKS.clear();
             }
         }
     }
@@ -237,6 +277,7 @@ public class ClientNetworking {
             if (pendingAreaDataHandler == handler) {
                 pendingAreaDataHandler = null;
                 PENDING_AREA_DATA.clear();
+                AREA_DATA_CHUNKS.clear();
             }
         }
     }
@@ -255,7 +296,10 @@ public class ClientNetworking {
             Path filePath = areahint.world.ClientWorldFolderManager.getWorldDimensionFile(fileName);
             AreashintClient.LOGGER.info("[调试] 客户端保存区域数据到文件: " + filePath.toAbsolutePath());
             FileManager.checkFolderExist();
-            Files.writeString(filePath, fileContent, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            // 单机客户端与集成服可共享世界目录，此时只刷新最新正式文件，不回写延迟到达的快照。
+            Path authoritativeFile = client.getServer() == null ? null
+                : areahint.world.WorldFolderManager.getWorldDimensionFile(fileName);
+            AreaDataSnapshotWriter.write(filePath, fileContent, authoritativeFile);
 
             AreashintClient.LOGGER.info("已接收并保存 " + dimensionName + " 的区域数据");
             areahint.xaero.AreaOverlayRepository.getInstance().refreshDimension(dimensionName);
@@ -318,6 +362,11 @@ public class ClientNetworking {
                 
                 // 根据命令类型处理
                 if (type.equals("areahint")) {
+                    // 聊天命令和面板都请求同一服务端会话，避免客户端本地数据绕过权限或并发检查。
+                    if (action.equals("vizedit")) {
+                        areahint.vizedit.VizEditClientManager.open();
+                        return;
+                    }
                     if (action.startsWith("approval_addhint:") || action.startsWith("approval_deletehint:")) {
                         areahint.approval.ApprovalClientManager.handleClientCommand(action);
                         return;

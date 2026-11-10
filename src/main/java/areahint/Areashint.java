@@ -98,6 +98,7 @@ public class Areashint implements ModInitializer {
 
 		// 审批通道独立注册，正式域名写入仍由原功能入口完成权限校验。
 		areahint.approval.ApprovalNetworking.register();
+		areahint.vizedit.VizEditNetworking.register();
 
 		// 初始化 Xaero 世界地图域名管理能力查询
 		areahint.management.AreaManagementServerNetworking.register();

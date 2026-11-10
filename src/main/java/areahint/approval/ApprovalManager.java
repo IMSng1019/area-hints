@@ -141,6 +141,53 @@ public final class ApprovalManager {
         return true;
     }
 
+    // 可视化申请使用原始 JSON 差异，模型未识别的扩展字段仍随原域名完整保留。
+    public static String submitVizEdit(ServerPlayerEntity player, Path file,
+            areahint.vizedit.VizEditChangeService.Prepared prepared) throws IOException {
+        ApprovalRequest request = create(player, "vizedit", player.getWorld().getRegistryKey().getValue().toString());
+        request.changes.add(change("areas", file, prepared.before(), prepared.after()));
+        request.vizEdit = areahint.vizedit.VizEditMetadata.from(prepared);
+        request.previewAreas = toAreas(prepared.after().isEmpty() ? prepared.before() : prepared.after());
+        saveNew(request);
+        return request.id;
+    }
+
+    public static ApprovalRequest editableVizEdit(ServerPlayerEntity player, String id) throws ApprovalException {
+        ApprovalRequest request = findVisible(player, id);
+        request = editable(player, id, request.revision);
+        if (!"vizedit".equals(request.operation) || request.vizEdit == null || request.vizEdit.fields == null
+                || request.changes.size() != 1 || !"areas".equals(request.changes.get(0).kind)) throw error("invalid");
+        return request;
+    }
+
+    // 专用会话已经重新计算后代及权限，这里只接受服务端生成的变更，不接收客户端 after 数组。
+    public static void saveVizEdit(ServerPlayerEntity player, String id, int revision,
+            areahint.vizedit.VizEditChangeService.Prepared prepared, boolean resubmit) throws IOException, ApprovalException {
+        ApprovalRequest request = editable(player, id, revision);
+        if (!"vizedit".equals(request.operation) || request.vizEdit == null || request.changes.size() != 1
+                || !Objects.equals(prepared.operation(), request.vizEdit.operation)
+                || !Objects.equals(prepared.targetName(), request.vizEdit.targetName)) throw error("invalid");
+        if (resubmit && (!player.getUuidAsString().equals(request.applicantId) || !"returned".equals(request.status))) {
+            throw error("denied");
+        }
+        replaceVizEdit(request, prepared);
+        if (resubmit) request.status = "pending";
+        update(request);
+        try {
+            ApprovalNetworking.broadcast(request, false);
+        } catch (RuntimeException exception) {
+            Areashint.LOGGER.warn("可视化审批草稿已保存，广播失败", exception);
+        }
+    }
+
+    private static void replaceVizEdit(ApprovalRequest request, areahint.vizedit.VizEditChangeService.Prepared prepared) {
+        ApprovalRequest.Change change = request.changes.get(0);
+        change.before = prepared.before().deepCopy();
+        change.after = prepared.after().deepCopy();
+        request.vizEdit = areahint.vizedit.VizEditMetadata.from(prepared);
+        request.previewAreas = toAreas(prepared.after().isEmpty() ? prepared.before() : prepared.after());
+    }
+
     private static ApprovalRequest create(ServerPlayerEntity player, String operation, String dimensionId) throws IOException {
         if (requestFolder == null) {
             throw new IOException("审批目录尚未初始化");
@@ -271,6 +318,23 @@ public final class ApprovalManager {
         if (history == null || !GSON.toJsonTree(request.reviews).equals(history)) {
             throw error("history");
         }
+        if ("vizedit".equals(request.operation)) {
+            // 旧审批面板的重新申请按钮也走专用字段和权限路径，不能落入宽泛的通用 rebase。
+            applyDraft(player, request, action.get("areas"));
+            if (!areahint.vizedit.VizEditServerService.canOpen(player) || request.vizEdit == null) throw error("denied");
+            if (!request.dimensionId.equals(player.getWorld().getRegistryKey().getValue().toString())) throw error("conflict");
+            JsonArray current = areahint.vizedit.VizEditServerService.readAreas(areahint.vizedit.VizEditServerService.file(request.dimensionId));
+            var prepared = areahint.vizedit.VizEditChangeService.prepare(current, current, request.vizEdit.operation,
+                request.vizEdit.targetName, request.vizEdit.fields, request.dimensionId,
+                areahint.dimensional.DimensionalNameManager.getDimensionalName(request.dimensionId), request.applicantName,
+                areahint.vizedit.VizEditServerService.permissions(player, current));
+            replaceVizEdit(request, prepared);
+            request.status = "pending";
+            update(request);
+            ApprovalNetworking.sendResult(player, true, "approval.message.resubmitted", "resubmit", request.id);
+            ApprovalNetworking.broadcast(request, false);
+            return;
+        }
         validateResubmitPermission(player, request);
         applyDraft(player, request, action.get("areas"));
         rebase(request);
@@ -287,6 +351,13 @@ public final class ApprovalManager {
     // 临时编辑只允许调整已申请域名的顶点，不能借顶点包改写署名、级别、颜色或审批内容。
     private static void applyDraft(ServerPlayerEntity player, ApprovalRequest request, JsonElement incoming)
         throws IOException, ApprovalException {
+        if ("vizedit".equals(request.operation)) {
+            // 可视化审批只能经专用会话修改，通用顶点编辑通道只允许原封不动的预览用于审批回复。
+            if (incoming != null && !incoming.isJsonNull() && !GSON.toJsonTree(request.previewAreas).equals(incoming)) {
+                throw error("invalid");
+            }
+            return;
+        }
         if (incoming == null || incoming.isJsonNull()) {
             return;
         }
@@ -505,6 +576,7 @@ public final class ApprovalManager {
     }
 
     private static void applyApproved(ServerPlayerEntity reviewer, ApprovalRequest request) throws IOException, ApprovalException {
+        if ("vizedit".equals(request.operation) && (request.vizEdit == null || request.changes.size() != 1)) throw error("invalid");
         Map<Path, JsonElement> originals = new LinkedHashMap<>();
         Map<Path, JsonElement> replacements = new LinkedHashMap<>();
         for (ApprovalRequest.Change change : request.changes) {
@@ -512,6 +584,19 @@ public final class ApprovalManager {
             Path file = resolve(change.path);
             JsonElement current = readDocument(file);
             originals.put(file, current);
+            if ("vizedit".equals(request.operation)) {
+                if (!"areas".equals(change.kind) || !file.toAbsolutePath().normalize().equals(
+                        areahint.vizedit.VizEditServerService.file(request.dimensionId).toAbsolutePath().normalize())) throw error("invalid");
+                try {
+                    JsonArray areas = current.isJsonNull() ? new JsonArray() : current.getAsJsonArray();
+                    var prepared = areahint.vizedit.VizEditServerService.validateApproval(request, areas);
+                    if (!prepared.before().equals(change.before) || !prepared.after().equals(change.after)) throw error("invalid");
+                    replacements.put(file, prepared.document());
+                } catch (areahint.vizedit.VizEditChangeService.EditException exception) {
+                    throw new ApprovalException(exception.getMessage());
+                }
+                continue;
+            }
             if ("areas".equals(change.kind)) {
                 // 审批只批准原操作允许的属性变化，不能把历史申请中的夹带字段转成模式授权。
                 validateGamemodeChange(request.operation, change);
@@ -568,6 +653,15 @@ public final class ApprovalManager {
             Files.deleteIfExists(journal);
         } catch (IOException e) {
             Areashint.LOGGER.warn("审批已完成，事务日志将在下次启动时清理: {}", journal, e);
+        }
+        if ("vizedit".equals(request.operation)) {
+            try {
+                ServerNetworking.sendAllAreaDataToAll();
+            } catch (RuntimeException exception) {
+                // 域名及审批状态已经原子提交，广播异常不能向审批人伪报事务失败。
+                Areashint.LOGGER.warn("可视化审批已通过，域名广播失败", exception);
+            }
+            return;
         }
         areahint.dimensional.DimensionalNameManager.loadDimensionalNames();
         if ("applyurbanarea".equals(request.operation) && Areashint.getServer() != null) {
@@ -847,6 +941,7 @@ public final class ApprovalManager {
 
     public static AreaData previewArea(ServerPlayerEntity player, String id, int index, boolean editing) throws ApprovalException {
         ApprovalRequest request = findVisible(player, id);
+        if (editing && "vizedit".equals(request.operation)) throw error("preview_unavailable");
         if (editing) {
             editable(player, id, request.revision);
         }
@@ -1058,11 +1153,13 @@ public final class ApprovalManager {
         if (request.changes == null) request.changes = new ArrayList<>();
         if (request.reviews == null) request.reviews = new ArrayList<>();
         if (request.previewAreas == null) request.previewAreas = new ArrayList<>();
-        for (AreaData area : request.previewAreas) area.setType(area.getType());
+        if (!"vizedit".equals(request.operation)) {
+            for (AreaData area : request.previewAreas) area.setType(area.getType());
+        }
         for (ApprovalRequest.Change change : request.changes) {
             if (change.before == null) change.before = JsonNull.INSTANCE;
             if (change.after == null) change.after = JsonNull.INSTANCE;
-            if ("areas".equals(change.kind)) {
+            if ("areas".equals(change.kind) && !"vizedit".equals(request.operation)) {
                 // 旧版审批快照缺失的模式和类型补齐默认值，匹配当前模型的规范化结果。
                 normalizeAreaSnapshot(change.before);
                 normalizeAreaSnapshot(change.after);

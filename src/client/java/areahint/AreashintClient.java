@@ -99,6 +99,8 @@ public class AreashintClient implements ClientModInitializer {
 		ClientNetworking.init();
 		// 审批快照与结果使用独立通道，正式世界目录就绪后再拉取并持久化。
 		areahint.approval.ApprovalClientManager.register();
+		// 可视化编辑器只接收服务端授权的会话，网格与地形画布共用同一份草稿。
+		areahint.vizedit.VizEditClientManager.initialize();
 		
 		// 初始化维度域名网络处理
 		areahint.network.ClientDimensionalNameNetworking.init();

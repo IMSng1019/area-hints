@@ -36,6 +36,7 @@ public class ServerNetworking {
         
         // 注册网络请求处理器
         registerNetworkHandlers();
+        AreaDataChunkNetworking.register();
         
         // 注册玩家连接事件，当玩家加入服务器时发送区域数据和维度域名数据
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
@@ -88,6 +89,10 @@ public class ServerNetworking {
             
             // 读取文件内容
             String fileContent = Files.readString(filePath);
+            if (fileContent.length() > 32767) {
+                AreaDataChunkNetworking.send(player, dimensionName, fileContent);
+                return;
+            }
             Areashint.LOGGER.info(ServerI18nManager.translate("message.button.general_12") + fileContent.length() + ServerI18nManager.translate("message.message.general_12"));
             if (fileContent.length() < 100) {
                 Areashint.LOGGER.info(ServerI18nManager.translate("message.button.general_13") + fileContent);
@@ -107,6 +112,9 @@ public class ServerNetworking {
             
         } catch (IOException e) {
             Areashint.LOGGER.error(ServerI18nManager.translate("message.message.general_70") + e.getMessage());
+        } catch (RuntimeException e) {
+            // 单个玩家断线或发包异常不能中断给其他玩家的同步，也不能把已落盘事务报告为失败。
+            Areashint.LOGGER.warn("发送域名数据失败: {} / {}", player.getGameProfile().getName(), dimensionName, e);
         }
     }
     

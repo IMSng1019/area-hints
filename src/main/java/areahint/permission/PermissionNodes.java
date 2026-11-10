@@ -21,6 +21,7 @@ public final class PermissionNodes {
     public static final String ADD = "areahint.command.add";
     public static final String DELETE = "areahint.command.delete";
     public static final String EASYADD = "areahint.command.easyadd";
+    public static final String VIZEDIT = "areahint.command.vizedit";
     public static final String EXPANDAREA = "areahint.command.expandarea";
     public static final String SHRINKAREA = "areahint.command.shrinkarea";
     public static final String DIVIDEAREA = "areahint.command.dividearea";
@@ -68,6 +69,7 @@ public final class PermissionNodes {
         ADD,
         DELETE,
         EASYADD,
+        VIZEDIT,
         EXPANDAREA,
         SHRINKAREA,
         DIVIDEAREA,

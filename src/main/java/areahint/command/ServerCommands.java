@@ -78,6 +78,15 @@ public class ServerCommands {
         CheckCommand.register(dispatcher, registryAccess, environment);
         
         dispatcher.register(literal("areahint")
+            // 可视化面板和命令均在客户端请求同一服务端会话，入口权限不代替实际操作权限。
+            .then(literal("vizedit")
+                .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.VIZEDIT, 0))
+                .executes(context -> {
+                    ServerPlayerEntity player = context.getSource().getPlayer();
+                    if (player == null) return 0;
+                    ServerNetworking.sendCommandToClient(player, "areahint:vizedit");
+                    return Command.SINGLE_SUCCESS;
+                }))
             // help 命令
             .then(literal("help")
                 .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.HELP, 0))
@@ -829,6 +838,7 @@ public class ServerCommands {
         source.sendMessage(Text.translatable("help.command.replacesubtitlesize"));
         source.sendMessage(Text.translatable("help.command.add"));
         source.sendMessage(Text.translatable("help.command.easyadd"));
+        source.sendMessage(Text.translatable("help.command.vizedit"));
         source.sendMessage(Text.translatable("help.command.addarea"));
         source.sendMessage(Text.translatable("help.command.recolor"));
         source.sendMessage(Text.translatable("help.command.rename"));

@@ -191,9 +191,12 @@ public final class VizEditChangeService {
         }
         var checked = VizEditGeometry.validate(points);
         if (!checked.valid()) throw error(checked.errorKey());
-        // 不对已有顶点整体吸附，几何内核仅合并无损共线点并返回原来的斜边坐标。
-        object.add("vertices", GSON.toJsonTree(checked.vertices()));
-        object.add("second-vertices", GSON.toJsonTree(VizEditGeometry.bounds(checked.vertices())));
+        // 先拒绝原始非法多边形，再强制一位小数并重新验证，不能通过量化把自交或退化输入悄悄修好。
+        var quantized = VizEditGeometry.validate(VizEditVertexFormat.quantize(checked.vertices()));
+        if (!quantized.valid()) throw error(quantized.errorKey());
+        // 服务端不再次有损简化，已预览及审批的几何重复提交时不会继续漂移；权限仍按最终真实面积增减核对。
+        object.add("vertices", VizEditVertexFormat.encode(quantized.vertices()));
+        object.add("second-vertices", VizEditVertexFormat.encode(VizEditGeometry.bounds(quantized.vertices())));
     }
 
     private static double coordinate(JsonObject point, String key) {

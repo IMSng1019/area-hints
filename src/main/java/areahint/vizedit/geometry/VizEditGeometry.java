@@ -67,8 +67,11 @@ public final class VizEditGeometry {
 
     public static Area copy(Area area) { return area == null ? new Area() : new Area(area); }
 
-    // 简化只由编辑操作主动调用，服务端验证及普通布尔运算继续保留原始精度，避免改名或改色改变旧边界。
+    // 绘制中的简化可保留旧边，普通布尔运算仍保留原始精度；提交前另走整体量化的保存入口。
     public static Area optimize(Area shape, Area preserved) { return BoundaryOptimizer.optimize(shape, preserved); }
+
+    // 保存入口整体简化并强制所有顶点为0.1格精度，返回的确切顶点应与预览一起缓存并直接用于提交。
+    public static List<Vertex> prepareForSave(Area shape) { return BoundaryOptimizer.prepareForSave(shape); }
 
     public static Delta difference(List<Vertex> before, List<Vertex> after) {
         Area previous = fromVertices(before);

@@ -413,7 +413,7 @@ public final class VizEditScreen extends Screen {
         try {
             Area optimized = VizEditGeometry.optimize(shape, preserved);
             // 缺少某一方向的权限时保留原笔画，不能让自动简化额外引入无法提交的扩张或缩小。
-            return permitsBoundary(optimized) ? optimized : shape;
+            return session.permitsBoundary(optimized) ? optimized : shape;
         } catch (VizEditGeometry.GeometryException e) {
             return shape;
         }
@@ -428,21 +428,11 @@ public final class VizEditScreen extends Screen {
                 session.status = t("vizedit.client.simplify_unchanged");
                 return;
             }
-            if (!permitsBoundary(optimized)) { session.status = t("vizedit.client.denied"); return; }
+            if (!session.permitsBoundary(optimized)) { session.status = t("vizedit.client.denied"); return; }
             session.checkpoint();
             session.draft.shape = optimized;
             session.status = I18nManager.translate("vizedit.client.simplified", vertexCount(before), vertexCount(optimized));
         } catch (VizEditGeometry.GeometryException e) { session.status = t(e.errorKey()); }
-    }
-
-    // 与服务端一样相对于原正式域名核对真实面积差，不能把删除新画部分误判为缩小旧域名。
-    private boolean permitsBoundary(Area shape) {
-        boolean expand = session.allows("expandarea"), shrink = session.allows("shrinkarea");
-        if (expand && shrink) return true;
-        if (session.originalArea == null) return false;
-        Area baseline = VizEditGeometry.fromVertices(session.originalArea.getVertices());
-        return (expand || VizEditGeometry.subtract(shape, baseline).isEmpty())
-            && (shrink || VizEditGeometry.subtract(baseline, shape).isEmpty());
     }
 
     private static int vertexCount(Area shape) {

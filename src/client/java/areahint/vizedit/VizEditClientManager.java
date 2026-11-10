@@ -240,7 +240,10 @@ public final class VizEditClientManager {
             show(); return;
         }
         try {
-            JsonObject fields = session.draft.fields("delete".equals(session.operation));
+            boolean deleting = "delete".equals(session.operation);
+            int before = deleting ? 0 : areahint.vizedit.geometry.VizEditGeometry.contours(session.draft.shape).stream().mapToInt(List::size).sum();
+            JsonObject fields = session.prepareSave();
+            if (!deleting) session.status = I18nManager.translate("vizedit.client.save_normalized", before, fields.getAsJsonArray("vertices").size());
             MinecraftClient.getInstance().setScreen(VizEditDialog.review(session, fields, draftOnly, continuation));
         } catch (areahint.vizedit.geometry.VizEditGeometry.GeometryException e) {
             report(e.errorKey());

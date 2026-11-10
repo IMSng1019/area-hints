@@ -156,6 +156,9 @@ public final class VizEditServerService {
         var prepared = VizEditChangeService.prepare(metadata.dependencies, current, metadata.operation, metadata.targetName,
             metadata.fields, request.dimensionId, DimensionalNameManager.getDimensionalName(request.dimensionId),
             request.applicantName, (operation, area) -> true);
+        // 旧申请若仍含高精度顶点，必须重新预览提交，不能在批准时悄悄改成另一条量化后的边界。
+        if (!"delete".equals(metadata.operation) && !Objects.equals(metadata.fields.get("vertices"), prepared.fields().get("vertices")))
+            throw VizEditChangeService.error("precision");
         validateDocumentSize(prepared);
         return prepared;
     }

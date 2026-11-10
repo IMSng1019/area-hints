@@ -146,6 +146,27 @@ public final class VizEditSession {
         if (draft != null && history.canRedo()) draft = history.redo(draft);
     }
 
+    // 提交核对前统一生成最终轮廓；验证失败不替换草稿，成功的整体优化作为独立一步支持撤销。
+    public JsonObject prepareSave() {
+        if ("delete".equals(operation)) return draft.fields(true);
+        Draft prepared = draft.preparedForSave();
+        JsonObject fields = prepared.fields(false);
+        if (!permitsBoundary(prepared.shape)) throw new VizEditGeometry.GeometryException("vizedit.client.denied");
+        if (!draft.same(prepared)) checkpoint();
+        draft = prepared;
+        return fields;
+    }
+
+    // 自动、手动和保存前简化都按原正式域名的真实面积差检查，最终仍由服务端再次核验权限。
+    public boolean permitsBoundary(Area shape) {
+        boolean expand = allows("expandarea"), shrink = allows("shrinkarea");
+        if (expand && shrink) return true;
+        if (originalArea == null) return false;
+        Area baseline = VizEditGeometry.fromVertices(originalArea.getVertices());
+        return (expand || VizEditGeometry.subtract(shape, baseline).isEmpty())
+            && (shrink || VizEditGeometry.subtract(baseline, shape).isEmpty());
+    }
+
     public List<AreaData> affectedDescendants() {
         if (draft == null || originalArea == null) return List.of();
         int level;
@@ -191,6 +212,8 @@ public final class VizEditSession {
         public String max = "";
         public Area shape = new Area();
         private boolean altitudeObject;
+        private List<Vertex> saveVertices;
+        private Area saveShape;
 
         public static Draft from(AreaData area) {
             Draft value = new Draft();
@@ -226,7 +249,19 @@ public final class VizEditSession {
                 List<Vertex> points = new ArrayList<>();
                 for (JsonElement item : data.getAsJsonArray("vertices")) points.add(GSON.fromJson(item, Vertex.class));
                 shape = VizEditGeometry.fromVertices(points);
+                saveVertices = null; saveShape = null;
             }
+        }
+
+        // 缓存确切的一位小数顶点，避免 Area 路径正规化重新生成长小数，也避免返回核对页面时重复移动边界。
+        private Draft preparedForSave() {
+            Draft result = copy();
+            if (saveVertices == null || saveShape == null || !shape.equals(saveShape)) {
+                result.saveVertices = VizEditGeometry.prepareForSave(shape);
+                result.shape = VizEditGeometry.fromVertices(result.saveVertices);
+                result.saveShape = new Area(result.shape);
+            }
+            return result;
         }
 
         public JsonObject fields(boolean deleting) {
@@ -249,7 +284,8 @@ public final class VizEditSession {
                 altitude.addProperty("max", high);
                 value.add("altitude", altitude);
             }
-            value.add("vertices", GSON.toJsonTree(VizEditGeometry.toVertices(shape)));
+            if (saveVertices == null || saveShape == null || !shape.equals(saveShape)) throw new IllegalArgumentException("Unprepared boundary");
+            value.add("vertices", VizEditVertexFormat.encode(saveVertices));
             return value;
         }
 
@@ -265,6 +301,9 @@ public final class VizEditSession {
             value.name = name; value.surface = surface; value.color = color; value.level = level;
             value.parent = parent; value.min = min; value.max = max; value.shape = new Area(shape);
             value.altitudeObject = altitudeObject;
+            // 顶点列表只在准备保存时整体赋值，历史快照可共享只读列表；用于比较的 Area 单独复制。
+            value.saveVertices = saveVertices;
+            value.saveShape = saveShape == null ? null : new Area(saveShape);
             return value;
         }
 

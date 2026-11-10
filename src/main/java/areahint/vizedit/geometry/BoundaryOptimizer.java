@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-// 只优化有效的单环草稿；坐标量化与轮廓简化共用一格误差预算，任何退化或资源超限均保留原稿。
+// 只优化有效单环且量化与简化共用一格误差预算；交互优化失败保留原稿，保存入口则强制验证量化结果。
 final class BoundaryOptimizer {
     private static final double SCALE = 10;
     private static final double MAX_ERROR_SQUARED = 1.0 * 1.0;
@@ -36,6 +36,40 @@ final class BoundaryOptimizer {
             // 复杂图形仍能继续编辑或撤销，保存时沿用既有几何错误提示，不因优化失败清空草稿。
             return original;
         }
+    }
+
+    // 保存必须返回实际提交的量化顶点，不能再遍历 Area 取点，以免正规化计算重新产生多位小数。
+    static List<Vertex> prepareForSave(Area shape) {
+        if (shape == null || shape.isEmpty()) throw VizEditGeometry.error("geometry_empty");
+        List<List<Vertex>> contours = VizEditGeometry.contours(shape);
+        if (contours.size() != 1) {
+            for (List<Vertex> contour : contours) if (VizEditGeometry.signedArea(contour) > 0)
+                throw VizEditGeometry.error("geometry_holes");
+            throw VizEditGeometry.error("geometry_disconnected");
+        }
+        List<Vertex> ring = VizEditGeometry.simplify(contours.get(0));
+        if (ring.size() < 3 || VizEditGeometry.signedArea(ring) == 0) throw VizEditGeometry.error("geometry_empty");
+        Budget budget = new Budget();
+        try {
+            // 必须先验证原环，不能让量化合并近邻点或简化删除交叉后把无效草稿悄悄变成有效边界。
+            if (!simple(ring, budget)) throw VizEditGeometry.error("geometry_self_intersection");
+        } catch (BudgetExceeded ignored) { throw VizEditGeometry.error("geometry_limit"); }
+        double direction = Math.signum(VizEditGeometry.signedArea(ring));
+        try {
+            List<Vertex> reduced = reduce(ring, null, budget);
+            VizEditGeometry.Validation checked = VizEditGeometry.validate(reduced);
+            if (reduced.size() <= ring.size() && checked.valid()
+                    && Math.signum(VizEditGeometry.signedArea(checked.vertices())) == direction) return checked.vertices();
+        } catch (BudgetExceeded ignored) {
+            // 优化预算耗尽仍可尝试只量化原环；回退结果也必须全部为一位小数，绝不能返回原来的高精度顶点。
+        }
+        List<Vertex> rounded = new ArrayList<>(ring.size());
+        for (Vertex point : ring) rounded.add(round(point));
+        VizEditGeometry.Validation checked = VizEditGeometry.validate(rounded);
+        if (!checked.valid()) throw new VizEditGeometry.GeometryException(checked.errorKey());
+        if (Math.signum(VizEditGeometry.signedArea(checked.vertices())) != direction)
+            throw VizEditGeometry.error("geometry_self_intersection");
+        return checked.vertices();
     }
 
     private static List<Vertex> reduce(List<Vertex> ring, EdgeTree oldEdges, Budget budget) {

@@ -50,6 +50,7 @@ final class VizEditDialog extends Screen {
             button("vizedit.ui.continue", left + 2 * (w + 6), height - 32, w, VizEditClientManager::show);
         } else {
             append(t("vizedit.ui.operation." + session.operation) + ": " + (session.target == null ? session.draft.name : session.target), contentWidth);
+            if (!"delete".equals(session.operation)) append(t("vizedit.ui.save_normalized"), contentWidth);
             List<String> affected = session.affectedDescendants().stream().map(area -> area.getName()).toList();
             append(I18nManager.translate("vizedit.ui.affected", affected.size()), contentWidth);
             for (String name : affected) append("• " + name, contentWidth);

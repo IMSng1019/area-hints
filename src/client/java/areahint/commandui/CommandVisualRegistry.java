@@ -82,7 +82,7 @@ public final class CommandVisualRegistry {
         handlers.add(visual("easyadd", "areahint easyadd", "help.command.easyadd", CATEGORY_AREA_EDIT,
             parent -> areahint.easyadd.EasyAddVisualController.openFromCommandUi(parent, "areahint easyadd")));
         // 注册一次即可同时加入命令面板、关键词搜索和可视化帮助列表。
-        handlers.add(visual("vizedit", "areahint vizedit", "help.command.vizedit", CATEGORY_AREA_EDIT,
+        handlers.add(visual("editviz", "areahint editviz", "help.command.vizedit", CATEGORY_AREA_EDIT,
             parent -> areahint.vizedit.VizEditClientManager.open()));
         handlers.add(visual("addarea", "areahint addarea", "help.command.addarea", CATEGORY_AREA_EDIT,
             parent -> areahint.easyadd.EasyAddVisualController.openFromCommandUi(parent, "areahint addarea")));

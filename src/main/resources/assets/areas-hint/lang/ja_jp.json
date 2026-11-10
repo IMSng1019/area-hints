@@ -2560,6 +2560,6 @@
   "vizedit.error.geometry_vertices": "頂点が多すぎます。同一直線上の点を形状を変えずに統合した後、最大4096点までです。",
   "vizedit.error.geometry_coordinates": "座標は有限の数値で、-30000000 から 30000000 の範囲にしてください。",
   "vizedit.error.geometry_limit": "描画が大きすぎます。筆跡を短くするか、ブラシを細くしてください。",
-  "help.command.vizedit": "§a/areahint vizedit §7- 領域ビジュアルエディターを開く（地図／グリッド、描画、プロパティ、審査）",
+  "help.command.vizedit": "§a/areahint editviz §7- 領域ビジュアルエディターを開く（地図／グリッド、描画、プロパティ、審査）",
   "approval.type.vizedit": "領域のビジュアル編集"
 }

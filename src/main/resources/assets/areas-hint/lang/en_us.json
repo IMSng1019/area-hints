@@ -2560,6 +2560,6 @@
   "vizedit.error.geometry_vertices": "Too many vertices. At most 4096 are allowed after merging collinear points without loss.",
   "vizedit.error.geometry_coordinates": "Coordinates must be finite and between -30000000 and 30000000.",
   "vizedit.error.geometry_limit": "This drawing is too large. Shorten the stroke or reduce the brush width.",
-  "help.command.vizedit": "§a/areahint vizedit §7- Open the visual domain editor (map/grid, drawing, properties and approval)",
+  "help.command.vizedit": "§a/areahint editviz §7- Open the visual domain editor (map/grid, drawing, properties and approval)",
   "approval.type.vizedit": "Visual domain edit"
 }

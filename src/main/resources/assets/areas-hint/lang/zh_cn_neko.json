@@ -2560,6 +2560,6 @@
   "vizedit.error.geometry_vertices": "顶点过多，无损合并共线点后最多允许 4096 个喵",
   "vizedit.error.geometry_coordinates": "坐标必须为有限数字，且介于 -30000000 与 30000000 之间喵",
   "vizedit.error.geometry_limit": "本次绘制过大，请缩短笔画或减小画笔粗细喵",
-  "help.command.vizedit": "§a/areahint vizedit §7- 打开可视化域名编辑器（地图／网格、绘制、属性与审批）喵",
+  "help.command.vizedit": "§a/areahint editviz §7- 打开可视化域名编辑器（地图／网格、绘制、属性与审批）喵",
   "approval.type.vizedit": "可视化域名编辑喵"
 }

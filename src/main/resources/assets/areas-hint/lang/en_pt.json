@@ -2560,6 +2560,6 @@
   "vizedit.error.geometry_vertices": "TOO MANY VERTICES. MAX 4096 AFTR LOSSLESS COLLINEAR MERGIN.",
   "vizedit.error.geometry_coordinates": "COORDINATES MUST BE FINITE AN BETWEEN -30000000 AN 30000000.",
   "vizedit.error.geometry_limit": "DIS DRAWIN IZ TOO BIG. SHORTEN TEH STROKE OR USE A SMALLER BRUSH.",
-  "help.command.vizedit": "§a/areahint vizedit §7- OPEN TEH VISUAL DOMAIN EDITOR (MAP/GRID, DRAWIN, PROPERTIEZ AN APPROVAL)",
+  "help.command.vizedit": "§a/areahint editviz §7- OPEN TEH VISUAL DOMAIN EDITOR (MAP/GRID, DRAWIN, PROPERTIEZ AN APPROVAL)",
   "approval.type.vizedit": "VISUAL DOMAIN EDIT"
 }

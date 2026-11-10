@@ -2560,6 +2560,6 @@
   "vizedit.error.geometry_vertices": "Demasiados vértices. Se permiten 4096 tras fusionar puntos colineales sin pérdida.",
   "vizedit.error.geometry_coordinates": "Las coordenadas deben ser finitas y estar entre -30000000 y 30000000.",
   "vizedit.error.geometry_limit": "Este dibujo es demasiado grande. Acorta el trazo o reduce el grosor del pincel.",
-  "help.command.vizedit": "§a/areahint vizedit §7- Abrir el editor visual de dominios (mapa/cuadrícula, dibujo, propiedades y aprobación)",
+  "help.command.vizedit": "§a/areahint editviz §7- Abrir el editor visual de dominios (mapa/cuadrícula, dibujo, propiedades y aprobación)",
   "approval.type.vizedit": "Edición visual de dominio"
 }

@@ -79,11 +79,12 @@ public class ServerCommands {
         
         dispatcher.register(literal("areahint")
             // 可视化面板和命令均在客户端请求同一服务端会话，入口权限不代替实际操作权限。
-            .then(literal("vizedit")
+            .then(literal("editviz")
                 .requires(source -> PermissionService.hasCommandPermission(source, PermissionNodes.VIZEDIT, 0))
                 .executes(context -> {
                     ServerPlayerEntity player = context.getSource().getPlayer();
                     if (player == null) return 0;
+                    // 指令更名后继续使用既有客户端动作标识，保证已安装客户端的编辑入口仍可接收。
                     ServerNetworking.sendCommandToClient(player, "areahint:vizedit");
                     return Command.SINGLE_SUCCESS;
                 }))

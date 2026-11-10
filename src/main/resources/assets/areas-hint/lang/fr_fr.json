@@ -2560,6 +2560,6 @@
   "vizedit.error.geometry_vertices": "Trop de sommets. Maximum : 4096 après fusion sans perte des points colinéaires.",
   "vizedit.error.geometry_coordinates": "Les coordonnées doivent être finies et comprises entre -30000000 et 30000000.",
   "vizedit.error.geometry_limit": "Ce dessin est trop grand. Raccourcissez le trait ou réduisez l'épaisseur du pinceau.",
-  "help.command.vizedit": "§a/areahint vizedit §7- Ouvrir l'éditeur visuel de domaines (carte/grille, dessin, propriétés et validation)",
+  "help.command.vizedit": "§a/areahint editviz §7- Ouvrir l'éditeur visuel de domaines (carte/grille, dessin, propriétés et validation)",
   "approval.type.vizedit": "Modification visuelle de domaine"
 }

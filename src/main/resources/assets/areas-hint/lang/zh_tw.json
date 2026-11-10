@@ -2560,6 +2560,6 @@
   "vizedit.error.geometry_vertices": "頂點過多，無損合併共線點後最多允許 4096 個。",
   "vizedit.error.geometry_coordinates": "座標必須為有限數字，且介於 -30000000 與 30000000 之間。",
   "vizedit.error.geometry_limit": "本次繪製過大，請縮短筆畫或減小畫筆粗細。",
-  "help.command.vizedit": "§a/areahint vizedit §7- 開啟視覺化域名編輯器（地圖／網格、繪製、屬性與審核）",
+  "help.command.vizedit": "§a/areahint editviz §7- 開啟視覺化域名編輯器（地圖／網格、繪製、屬性與審核）",
   "approval.type.vizedit": "視覺化域名編輯"
 }

@@ -2560,6 +2560,6 @@
   "vizedit.error.geometry_vertices": "Zu viele Eckpunkte. Nach verlustfreiem Zusammenführen kollinearer Punkte sind maximal 4096 erlaubt.",
   "vizedit.error.geometry_coordinates": "Koordinaten müssen endlich sein und zwischen -30000000 und 30000000 liegen.",
   "vizedit.error.geometry_limit": "Diese Zeichnung ist zu groß. Verkürze den Strich oder verkleinere den Pinsel.",
-  "help.command.vizedit": "§a/areahint vizedit §7- Visuellen Gebietseditor öffnen (Karte/Raster, Zeichnen, Eigenschaften und Prüfung)",
+  "help.command.vizedit": "§a/areahint editviz §7- Visuellen Gebietseditor öffnen (Karte/Raster, Zeichnen, Eigenschaften und Prüfung)",
   "approval.type.vizedit": "Visuelle Gebietsänderung"
 }

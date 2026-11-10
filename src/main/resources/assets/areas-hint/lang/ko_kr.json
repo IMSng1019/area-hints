@@ -2560,6 +2560,6 @@
   "vizedit.error.geometry_vertices": "꼭짓점이 너무 많습니다. 일직선상의 점을 손실 없이 병합한 뒤 최대 4096개까지 허용됩니다.",
   "vizedit.error.geometry_coordinates": "좌표는 유한한 숫자여야 하며 -30000000에서 30000000 사이여야 합니다.",
   "vizedit.error.geometry_limit": "그림이 너무 큽니다. 획을 짧게 하거나 브러시 두께를 줄이세요.",
-  "help.command.vizedit": "§a/areahint vizedit §7- 영역 시각 편집기 열기 (지도/격자, 그리기, 속성 및 심사)",
+  "help.command.vizedit": "§a/areahint editviz §7- 영역 시각 편집기 열기 (지도/격자, 그리기, 속성 및 심사)",
   "approval.type.vizedit": "영역 시각 편집"
 }

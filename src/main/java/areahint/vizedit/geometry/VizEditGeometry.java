@@ -67,6 +67,9 @@ public final class VizEditGeometry {
 
     public static Area copy(Area area) { return area == null ? new Area() : new Area(area); }
 
+    // 简化只由编辑操作主动调用，服务端验证及普通布尔运算继续保留原始精度，避免改名或改色改变旧边界。
+    public static Area optimize(Area shape, Area preserved) { return BoundaryOptimizer.optimize(shape, preserved); }
+
     public static Delta difference(List<Vertex> before, List<Vertex> after) {
         Area previous = fromVertices(before);
         Area current = fromVertices(after);
@@ -224,7 +227,7 @@ public final class VizEditGeometry {
     }
 
     // 只移除重复点和严格共线且位于前后点之间的中间点，绝不按误差阈值简化旧斜边。
-    private static List<Vertex> simplify(List<Vertex> input) {
+    static List<Vertex> simplify(List<Vertex> input) {
         List<Vertex> points = new ArrayList<>();
         for (Vertex source : input) {
             Vertex point = new Vertex(source.getX(), source.getZ());
@@ -254,7 +257,7 @@ public final class VizEditGeometry {
     private static boolean between(double value, double first, double second) { return value >= Math.min(first, second) && value <= Math.max(first, second); }
     private static boolean same(Vertex a, Vertex b) { return a.getX() == b.getX() && a.getZ() == b.getZ(); }
 
-    private static boolean intersects(Vertex a, Vertex b, Vertex c, Vertex d) {
+    static boolean intersects(Vertex a, Vertex b, Vertex c, Vertex d) {
         if (Math.max(a.getX(), b.getX()) < Math.min(c.getX(), d.getX()) || Math.max(c.getX(), d.getX()) < Math.min(a.getX(), b.getX())
             || Math.max(a.getZ(), b.getZ()) < Math.min(c.getZ(), d.getZ()) || Math.max(c.getZ(), d.getZ()) < Math.min(a.getZ(), b.getZ())) return false;
         int abC = orientation(a, b, c), abD = orientation(a, b, d), cdA = orientation(c, d, a), cdB = orientation(c, d, b);
@@ -262,7 +265,7 @@ public final class VizEditGeometry {
     }
 
     // 大坐标附近的叉积相消时采用精确十进制判号，避免把非常短的真实斜边当作共线点删除。
-    private static int orientation(Vertex a, Vertex b, Vertex c) {
+    static int orientation(Vertex a, Vertex b, Vertex c) {
         double left = (b.getX() - a.getX()) * (c.getZ() - a.getZ());
         double right = (b.getZ() - a.getZ()) * (c.getX() - a.getX());
         double determinant = left - right;

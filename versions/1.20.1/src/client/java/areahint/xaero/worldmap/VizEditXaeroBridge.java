@@ -29,6 +29,7 @@ public final class VizEditXaeroBridge {
     private static Field destinationAnimationZ;
     private static Method changeZoom;
     private static GuiMap map;
+    private static VizEditScreen mapEditor;
     private static VizEditSession mapSession;
     private static boolean usable;
 
@@ -60,9 +61,16 @@ public final class VizEditXaeroBridge {
         });
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
             if (!(screen instanceof GuiMap current) || !active(current)) return;
+            // 窗口重建会替换浮层控制器，先收尾上一控制器的笔画以保留简化结果与撤销历史。
+            if (mapEditor != null) mapEditor.removed();
             Projection projection = new Projection(current);
             VizEditScreen editor = new VizEditScreen(mapSession, projection, current);
             editor.init(client, width, height);
+            mapEditor = editor;
+            ScreenEvents.remove(current).register(ignored -> {
+                editor.removed();
+                if (mapEditor == editor) mapEditor = null;
+            });
             ScreenEvents.afterRender(current).register((ignored, context, mouseX, mouseY, delta) -> {
                 if (!active(current)) return;
                 // 使用原始双精度鼠标坐标，避免低倍缩放下一个 GUI 像素跳过数个方块。

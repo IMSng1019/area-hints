@@ -33,6 +33,7 @@ public final class VizEditScreen extends Screen {
     private TextFieldWidget search;
     private ButtonWidget undo;
     private ButtonWidget redo;
+    private ButtonWidget simplify;
     private ButtonWidget properties;
     private ButtonWidget delete;
     private ButtonWidget save;
@@ -53,6 +54,7 @@ public final class VizEditScreen extends Screen {
     private boolean sampledShift;
     private Area beforeStroke;
     private VizEditSession.Draft beforeDraft;
+    private VizEditSession.Draft drawingDraft;
 
     public VizEditScreen(VizEditSession session, VizEditCanvas canvas, Screen terrainScreen) {
         super(Text.literal(t("vizedit.ui.title")));
@@ -60,11 +62,12 @@ public final class VizEditScreen extends Screen {
     }
 
     @Override protected void init() {
+        finishStroke();
         editingButtons.clear();
         panelWidth = Math.min(184, Math.max(104, width / 4));
         canvasTop = width - panelWidth < 360 ? 92 : 70;
         canvasBottom = Math.max(canvasTop + 20, height - 28);
-        treeBottom = Math.max(112, height - (session.approvalId != null ? 88 : 64));
+        treeBottom = Math.max(92, height - (session.approvalId != null ? 112 : 88));
         if (canvas instanceof VizEditCanvas.Grid grid) grid.viewport(panelWidth + 4, canvasTop, Math.max(20, width - panelWidth - 8), canvasBottom - canvasTop);
         int left = panelWidth + 5;
         int available = Math.max(70, width - left - 5);
@@ -94,6 +97,7 @@ public final class VizEditScreen extends Screen {
         });
         undo = button("vizedit.ui.undo", 6, height - 46, half, () -> { session.undo(); refreshState(); });
         redo = button("vizedit.ui.redo", 10 + half, height - 46, half, () -> { session.redo(); refreshState(); });
+        simplify = button("vizedit.ui.simplify", 6, height - (session.approvalId != null ? 94 : 70), panelWidth - 12, this::simplifyBoundary);
         if (session.approvalId != null) saveDraft = button("vizedit.ui.draft", 6, height - 70, panelWidth - 12,
             () -> VizEditClientManager.review(true, null));
         button("−", left, canvasTop - 18, 18, () -> session.brushWidth = Math.max(1, session.brushWidth - 1));
@@ -102,7 +106,8 @@ public final class VizEditScreen extends Screen {
     }
 
     private ButtonWidget button(String key, int x, int y, int w, Runnable action) {
-        return addDrawableChild(ButtonWidget.builder(Text.literal(t(key)), ignored -> action.run()).dimensions(x, y, w, 18).build());
+        // 保存、切换画布和工具按钮都先完成当前笔画，防止提交值与松开鼠标后的简化预览不同。
+        return addDrawableChild(ButtonWidget.builder(Text.literal(t(key)), ignored -> { finishStroke(); action.run(); }).dimensions(x, y, w, 18).build());
     }
     private void refreshState() {
         boolean editable = !VizEditClientManager.isBusy() && !VizEditClientManager.isDraftLocked() && !session.readOnly && !session.invalid;
@@ -114,6 +119,7 @@ public final class VizEditScreen extends Screen {
         delete.active = editable && session.allows("delete") && !session.hasChildren() && session.originalArea != null
             && (session.approvalId == null || "delete".equals(session.operation));
         undo.active = editable && session.history.canUndo(); redo.active = editable && session.history.canRedo();
+        simplify.active = editable && session.canDraw() && canvas.isCurrentDimension() && !session.draft.shape.isEmpty();
         switchCanvas.active = !VizEditClientManager.isBusy() && (canvas.isTerrain() || VizEditClientManager.mapAvailable());
         for (int i = 0; i < editingButtons.size(); i++) editingButtons.get(i).active = editable
             && session.canDraw() && canvas.isCurrentDimension()
@@ -122,6 +128,8 @@ public final class VizEditScreen extends Screen {
 
     @Override public boolean shouldPause() { return false; }
     @Override public void close() { finishStroke(); VizEditClientManager.requestClose(); }
+    // 外部切换界面和窗口重建也必须结束笔画；Xaero 浮层由桥接层转发相同生命周期。
+    @Override public void removed() { finishStroke(); super.removed(); }
 
     // 新版 Screen.render 会自动绘制整屏遮罩或模糊，地图浮层必须覆盖此入口以免地形被再次压暗。
     //? if >=1.20.2 {
@@ -174,6 +182,8 @@ public final class VizEditScreen extends Screen {
             label(context, coordinates, panelWidth + 8, canvasBottom - 12, width - panelWidth - 16, 0xFFFFFF);
         }
         super.render(context, mouseX, mouseY, delta);
+        if (simplify.isHovered()) context.drawOrderedTooltip(textRenderer,
+            textRenderer.wrapLines(Text.literal(t("vizedit.ui.simplify_hint")), Math.min(360, Math.max(80, width - 24))), mouseX, mouseY);
         if (mouseY >= height - 24) context.drawOrderedTooltip(textRenderer,
             textRenderer.wrapLines(Text.literal(status), Math.min(360, Math.max(80, width - 24))), mouseX, mouseY);
     }
@@ -301,6 +311,7 @@ public final class VizEditScreen extends Screen {
     private boolean hasChildren(AreaData area) { return session.areas.stream().anyMatch(child -> Objects.equals(child.getBaseName(), area.getName())); }
 
     @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        finishStroke();
         if (super.mouseClicked(mouseX, mouseY, button)) return true;
         if (button != 0) return true;
         if (mouseX < panelWidth) {
@@ -342,11 +353,17 @@ public final class VizEditScreen extends Screen {
                 }
                 Area fill = VizEditGeometry.magicWand(edges, canvas.worldX(mouseX), canvas.worldZ(mouseY));
                 if (fill.isEmpty()) session.status = t("vizedit.client.no_closed_region");
-                else { session.checkpoint(); session.draft.shape = VizEditGeometry.union(session.draft.shape, fill); }
+                else {
+                    Area before = session.draft.shape;
+                    Area combined = VizEditGeometry.union(before, fill);
+                    Area optimized = optimizeDrawing(combined, before);
+                    if (!before.equals(optimized)) { session.checkpoint(); session.draft.shape = optimized; }
+                }
             } catch (VizEditGeometry.GeometryException e) { session.status = t(e.errorKey()); }
             return true;
         }
         drawing = true; stroke.clear(); beforeStroke = new Area(session.draft.shape); beforeDraft = session.draft.copy();
+        drawingDraft = session.draft;
         sampledX = Double.NaN; sampledY = Double.NaN;
         stroke.add(new Vertex(canvas.worldX(mouseX), canvas.worldZ(mouseY)));
         updateStroke(mouseX, mouseY); return true;
@@ -358,7 +375,7 @@ public final class VizEditScreen extends Screen {
         if (drawing && inCanvas(x, y)) updateStroke(x, y);
     }
     private void updateStroke(double x, double y) {
-        if (session.draft == null || beforeStroke == null) return;
+        if (session.draft == null || session.draft != drawingDraft || beforeStroke == null) return;
         boolean constrain = hasShiftDown();
         if (Double.compare(x, sampledX) == 0 && Double.compare(y, sampledY) == 0 && constrain == sampledShift) return;
         sampledX = x; sampledY = y; sampledShift = constrain;
@@ -383,8 +400,53 @@ public final class VizEditScreen extends Screen {
     }
     @Override public boolean mouseReleased(double x, double y, int button) { finishStroke(); return true; }
     private void finishStroke() {
-        if (drawing && beforeDraft != null && session.draft != null && !session.draft.same(beforeDraft)) session.history.push(beforeDraft);
-        drawing = false; panning = false; beforeStroke = null; beforeDraft = null; stroke.clear();
+        if (drawing && beforeDraft != null && session.draft == drawingDraft && !session.draft.same(beforeDraft)) {
+            // 只在笔画结束时优化新增轮廓，避免拖动帧反复简化导致误差累积或旧边界逐渐移动。
+            session.draft.shape = optimizeDrawing(session.draft.shape, beforeStroke);
+            if (!session.draft.same(beforeDraft)) session.history.push(beforeDraft);
+        }
+        drawing = false; panning = false; beforeStroke = null; beforeDraft = null; drawingDraft = null; stroke.clear();
+    }
+
+    private Area optimizeDrawing(Area shape, Area preserved) {
+        if (!session.canDraw() || !canvas.isCurrentDimension()) return shape;
+        try {
+            Area optimized = VizEditGeometry.optimize(shape, preserved);
+            // 缺少某一方向的权限时保留原笔画，不能让自动简化额外引入无法提交的扩张或缩小。
+            return permitsBoundary(optimized) ? optimized : shape;
+        } catch (VizEditGeometry.GeometryException e) {
+            return shape;
+        }
+    }
+
+    private void simplifyBoundary() {
+        if (!session.canDraw() || VizEditClientManager.isBusy() || !canvas.isCurrentDimension()) return;
+        try {
+            Area before = session.draft.shape;
+            Area optimized = VizEditGeometry.optimize(before, null);
+            if (before.equals(optimized)) {
+                session.status = t("vizedit.client.simplify_unchanged");
+                return;
+            }
+            if (!permitsBoundary(optimized)) { session.status = t("vizedit.client.denied"); return; }
+            session.checkpoint();
+            session.draft.shape = optimized;
+            session.status = I18nManager.translate("vizedit.client.simplified", vertexCount(before), vertexCount(optimized));
+        } catch (VizEditGeometry.GeometryException e) { session.status = t(e.errorKey()); }
+    }
+
+    // 与服务端一样相对于原正式域名核对真实面积差，不能把删除新画部分误判为缩小旧域名。
+    private boolean permitsBoundary(Area shape) {
+        boolean expand = session.allows("expandarea"), shrink = session.allows("shrinkarea");
+        if (expand && shrink) return true;
+        if (session.originalArea == null) return false;
+        Area baseline = VizEditGeometry.fromVertices(session.originalArea.getVertices());
+        return (expand || VizEditGeometry.subtract(shape, baseline).isEmpty())
+            && (shrink || VizEditGeometry.subtract(baseline, shape).isEmpty());
+    }
+
+    private static int vertexCount(Area shape) {
+        return VizEditGeometry.contours(shape).stream().mapToInt(List::size).sum();
     }
 
     // Fabric 事件的滚轮参数在所有活跃版本均有横纵两轴，原版 Screen 签名由预处理适配。

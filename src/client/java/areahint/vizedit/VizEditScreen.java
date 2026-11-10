@@ -123,6 +123,15 @@ public final class VizEditScreen extends Screen {
     @Override public boolean shouldPause() { return false; }
     @Override public void close() { finishStroke(); VizEditClientManager.requestClose(); }
 
+    // 新版 Screen.render 会自动绘制整屏遮罩或模糊，地图浮层必须覆盖此入口以免地形被再次压暗。
+    //? if >=1.20.2 {
+    @Override public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    //?} else {
+    /*@Override public void renderBackground(DrawContext context) {*/
+    //?}
+        // 面板和独立网格均由 render 按各自范围绘制背景，地形画布保持透明并沿用 Xaero 原始颜色。
+    }
+
     @Override public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         refreshState();
         // Xaero 首帧已建立相机后再定位，避免 init 中被地图自己的重置步骤覆盖。

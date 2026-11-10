@@ -4,15 +4,14 @@ import areahint.AreashintClient;
 import areahint.config.ClientConfig;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
+import areahint.geometry.AreaSpatialIndex;
 import areahint.util.AreaDataConverter;
 import areahint.debug.ClientDebugManager;
 import areahint.debug.ClientDebugManager.DebugCategory;
 import areahint.render.DomainRenderer;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 区域检测器类
@@ -67,8 +66,19 @@ public class AreaDetector {
         }
         Arrays.sort(sortedLevels);
 
+        // 一级域名与每组子域名分别建立空间索引，查询只对玩家所在包围盒范围内的候选做距离排序。
+        AreaSpatialIndex levelOneIndex = new AreaSpatialIndex(areasByLevel.getOrDefault(1, Collections.emptyList()));
+        Map<String, AreaSpatialIndex> childIndexes = new HashMap<>();
+        for (Map.Entry<String, List<AreaData>> entry : areasByBaseName.entrySet()) {
+            childIndexes.put(entry.getKey(), new AreaSpatialIndex(entry.getValue()));
+        }
+
+        // 显示沿用同名域名后者覆盖的历史规则，与名称查找所需的先出现者优先索引分别保存。
+        Map<String, AreaData> displayAreasByName = DomainRenderer.buildAreaIndex(loadedAreas);
+
         // 列表与索引整体发布：检测线程读到的只会是完整一致的旧数据或完整一致的新数据，不会读到半成品
-        index = new AreaIndex(loadedAreas, areasByName, areasByLevel, areasByBaseName, sortedLevels);
+        index = new AreaIndex(loadedAreas, areasByName, areasByLevel, sortedLevels,
+                levelOneIndex, childIndexes, displayAreasByName);
 
         // 输出所有加载的区域名称
         if (!loadedAreas.isEmpty()) {
@@ -207,35 +217,27 @@ public class AreaDetector {
         boolean debugLog = AreashintClient.LOGGER.isDebugEnabled();
         boolean debugInfo = ClientDebugManager.isDebugEnabled();
 
-        // 步骤1: 高度预筛选 + 一级域名命中（直接用预建的等级索引，不再重建分组与排序key）
+        // 步骤1：空间树先筛选一级域名的AABB和高度，仅对真正可能命中的候选按距离排序。
         List<AreaData> levelOneAreas = snapshot.areasByLevel.get(1);
         int levelOneCount = levelOneAreas == null ? 0 : levelOneAreas.size();
         List<AreaData> candidates = candidateBuffer.get();
-        candidates.clear();
-        if (levelOneAreas != null) {
-            for (AreaData area : levelOneAreas) {
-                if (AltitudeFilter.isPlayerInAltitudeRange(y, area)) {
-                    candidates.add(area);
-                }
-            }
-        }
+        snapshot.levelOneIndex.collectCandidates(x, y, z, 1, candidates);
 
         if (debugInfo) {
             ClientDebugManager.sendDebugInfo(DebugCategory.AREA_DETECTION, String.format(
-                "高度预筛选(一级域名): 玩家高度=%.1f, 一级域名总数=%d, 筛选后=%d",
+                "空间与高度预筛选(一级域名): 玩家高度=%.1f, 一级域名总数=%d, 筛选后=%d",
                 y, levelOneCount, candidates.size()));
         }
 
-        // 一级域名全部被高度筛掉时不可能命中任何域名（旧实现也是直接返回null）
+        // 空间或高度范围均无法命中时直接返回，避免为远处域名分配排序工作。
         if (candidates.isEmpty()) {
             if (debugLog) {
-                AreashintClient.LOGGER.debug("经过高度预筛选后，没有符合条件的一级域名");
+                AreashintClient.LOGGER.debug("经过空间与高度预筛选后，没有符合条件的一级域名");
             }
             return null;
         }
 
-        // 按距离原地排序（List.sort是稳定排序，距离相同时保持areas中的原始顺序，命中结果与旧实现一致）
-        sortAreasByDistance(candidates, x, z);
+        // 索引已按中心距离排序，距离相同时按原文件顺序选择，避免树的遍历顺序改变重叠域名结果。
 
         if (debugLog) {
             AreashintClient.LOGGER.debug("检查玩家({}, {})是否在一级域名内，一级域名数量: {}", x, z, candidates.size());
@@ -272,22 +274,17 @@ public class AreaDetector {
                 continue;
             }
 
-            // 用预建的子域名索引直接取出以当前域名为上级的候选，不再逐级新建List收集子域名
+            // 当前父域名的空间索引同时筛选等级、AABB和高度，不再扫描整组子域名后排序。
             candidates.clear();
             if (baseName != null) {
-                List<AreaData> childAreas = snapshot.areasByBaseName.get(baseName);
-                if (childAreas != null) {
-                    for (AreaData area : childAreas) {
-                        // 等级与高度条件与旧实现逐级筛选完全一致
-                        if (area.getLevel() == level && AltitudeFilter.isPlayerInAltitudeRange(y, area)) {
-                            candidates.add(area);
-                        }
-                    }
+                AreaSpatialIndex childIndex = snapshot.childIndexes.get(baseName);
+                if (childIndex != null) {
+                    childIndex.collectCandidates(x, y, z, level, candidates);
                 }
             }
 
             if (candidates.isEmpty()) {
-                // 旧实现里“该等级完全没有通过高度筛选的域名”会整级跳过，其余情况一律停止查找
+                // AABB未命中也必须停止；只有全局该等级均无高度候选时才能沿用旧规则跳过这一等级。
                 if (hasAreaInAltitudeRange(snapshot.areasByLevel.get(level), y)) {
                     if (debugLog) {
                         AreashintClient.LOGGER.debug("在当前级别没有找到区域，停止查找");
@@ -301,9 +298,6 @@ public class AreaDetector {
                 AreashintClient.LOGGER.debug("检查 {} 级域名，基于上级域名 {}，符合条件的下级域名数量: {}",
                         level, baseName, candidates.size());
             }
-
-            // 按距离原地排序
-            sortAreasByDistance(candidates, x, z);
 
             boolean foundInCurrentLevel = false;
 
@@ -335,7 +329,7 @@ public class AreaDetector {
     }
     
     /**
-     * 判断玩家是否在指定域名内（AABB预筛 + 射线法，判定结果与旧实现完全一致）
+     * 对空间索引筛出的域名继续使用原射线法，保留多边形边界的原有命中规则
      * @param area 域名
      * @param x 玩家的X坐标
      * @param z 玩家的Z坐标
@@ -343,17 +337,7 @@ public class AreaDetector {
      * @return 是否在域名内
      */
     private boolean isInsideArea(AreaData area, double x, double z, boolean debugLog) {
-        // 先用缓存AABB快速排除
-        boolean inAABB = area.isCacheComputed() ? area.isPointInCachedAABB(x, z)
-            : RayCasting.isPointInAABB(x, z, area.getSecondVertices());
-        if (debugLog) {
-            AreashintClient.LOGGER.debug("检查区域 {} 的AABB: {}", area.getName(), inAABB ? "在内部" : "在外部");
-        }
-
-        if (!inAABB) {
-            return false;
-        }
-
+        // 候选已经通过缓存AABB判定，此处只进行多边形精查，避免重复筛选。
         boolean inPolygon = RayCasting.isPointInPolygon(x, z, area.getVertices());
         if (debugLog) {
             AreashintClient.LOGGER.debug("检查区域 {} 的多边形: {}", area.getName(), inPolygon ? "在内部" : "在外部");
@@ -380,49 +364,6 @@ public class AreaDetector {
     }
     
     /**
-     * 按照与玩家的距离原地排序候选域名列表
-     * 列表由检测线程独占，因此直接原地排序，不再额外拷贝一层
-     * @param candidates 候选域名列表（会被原地排序）
-     * @param x 玩家的X坐标
-     * @param z 玩家的Z坐标
-     */
-    private void sortAreasByDistance(List<AreaData> candidates, double x, double z) {
-        if (candidates == null || candidates.size() < 2) {
-            return;
-        }
-        
-        candidates.sort((a1, a2) -> {
-            double d1 = distanceToArea(a1, x, z);
-            double d2 = distanceToArea(a2, x, z);
-            return Double.compare(d1, d2);
-        });
-    }
-    
-    /**
-     * 计算点到区域的近似距离
-     * 这里使用到多边形中心点的距离作为近似
-     * @param area 区域
-     * @param x 点的X坐标
-     * @param z 点的Z坐标
-     * @return 距离
-     */
-    private double distanceToArea(AreaData area, double x, double z) {
-        if (area.isCacheComputed()) {
-            return area.distanceSqToCenter(x, z); // 用平方距离排序即可，无需sqrt
-        }
-        double centerX = 0, centerZ = 0;
-        List<AreaData.Vertex> vertices = area.getVertices();
-        for (AreaData.Vertex vertex : vertices) {
-            centerX += vertex.getX();
-            centerZ += vertex.getZ();
-        }
-        centerX /= vertices.size();
-        centerZ /= vertices.size();
-        double dx = x - centerX, dz = z - centerZ;
-        return dx * dx + dz * dz;
-    }
-    
-    /**
      * 根据配置的样式格式化区域名称
      * @param area 区域
      * @param style 样式（full、simple、mixed）
@@ -435,13 +376,13 @@ public class AreaDetector {
         
         String result;
         
-        // 读取一次快照，保证层级链构建使用的列表与索引来自同一代数据
-        List<AreaData> snapshotAreas = index.areas;
+        // 显示索引随域名快照一次构建，格式化时不再遍历全部域名重新分配HashMap。
+        Map<String, AreaData> displayIndex = index.displayAreasByName;
         
         switch (style) {
             case "full":
                 // 显示完整路径（带颜色）
-                result = DomainRenderer.buildDomainDisplayText(area, snapshotAreas);
+                result = DomainRenderer.buildDomainDisplayText(area, displayIndex);
                 break;
             case "simple":
                 // 仅显示当前级别（带颜色）
@@ -454,7 +395,7 @@ public class AreaDetector {
                     result = DomainRenderer.getSimpleDomainText(area);
                 } else if (area.getLevel() == 2) {
                     // 二级域名显示一级+二级
-                    result = DomainRenderer.buildDomainDisplayText(area, snapshotAreas);
+                    result = DomainRenderer.buildDomainDisplayText(area, displayIndex);
                 } else {
                     // 三级及以上只显示当前级别
                     result = DomainRenderer.getSimpleDomainText(area);
@@ -511,27 +452,33 @@ public class AreaDetector {
 
     /**
      * 域名索引快照
-     * 域名列表与三个索引在同一时刻通过一次volatile写入整体发布，检测线程读到的永远是完整一致的一份数据
+     * 域名列表、空间索引和显示索引通过一次volatile写入整体发布，检测线程只读取构建完成的快照
      */
     private static final class AreaIndex {
         // 尚未加载任何域名数据时使用的空索引
         static final AreaIndex EMPTY = new AreaIndex(Collections.emptyList(), Collections.emptyMap(),
-                Collections.emptyMap(), Collections.emptyMap(), new int[0]);
+                Collections.emptyMap(), new int[0], new AreaSpatialIndex(Collections.emptyList()),
+                Collections.emptyMap(), Collections.emptyMap());
 
         final List<AreaData> areas;                            // 当前维度的全部域名（与旧实现的areas顺序一致）
         final Map<String, AreaData> areasByName;               // 域名name -> AreaData
         final Map<Integer, List<AreaData>> areasByLevel;       // 等级 -> 该等级的域名列表
-        final Map<String, List<AreaData>> areasByBaseName;     // 上级域名name -> 子域名列表
         final int[] sortedLevels;                              // 数据中出现的等级，升序去重
+        final AreaSpatialIndex levelOneIndex;                  // 一级域名的空间索引
+        final Map<String, AreaSpatialIndex> childIndexes;      // 上级域名name -> 子域名空间索引
+        final Map<String, AreaData> displayAreasByName;         // 标题显示索引，同名取最后出现的域名
 
         AreaIndex(List<AreaData> areas, Map<String, AreaData> areasByName,
-                  Map<Integer, List<AreaData>> areasByLevel, Map<String, List<AreaData>> areasByBaseName,
-                  int[] sortedLevels) {
+                  Map<Integer, List<AreaData>> areasByLevel, int[] sortedLevels,
+                  AreaSpatialIndex levelOneIndex, Map<String, AreaSpatialIndex> childIndexes,
+                  Map<String, AreaData> displayAreasByName) {
             this.areas = areas;
             this.areasByName = areasByName;
             this.areasByLevel = areasByLevel;
-            this.areasByBaseName = areasByBaseName;
             this.sortedLevels = sortedLevels;
+            this.levelOneIndex = levelOneIndex;
+            this.childIndexes = childIndexes;
+            this.displayAreasByName = displayAreasByName;
         }
     }
 } 

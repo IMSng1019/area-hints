@@ -314,6 +314,26 @@ public class AreaData {
         return cacheComputed && x >= cachedMinX && x <= cachedMaxX && z >= cachedMinZ && z <= cachedMaxZ;
     }
 
+    // 空间索引读取已计算的边界，避免重新推导二级顶点时与既有命中缓存产生差异。
+    public double getCachedMinX() {
+        return cachedMinX;
+    }
+
+    // 空间索引以同一份缓存的最大X坐标构建包围盒。
+    public double getCachedMaxX() {
+        return cachedMaxX;
+    }
+
+    // 空间索引以同一份缓存的最小Z坐标构建包围盒。
+    public double getCachedMinZ() {
+        return cachedMinZ;
+    }
+
+    // 空间索引以同一份缓存的最大Z坐标构建包围盒。
+    public double getCachedMaxZ() {
+        return cachedMaxZ;
+    }
+
     public double distanceSqToCenter(double x, double z) {
         double dx = x - cachedCenterX;
         double dz = z - cachedCenterZ;

@@ -1,11 +1,11 @@
 package areahint.gamemode;
 
 import areahint.data.AreaData;
+import areahint.geometry.AreaSpatialIndex;
 import areahint.teleport.ServerAreaGeometry;
 import net.minecraft.world.GameMode;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,12 +14,18 @@ import java.util.TreeMap;
 // 服务端复用既有几何工具，层级选择顺序与客户端 AreaDetector 保持一致。
 public final class AreaGamemodeResolver {
     private final Map<Integer, List<AreaData>> byLevel = new TreeMap<>();
-    private final Map<String, List<AreaData>> byParent = new HashMap<>();
+    // 一级域名和各父域名分别建立空间索引，检测时不再扫描整组远处域名。
+    private final AreaSpatialIndex levelOneIndex;
+    private final Map<String, AreaSpatialIndex> byParent = new HashMap<>();
+    // 查询只写入当前线程自己的候选列表，同一份服务端快照可安全接受独立查询。
+    private final ThreadLocal<List<AreaData>> candidateBuffer = ThreadLocal.withInitial(ArrayList::new);
 
     public AreaGamemodeResolver(List<AreaData> areas) {
         if (areas == null) {
+            levelOneIndex = new AreaSpatialIndex(List.of());
             return;
         }
+        Map<String, List<AreaData>> childrenByParent = new HashMap<>();
         for (AreaData area : areas) {
             if (area == null || area.getVertices() == null || area.getVertices().size() < 3
                     || area.getSecondVertices() == null || area.getSecondVertices().size() != 4
@@ -29,9 +35,12 @@ public final class AreaGamemodeResolver {
             area.computeCache();
             byLevel.computeIfAbsent(area.getLevel(), ignored -> new ArrayList<>()).add(area);
             if (area.getBaseName() != null) {
-                byParent.computeIfAbsent(area.getBaseName(), ignored -> new ArrayList<>()).add(area);
+                childrenByParent.computeIfAbsent(area.getBaseName(), ignored -> new ArrayList<>()).add(area);
             }
         }
+        // 索引仅在加载快照时构建，输入顺序保留文件顺序以维持同距重叠域名的选择规则。
+        levelOneIndex = new AreaSpatialIndex(byLevel.getOrDefault(1, List.of()));
+        childrenByParent.forEach((parent, children) -> byParent.put(parent, new AreaSpatialIndex(children)));
     }
 
     // 不让损坏的顶点进入服务端每刻回调；其余有效域名仍正常参与游戏模式判断。
@@ -60,7 +69,7 @@ public final class AreaGamemodeResolver {
     }
 
     public AreaData findArea(double x, double y, double z) {
-        AreaData current = nearestContaining(byLevel.get(1), 1, x, y, z);
+        AreaData current = nearestContaining(levelOneIndex, 1, x, y, z);
         if (current == null) {
             return null;
         }
@@ -69,43 +78,38 @@ public final class AreaGamemodeResolver {
             if (level <= 1) {
                 continue;
             }
-            List<AreaData> children = current.getName() == null ? null : byParent.get(current.getName());
-            // 保留客户端的高度预筛语义：该等级完全没有高度候选时才跳过整个等级。
-            boolean hasChild = children != null && children.stream().anyMatch(
-                area -> area.getLevel() == level && ServerAreaGeometry.isWithinAltitude(area, y));
-            if (!hasChild) {
+            AreaSpatialIndex children = current.getName() == null ? null : byParent.get(current.getName());
+            AreaData child = nearestContaining(children, level, x, y, z);
+            if (child == null) {
+                // 空间未命中不能视为整级无候选，只有该等级全局都不满足高度时才允许跳级。
                 if (entry.getValue().stream().anyMatch(area -> ServerAreaGeometry.isWithinAltitude(area, y))) {
                     break;
                 }
                 continue;
-            }
-            AreaData child = nearestContaining(children, level, x, y, z);
-            if (child == null) {
-                break;
             }
             current = child;
         }
         return current;
     }
 
-    private static AreaData nearestContaining(List<AreaData> areas, int level, double x, double y, double z) {
-        if (areas == null) {
+    private AreaData nearestContaining(AreaSpatialIndex spatialIndex, int level, double x, double y, double z) {
+        if (spatialIndex == null) {
             return null;
         }
-        // 稳定排序确保距离相同时仍选文件中先出现的域名，与标题检测的重叠域名规则一致。
-        List<AreaData> candidates = new ArrayList<>();
-        for (AreaData area : areas) {
-            if (area.getLevel() == level && ServerAreaGeometry.isWithinAltitude(area, y)) {
-                candidates.add(area);
+        // 空间索引先筛选等级、高度和AABB，再仅对附近候选按中心距离及原文件顺序排序。
+        List<AreaData> candidates = candidateBuffer.get();
+        try {
+            spatialIndex.collectCandidates(x, y, z, level, candidates);
+            for (AreaData area : candidates) {
+                // 包围盒只负责缩小范围，多边形边界仍由原射线法决定，避免改变入域判定。
+                if (ServerAreaGeometry.isPointInPolygon(x, z, area.getVertices())) {
+                    return area;
+                }
             }
+            return null;
+        } finally {
+            // 保留列表容量但释放域名引用，避免重载后旧快照残留在长寿命服务端线程中。
+            candidates.clear();
         }
-        candidates.sort(Comparator.comparingDouble(area -> area.distanceSqToCenter(x, z)));
-        for (AreaData area : candidates) {
-            if (area.isPointInCachedAABB(x, z)
-                    && ServerAreaGeometry.isPointInPolygon(x, z, area.getVertices())) {
-                return area;
-            }
-        }
-        return null;
     }
 }

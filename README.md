@@ -150,7 +150,7 @@ Dimension names conceptually sit above ordinary areas at level `0.5`, but are st
 
 Use `/areahint ...` in chat or open the command panel with the shared action key. Interactive buttons supply the next command arguments for you. Server commands still enforce permissions, signatures, and server configuration when launched from the panel.
 
-In the reference below, `<argument>` is required and `[argument]` is optional. The root `/areahintc` is used for local sound settings.
+In the reference below, `<argument>` is required and `[argument]` is optional. Every command uses the `/areahint` root; transition-sound settings are handled locally by the client.
 
 ### Shared action key
 
@@ -236,13 +236,13 @@ Description edits follow administrator or authorized signature rules. Ordinary a
 
 | Command | Purpose |
 |---|---|
-| `/areahintc replacesoundevent` | Open the sound category and selection workflow |
-| `/areahintc replacesoundevent select <sound-id> <pitch>` | Choose an available sound with pitch from `0.5` to `2.0` |
-| `/areahintc replacesoundevent none` | Disable transition sounds |
-| `/areahintc soundlevel` | Open volume selection |
-| `/areahintc soundlevel <0-1>` | Set volume; decimals are supported and `0` mutes it |
+| `/areahint replacesoundevent` | Open the sound category and selection workflow |
+| `/areahint replacesoundevent select <sound-id> <pitch>` | Choose an available sound with pitch from `0.5` to `2.0` |
+| `/areahint replacesoundevent none` | Disable transition sounds |
+| `/areahint soundlevel` | Open volume selection |
+| `/areahint soundlevel <0-1>` | Set volume; decimals are supported and `0` mutes it |
 
-Sound preferences affect only the current client. Sounds are disabled by default. The command panel provides the same controls, and the older `/areahint replacesoundevent` and `/areahint soundlevel` entry points remain available for compatibility.
+Sound preferences affect only the current client. Sounds are disabled by default. The command panel provides the same controls, and typing `/areahint replacesoundevent` or `/areahint soundlevel` in chat opens the same local settings.
 
 ### Language and diagnostics
 
@@ -427,13 +427,13 @@ These are common command branches. Interactive buttons supply arguments during e
 - `/areahint language select <language-code>`
 - `/areahint language cancel`
 - `/areahint boundviz`
-- `/areahintc replacesoundevent`
-- `/areahintc replacesoundevent category <category> [page]`
-- `/areahintc replacesoundevent instrument <sound-id> [page]`
-- `/areahintc replacesoundevent select <sound-id> <pitch>`
-- `/areahintc replacesoundevent none`
-- `/areahintc replacesoundevent cancel`
-- `/areahintc soundlevel [0-1]`
+- `/areahint replacesoundevent`
+- `/areahint replacesoundevent category <category> [page]`
+- `/areahint replacesoundevent instrument <sound-id> [page]`
+- `/areahint replacesoundevent select <sound-id> <pitch>`
+- `/areahint replacesoundevent none`
+- `/areahint replacesoundevent cancel`
+- `/areahint soundlevel [0-1]`
 
 ### Subtitles, descriptions, and signatures
 

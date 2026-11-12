@@ -379,13 +379,13 @@ LuckPerms 节点为 `areahint.command.applyurbanarea`，不会替代当前域名
 
 | 命令 | 说明 |
 |---|---|
-| `/areahintc replacesoundevent` | 打开音效分类与选择流程 |
-| `/areahintc replacesoundevent select <声音ID> <音高>` | 选择可用音效，音高范围 `0.5–2.0` |
-| `/areahintc replacesoundevent none` | 关闭域名切换音效 |
-| `/areahintc soundlevel` | 打开音量选择 |
-| `/areahintc soundlevel <0-1>` | 设置音量，支持小数，`0` 为静音 |
+| `/areahint replacesoundevent` | 打开音效分类与选择流程 |
+| `/areahint replacesoundevent select <声音ID> <音高>` | 选择可用音效，音高范围 `0.5–2.0` |
+| `/areahint replacesoundevent none` | 关闭域名切换音效 |
+| `/areahint soundlevel` | 打开音量选择 |
+| `/areahint soundlevel <0-1>` | 设置音量，支持小数，`0` 为静音 |
 
-音效配置只影响当前客户端，默认不播放声音。可视化面板提供相同入口；旧写法 `/areahint replacesoundevent` 和 `/areahint soundlevel` 仍保留兼容入口。
+音效配置只影响当前客户端，默认不播放声音。可视化面板提供相同入口；在聊天中直接输入 `/areahint replacesoundevent` 或 `/areahint soundlevel` 也会打开同一套本地设置。
 
 ### 描述系统
 
@@ -594,13 +594,13 @@ LuckPerms 节点为 `areahint.command.applyurbanarea`，不会替代当前域名
 - `/areahint language select <语言代码>`
 - `/areahint language cancel`
 - `/areahint boundviz`
-- `/areahintc replacesoundevent`
-- `/areahintc replacesoundevent category <分类> [页码]`
-- `/areahintc replacesoundevent instrument <声音ID> [页码]`
-- `/areahintc replacesoundevent select <声音ID> <音高>`
-- `/areahintc replacesoundevent none`
-- `/areahintc replacesoundevent cancel`
-- `/areahintc soundlevel [0-1]`
+- `/areahint replacesoundevent`
+- `/areahint replacesoundevent category <分类> [页码]`
+- `/areahint replacesoundevent instrument <声音ID> [页码]`
+- `/areahint replacesoundevent select <声音ID> <音高>`
+- `/areahint replacesoundevent none`
+- `/areahint replacesoundevent cancel`
+- `/areahint soundlevel [0-1]`
 
 ### 副字幕、描述与签名
 

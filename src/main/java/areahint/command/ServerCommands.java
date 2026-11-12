@@ -1,7 +1,6 @@
 package areahint.command;
 
 import areahint.Areashint;
-import areahint.command.AreasHintCommandRoot;
 import areahint.data.AreaData;
 import areahint.approval.ApprovalManager;
 import areahint.data.ConfigData;
@@ -66,11 +65,6 @@ public class ServerCommands {
     private static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher, 
                                         CommandRegistryAccess registryAccess, 
                                         CommandManager.RegistrationEnvironment environment) {
-        // 纯客户端子命令必须挂在独立根指令下，否则会把 /areahint 整条根标记成客户端命令
-        dispatcher.register(literal(AreasHintCommandRoot.CLIENT_ROOT)
-            .then(createReplaceSoundEventCommand())
-            .then(createSoundLevelCommand()));
-
         // 注册调试命令
         DebugCommand.register(dispatcher, registryAccess, environment);
         
@@ -608,29 +602,9 @@ public class ServerCommands {
                 .then(literal("cancel")
                     .executes(ServerCommands::executeReplaceButtonCancel)))
 
-            // 旧写法兼容：/areahint soundlevel、/areahint replacesoundevent 仍然能通过语法解析，
-            // 真正的执行由客户端模组完成（客户端本地命令，命令面不再挂在这个根下）
-            .then(literal("replacesoundevent")
-                .executes(ServerCommands::executeClientOnlyCommandPlaceholder)
-                .then(literal("category")
-                    .then(argument("category", StringArgumentType.word())
-                        .executes(ServerCommands::executeClientOnlyCommandPlaceholder)))
-                .then(literal("instrument")
-                    .then(argument("soundId", IdentifierArgumentType.identifier())
-                        .executes(ServerCommands::executeClientOnlyCommandPlaceholder)))
-                .then(literal("select")
-                    .then(argument("soundId", IdentifierArgumentType.identifier())
-                        .then(argument("pitch", FloatArgumentType.floatArg(0.5f, 2.0f))
-                            .executes(ServerCommands::executeClientOnlyCommandPlaceholder))))
-                .then(literal("none")
-                    .executes(ServerCommands::executeClientOnlyCommandPlaceholder))
-                .then(literal("cancel")
-                    .executes(ServerCommands::executeClientOnlyCommandPlaceholder)))
-            .then(literal("soundlevel")
-                .executes(ServerCommands::executeClientOnlyCommandPlaceholder)
-                .then(argument("level", FloatArgumentType.floatArg(
-                        ConfigData.SOUND_LEVEL_MIN, ConfigData.SOUND_LEVEL_MAX))
-                    .executes(ServerCommands::executeClientOnlyCommandPlaceholder)))
+            // 域名切换声音指令：服务端解析语法和参数，客户端执行本地配置和聊天界面
+            .then(createReplaceSoundEventCommand())
+            .then(createSoundLevelCommand())
 
             // language 命令（交互式语言选择）
             .then(literal("language")
@@ -695,77 +669,76 @@ public class ServerCommands {
     }
 
     /**
-     * 创建域名切换声音指令的服务端语法镜像。
+     * 创建域名切换声音指令的服务端节点。
      * <p>
-     * 实际执行会被Fabric客户端命令分发器优先拦截；这里仅把同构节点同步给聊天输入框，
-     * 防止共享的 /areahint 根节点缺少客户端子命令时出现“参数错误”的红色提示。
+     * 服务端只负责解析语法和参数，实际的声音配置与聊天界面由执行命令玩家的客户端完成，
+     * 与音量、渲染模式、语言等客户端本地功能使用同一套服务端转发模式。
      *
-     * @return 不处理声音配置、仅用于命令语法同步的节点
+     * @return 解析声音参数并把动作转发给客户端的节点
      */
     private static LiteralArgumentBuilder<ServerCommandSource> createReplaceSoundEventCommand() {
         return literal("replacesoundevent")
-            .executes(ServerCommands::executeClientOnlyCommandPlaceholder)
+            .executes(context -> forwardSoundEventCommand(context, "soundevent_open"))
             .then(literal("category")
                 .then(argument("category", StringArgumentType.word())
-                    .executes(ServerCommands::executeClientOnlyCommandPlaceholder)
+                    .executes(context -> forwardSoundEventCommand(context,
+                        "soundevent_category:0:" + StringArgumentType.getString(context, "category")))
                     .then(argument("page", IntegerArgumentType.integer(0))
-                        .executes(ServerCommands::executeClientOnlyCommandPlaceholder))))
+                        .executes(context -> forwardSoundEventCommand(context,
+                            "soundevent_category:" + IntegerArgumentType.getInteger(context, "page")
+                                + ":" + StringArgumentType.getString(context, "category"))))))
             .then(literal("instrument")
                 .then(argument("soundId", IdentifierArgumentType.identifier())
-                    .executes(ServerCommands::executeClientOnlyCommandPlaceholder)
+                    .executes(context -> forwardSoundEventCommand(context,
+                        "soundevent_instrument:0:" + context.getArgument("soundId", Identifier.class)))
                     .then(argument("page", IntegerArgumentType.integer(0))
-                        .executes(ServerCommands::executeClientOnlyCommandPlaceholder))))
+                        .executes(context -> forwardSoundEventCommand(context,
+                            "soundevent_instrument:" + IntegerArgumentType.getInteger(context, "page")
+                                + ":" + context.getArgument("soundId", Identifier.class))))))
             .then(literal("select")
                 .then(argument("soundId", IdentifierArgumentType.identifier())
                     .then(argument("pitch", FloatArgumentType.floatArg(0.5f, 2.0f))
-                        .executes(ServerCommands::executeClientOnlyCommandPlaceholder))))
+                        .executes(context -> forwardSoundEventCommand(context,
+                            "soundevent_select:" + FloatArgumentType.getFloat(context, "pitch")
+                                + ":" + context.getArgument("soundId", Identifier.class))))))
             .then(literal("none")
-                .executes(ServerCommands::executeClientOnlyCommandPlaceholder))
+                .executes(context -> forwardSoundEventCommand(context, "soundevent_none")))
             .then(literal("cancel")
-                .executes(ServerCommands::executeClientOnlyCommandPlaceholder));
+                .executes(context -> forwardSoundEventCommand(context, "soundevent_cancel")));
     }
 
     /**
-     * 创建域名切换声音音量指令的服务端语法镜像。
+     * 创建域名切换声音音量指令的服务端节点。
      * <p>
-     * 实际音量设置仍由Fabric客户端命令分发器处理；服务端节点只向聊天输入框同步同构语法，
-     * 使 soundlevel 字面量能够显示在预选列表中，并让完整指令通过语法着色检查。
+     * 音量范围仍由服务端参数类型限制，客户端只负责保存个人配置并显示聊天界面。
      *
-     * @return 不处理声音音量、仅用于命令语法同步的节点
+     * @return 解析音量参数并把动作转发给客户端的节点
      */
     private static LiteralArgumentBuilder<ServerCommandSource> createSoundLevelCommand() {
         return literal("soundlevel")
-            .executes(ServerCommands::executeClientOnlyCommandPlaceholder)
+            .executes(context -> forwardSoundEventCommand(context, "soundlevel_open"))
             .then(argument("level", FloatArgumentType.floatArg(
                     ConfigData.SOUND_LEVEL_MIN, ConfigData.SOUND_LEVEL_MAX))
-                .executes(ServerCommands::executeClientOnlyCommandPlaceholder));
+                .executes(context -> forwardSoundEventCommand(context,
+                    "soundlevel_set:" + FloatArgumentType.getFloat(context, "level"))));
     }
 
     /**
-     * 纯客户端指令在服务端的执行终点。
+     * 转发域名切换声音的客户端动作。
      * <p>
-     * soundlevel / replacesoundevent 的实际执行体在客户端（客户端命令树挂在独立根指令 areahintc 下）。
-     * 玩家直接手打 /areahint soundlevel 这类写法时，命令会送到服务端，这里再把它转回客户端打开对应界面，
-     * 这样“打字输入”和“命令面板按钮”两条路径的行为保持一致。
+     * 声音配置只影响执行命令的玩家本人，因此命令源必须是玩家；非玩家执行时与其他客户端指令一样拒绝。
+     *
+     * @param context 命令上下文
+     * @param action 客户端动作标识，例如 soundevent_open
+     * @return 指令执行结果
      */
-    private static int executeClientOnlyCommandPlaceholder(CommandContext<ServerCommandSource> context) {
-        ServerPlayerEntity player = context.getSource().getPlayer();
-        if (player == null) {
-            return Command.SINGLE_SUCCESS;
+    private static int forwardSoundEventCommand(CommandContext<ServerCommandSource> context, String action) {
+        ServerCommandSource source = context.getSource();
+        if (!source.isExecutedByPlayer()) {
+            source.sendMessage(Text.translatable("command.error.general_9"));
+            return 0;
         }
-
-        // 从输入内容判断是哪一个纯客户端子指令（服务端只镜像语法，不解析具体参数）
-        String input = context.getInput();
-        if (input == null) {
-            return Command.SINGLE_SUCCESS;
-        }
-        if (input.startsWith(AreasHintCommandRoot.CLIENT_ROOT + " soundlevel")
-                || input.startsWith(AreasHintCommandRoot.SERVER_ROOT + " soundlevel")) {
-            ServerNetworking.sendCommandToClient(player, "areahint:soundlevel_open");
-        } else if (input.startsWith(AreasHintCommandRoot.CLIENT_ROOT + " replacesoundevent")
-                || input.startsWith(AreasHintCommandRoot.SERVER_ROOT + " replacesoundevent")) {
-            ServerNetworking.sendCommandToClient(player, "areahint:soundevent_open");
-        }
+        sendClientCommand(source, "areahint:" + action);
         return Command.SINGLE_SUCCESS;
     }
 

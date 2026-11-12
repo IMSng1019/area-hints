@@ -484,12 +484,9 @@ public class ClientNetworking {
                     else if (action.startsWith("boundviz")) {
                         handleBoundVizCommand(action);
                     }
-                    // 纯客户端音效指令：手打 /areahint soundlevel 这类写法时由服务端转回本地打开界面
-                    else if (action.equals("soundlevel_open")) {
-                        areahint.soundevent.SoundLevelVisualController.openFromCommandUi(client.currentScreen);
-                    }
-                    else if (action.equals("soundevent_open")) {
-                        areahint.soundevent.SoundEventVisualController.openFromCommandUi(client.currentScreen);
+                    // 纯客户端音效指令：服务端解析语法后回传动作，客户端执行本地配置和聊天界面
+                    else if (action.startsWith("soundevent_") || action.startsWith("soundlevel_")) {
+                        areahint.soundevent.SoundEventClientActions.handleClientCommand(action);
                     }
                     // 处理模组开关命令
                     else if (action.equals("on") || action.equals("off")) {

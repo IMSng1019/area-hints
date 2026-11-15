@@ -190,7 +190,7 @@ public class AreasHintConfigScreen extends Screen {
     @Override
     public void onClose() {
         if (this.minecraft != null) {
-            this.minecraft.setScreen(this.parent);
+            areahint.util.ClientScreenCompat.setScreen(this.minecraft, this.parent);
         }
     }
 
@@ -217,7 +217,7 @@ public class AreasHintConfigScreen extends Screen {
             // 从指令可视化进入设置时，绑定键关闭界面并丢弃未应用的草稿。
             areahint.keyhandler.UnifiedKeyHandler.suppressRecordKeyUntilRelease();
             if (this.minecraft != null) {
-                this.minecraft.setScreen(null);
+                areahint.util.ClientScreenCompat.setScreen(this.minecraft, null);
             }
             return true;
         }

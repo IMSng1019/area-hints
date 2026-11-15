@@ -19,7 +19,7 @@ public abstract class CommandWizardScreen extends CommandUiScreen {
         cancelFlow();
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(null);
+            areahint.util.ClientScreenCompat.setScreen(client, null);
         }
     }
 

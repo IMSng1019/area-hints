@@ -73,7 +73,7 @@ public final class EasyAddVisualController {
         if (client == null) {
             return;
         }
-        client.setScreen(new WizardTextInputScreen(parentScreen,
+        areahint.util.ClientScreenCompat.setScreen(client, new WizardTextInputScreen(parentScreen,
             "commandui.easyadd.name.title",
             List.of(new WizardTextInputScreen.FieldSpec("commandui.easyadd.name.label",
                 "commandui.easyadd.name.placeholder", "", 80)),
@@ -89,7 +89,7 @@ public final class EasyAddVisualController {
         if (client == null) {
             return;
         }
-        client.setScreen(new WizardTextInputScreen(parentScreen,
+        areahint.util.ClientScreenCompat.setScreen(client, new WizardTextInputScreen(parentScreen,
             "commandui.easyadd.surface.title",
             List.of(new WizardTextInputScreen.FieldSpec("commandui.easyadd.surface.label",
                 "commandui.easyadd.surface.placeholder", "", 80)),
@@ -105,7 +105,7 @@ public final class EasyAddVisualController {
         if (client == null) {
             return;
         }
-        client.setScreen(new WizardOptionScreen(parentScreen,
+        areahint.util.ClientScreenCompat.setScreen(client, new WizardOptionScreen(parentScreen,
             "commandui.easyadd.level.title",
             "commandui.easyadd.level.prompt",
             "commandui.easyadd.level.detail",
@@ -131,7 +131,7 @@ public final class EasyAddVisualController {
                 area.getName(), area.getLevel(), area.getColor());
             items.add(new WizardSelectionListScreen.SelectionItem<>(area, displayName, detail));
         }
-        client.setScreen(new WizardSelectionListScreen<>(parentScreen,
+        areahint.util.ClientScreenCompat.setScreen(client, new WizardSelectionListScreen<>(parentScreen,
             "commandui.easyadd.base.title",
             "commandui.easyadd.base.prompt",
             items,
@@ -142,7 +142,7 @@ public final class EasyAddVisualController {
     public static void showRecordingHud() {
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(null);
+            areahint.util.ClientScreenCompat.setScreen(client, null);
         }
     }
 
@@ -151,7 +151,7 @@ public final class EasyAddVisualController {
         if (client == null) {
             return;
         }
-        client.setScreen(new WizardOptionScreen(parentScreen,
+        areahint.util.ClientScreenCompat.setScreen(client, new WizardOptionScreen(parentScreen,
             "commandui.easyadd.altitude.title",
             altitudePrompt(recordedPoints),
             "commandui.easyadd.altitude.detail",
@@ -173,7 +173,7 @@ public final class EasyAddVisualController {
         if (client == null) {
             return;
         }
-        client.setScreen(new WizardTextInputScreen(parentScreen,
+        areahint.util.ClientScreenCompat.setScreen(client, new WizardTextInputScreen(parentScreen,
             "commandui.easyadd.altitude.custom.title",
             List.of(
                 new WizardTextInputScreen.FieldSpec("commandui.easyadd.altitude.min",
@@ -192,7 +192,7 @@ public final class EasyAddVisualController {
         if (client == null) {
             return;
         }
-        client.setScreen(new WizardOptionScreen(parentScreen,
+        areahint.util.ClientScreenCompat.setScreen(client, new WizardOptionScreen(parentScreen,
             "commandui.easyadd.color.title",
             "commandui.easyadd.color.prompt",
             "commandui.easyadd.color.detail",
@@ -205,7 +205,7 @@ public final class EasyAddVisualController {
         if (client == null) {
             return;
         }
-        client.setScreen(new WizardTextInputScreen(parentScreen,
+        areahint.util.ClientScreenCompat.setScreen(client, new WizardTextInputScreen(parentScreen,
             "commandui.easyadd.color.custom.title",
             List.of(new WizardTextInputScreen.FieldSpec("commandui.easyadd.color.custom.label",
                 "commandui.easyadd.color.custom.placeholder", "#FFFFFF", 16)),
@@ -221,7 +221,7 @@ public final class EasyAddVisualController {
         if (client == null) {
             return;
         }
-        client.setScreen(new EasyAddConfirmScreen(parentScreen, areaData));
+        areahint.util.ClientScreenCompat.setScreen(client, new EasyAddConfirmScreen(parentScreen, areaData));
     }
 
     private static String altitudePrompt(List<BlockPos> points) {

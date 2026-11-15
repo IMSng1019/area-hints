@@ -25,7 +25,7 @@ public class RecordCommandActionScreen extends CommandUiScreen {
         }
         net.minecraft.client.Minecraft client = net.minecraft.client.Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(new RecordCommandActionScreen(parent, flow));
+            areahint.util.ClientScreenCompat.setScreen(client, new RecordCommandActionScreen(parent, flow));
             return true;
         }
         return false;
@@ -42,14 +42,14 @@ public class RecordCommandActionScreen extends CommandUiScreen {
             this.handled = true;
             this.flow.continueAction().run();
             if (this.minecraft != null) {
-                this.minecraft.setScreen(null);
+                areahint.util.ClientScreenCompat.setScreen(this.minecraft, null);
             }
         }).bounds(x, y, buttonWidth, BUTTON_HEIGHT).build());
 
         Button finishButton = Button.builder(Component.literal(t("commandui.button.finish")), button -> {
             this.handled = true;
             if (this.minecraft != null) {
-                this.minecraft.setScreen(null);
+                areahint.util.ClientScreenCompat.setScreen(this.minecraft, null);
             }
             this.flow.finishAction().run();
             if ("dividearea".equals(this.flow.id())) {
@@ -64,7 +64,7 @@ public class RecordCommandActionScreen extends CommandUiScreen {
         this.addRenderableWidget(Button.builder(Component.literal(t("commandui.button.cancel")), button -> {
             this.handled = true;
             if (this.minecraft != null) {
-                this.minecraft.setScreen(null);
+                areahint.util.ClientScreenCompat.setScreen(this.minecraft, null);
             }
             this.flow.cancelAction().run();
             CommandVisualController.clearVisualRecordMode();
@@ -82,7 +82,7 @@ public class RecordCommandActionScreen extends CommandUiScreen {
     public void onClose() {
         onDiscard();
         if (this.minecraft != null) {
-            this.minecraft.setScreen(null);
+            areahint.util.ClientScreenCompat.setScreen(this.minecraft, null);
         }
     }
 

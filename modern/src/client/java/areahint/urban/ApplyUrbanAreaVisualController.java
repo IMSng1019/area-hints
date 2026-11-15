@@ -87,9 +87,9 @@ public final class ApplyUrbanAreaVisualController {
                 : "type: " + type;
             items.add(new WizardSelectionListScreen.SelectionItem<>(area, area.name(), detail));
         }
-        Minecraft.getInstance().setScreen(new WizardSelectionListScreen<>(parentScreen, TITLE,
+        areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), new WizardSelectionListScreen<>(parentScreen, TITLE,
             "commandui.applyurbanarea.prompt", items,
-            area -> CommandUiActions.runCommandAndClose(Minecraft.getInstance().screen,
+            area -> CommandUiActions.runCommandAndClose(areahint.util.ClientScreenCompat.getScreen(Minecraft.getInstance()),
                 ROOT + " select " + CommandUiData.quote(dimension) + " " + CommandUiData.quote(area.name())),
             ApplyUrbanAreaVisualController::clear));
     }
@@ -98,7 +98,7 @@ public final class ApplyUrbanAreaVisualController {
         // 申请仅展示待审批参数，正式文件的写入与 reload 始终交给服务端成功分支处理。
         String messageKey = submitted ? "urban.message.submitted" : "urban.message.updated";
         String details = I18nManager.translate("commandui.applyurbanarea.result", area.name(), dimension, area.type());
-        Minecraft.getInstance().setScreen(new WizardConfirmScreen(parentScreen, TITLE,
+        areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), new WizardConfirmScreen(parentScreen, TITLE,
             I18nManager.translate(messageKey, area.name(), area.type()), List.of(details.split("\\n")),
             "commandui.button.close", ApplyUrbanAreaVisualController::clear, ApplyUrbanAreaVisualController::clear));
     }

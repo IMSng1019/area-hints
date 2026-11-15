@@ -26,7 +26,7 @@ public abstract class CommandUiScreen extends Screen {
 
     public static boolean closeIfCommandUiOpen() {
         Minecraft client = Minecraft.getInstance();
-        if (client != null && client.screen instanceof CommandUiScreen screen) {
+        if (client != null && areahint.util.ClientScreenCompat.getScreen(client) instanceof CommandUiScreen screen) {
             screen.closeToGameFromBoundKey();
             return true;
         }
@@ -45,14 +45,14 @@ public abstract class CommandUiScreen extends Screen {
         onDiscard();
         UnifiedKeyHandler.suppressRecordKeyUntilRelease();
         if (this.minecraft != null) {
-            this.minecraft.setScreen(null);
+            areahint.util.ClientScreenCompat.setScreen(this.minecraft, null);
         }
     }
 
     @Override
     public void onClose() {
         if (this.minecraft != null) {
-            this.minecraft.setScreen(this.parent);
+            areahint.util.ClientScreenCompat.setScreen(this.minecraft, this.parent);
         }
     }
 

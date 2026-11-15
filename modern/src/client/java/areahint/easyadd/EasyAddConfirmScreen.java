@@ -36,7 +36,7 @@ public class EasyAddConfirmScreen extends CommandWizardScreen {
             }
             markFlowHandled();
             if (this.minecraft != null) {
-                this.minecraft.setScreen(null);
+                areahint.util.ClientScreenCompat.setScreen(this.minecraft, null);
             }
         }).bounds(x, y, buttonWidth, BUTTON_HEIGHT).build());
         this.addRenderableWidget(Button.builder(Component.literal(t("commandui.button.cancel")), button -> cancelAndCloseToGame())

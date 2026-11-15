@@ -51,9 +51,9 @@ public final class DescriptionKeyHandler {
                     return;
                 }
 
-                switch (resolveBoundKeyAction(skipNextQueryKeyPress, true, isViewDescriptionBookScreen(client.screen))) {
+                switch (resolveBoundKeyAction(skipNextQueryKeyPress, true, isViewDescriptionBookScreen(areahint.util.ClientScreenCompat.getScreen(client)))) {
                     case CLOSE_DESCRIPTION -> {
-                        closeDescriptionBookScreen(client.screen);
+                        closeDescriptionBookScreen(areahint.util.ClientScreenCompat.getScreen(client));
                         skipNextQueryKeyPress = false;
                         skipNextRecordKeyPress = true;
                         drainQueryKeyPresses();
@@ -76,7 +76,7 @@ public final class DescriptionKeyHandler {
         if (client == null) {
             return false;
         }
-        boolean closed = closeDescriptionBookScreen(client.screen);
+        boolean closed = closeDescriptionBookScreen(areahint.util.ClientScreenCompat.getScreen(client));
         if (closed) {
             skipNextQueryKeyPress = false;
             drainQueryKeyPresses();
@@ -126,7 +126,7 @@ public final class DescriptionKeyHandler {
     public static boolean shouldSkipDefaultRecordKeyQuery() {
         Minecraft client = Minecraft.getInstance();
         return DescriptionManager.getInstance().isActive()
-            || (client != null && client.screen != null);
+            || (client != null && areahint.util.ClientScreenCompat.getScreen(client) != null);
     }
 
     public static void queryCurrentDescription() {
@@ -134,7 +134,7 @@ public final class DescriptionKeyHandler {
         if (client.player == null || client.level == null) {
             return;
         }
-        if (client.screen != null || isInteractionActive()) {
+        if (areahint.util.ClientScreenCompat.getScreen(client) != null || isInteractionActive()) {
             return;
         }
 

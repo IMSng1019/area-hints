@@ -12,10 +12,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
-// 1.21.5 起 VertexFormat 移到 com.mojang.blaze3d.vertex，通配 import 覆盖不到，需显式导入
-import com.mojang.blaze3d.vertex.VertexFormat;
 import org.joml.Matrix4f;
 
 import java.util.ArrayList;
@@ -203,7 +200,7 @@ public class BoundVizRenderer {
         for (int i = 0; i < size; i++) {
             if (!visibleFlags[i]) continue;
             if (!hasTriangles) {
-                buffer = BufferCompat.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
+                buffer = BufferCompat.beginTriangles();
                 hasTriangles = true;
             }
             emitAreaTriangles(matrix, buffer, cachedAreas.get(i));
@@ -216,7 +213,7 @@ public class BoundVizRenderer {
             if (!visibleFlags[i]) continue;
             CachedArea ca = cachedAreas.get(i);
             if (!hasLines) {
-                buffer = BufferCompat.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
+                buffer = BufferCompat.beginLines();
                 hasLines = true;
             }
             emitAreaLines(matrix, buffer, ca);
@@ -498,7 +495,7 @@ public class BoundVizRenderer {
         Matrix4f matrix = matrices.last().pose();
         float py = (float) client.player.getY();
 
-        BufferBuilder buffer = BufferCompat.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder buffer = BufferCompat.beginLines();
         for (BlockPos pos : vertices) {
             float px = pos.getX() + 0.5f, pz = pos.getZ() + 0.5f;
             float size = 0.4f;

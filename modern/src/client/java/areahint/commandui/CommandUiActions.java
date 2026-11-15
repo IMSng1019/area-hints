@@ -28,7 +28,7 @@ public final class CommandUiActions {
     public static void runCommandAndClose(Screen screen, String command) {
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(null);
+            areahint.util.ClientScreenCompat.setScreen(client, null);
         }
         runCommand(command);
     }

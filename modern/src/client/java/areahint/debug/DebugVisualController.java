@@ -18,7 +18,7 @@ public final class DebugVisualController {
     public static void openFromCommandUi(Screen parent) {
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(new DebugScreen(parent));
+            areahint.util.ClientScreenCompat.setScreen(client, new DebugScreen(parent));
         }
     }
 

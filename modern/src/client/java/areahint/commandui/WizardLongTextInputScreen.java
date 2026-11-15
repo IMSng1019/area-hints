@@ -146,7 +146,7 @@ public class WizardLongTextInputScreen extends CommandWizardScreen {
         if (this.submitAction != null) {
             markFlowHandled();
             if (this.minecraft != null) {
-                this.minecraft.setScreen(null);
+                areahint.util.ClientScreenCompat.setScreen(this.minecraft, null);
             }
             this.submitAction.accept(this.text);
         }

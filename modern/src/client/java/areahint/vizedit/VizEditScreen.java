@@ -71,7 +71,7 @@ public final class VizEditScreen extends Screen {
         int left = panelWidth + 5;
         int available = Math.max(70, width - left - 5);
         int actionW = Math.max(20, (available - 12) / 4);
-        properties = button("vizedit.ui.properties", left, 6, actionW, () -> minecraft.setScreen(new VizEditPropertiesScreen(session)));
+        properties = button("vizedit.ui.properties", left, 6, actionW, () -> areahint.util.ClientScreenCompat.setScreen(minecraft, new VizEditPropertiesScreen(session)));
         save = button("vizedit.ui.save", left + actionW + 4, 6, actionW, () -> VizEditClientManager.review(false, null));
         switchCanvas = button(canvas.isTerrain() ? "vizedit.ui.grid" : "vizedit.ui.map", left + 2 * (actionW + 4), 6, actionW, VizEditClientManager::switchCanvas);
         button("vizedit.ui.close", left + 3 * (actionW + 4), 6, actionW, VizEditClientManager::requestClose);

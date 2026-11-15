@@ -70,9 +70,9 @@ public final class SoundEventCategoryScreen extends CommandUiScreen {
             return;
         }
         if (SoundEventCatalog.CATEGORY_NOTE_BLOCK.equals(category.key())) {
-            this.minecraft.setScreen(SoundEventListScreen.forInstruments(this, this.context, category));
+            areahint.util.ClientScreenCompat.setScreen(this.minecraft, SoundEventListScreen.forInstruments(this, this.context, category));
         } else {
-            this.minecraft.setScreen(SoundEventListScreen.forSelections(this, this.context,
+            areahint.util.ClientScreenCompat.setScreen(this.minecraft, SoundEventListScreen.forSelections(this, this.context,
                     t("soundevent.category." + category.key()), category.sounds()));
         }
     }

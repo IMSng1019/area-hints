@@ -26,7 +26,7 @@ public class CommandPanelScreen extends CommandUiScreen {
 
         addEntryButton(x, startY, buttonWidth, "commandui.button.boundviz", "boundviz");
         this.addRenderableWidget(Button.builder(Component.literal(t("commandui.button.commands")),
-            button -> Minecraft.getInstance().setScreen(new CommandListScreen(this)))
+            button -> areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), new CommandListScreen(this)))
             .bounds(x, startY + gap, buttonWidth, BUTTON_HEIGHT).build());
         addEntryButton(x, startY + gap * 2, buttonWidth, "commandui.button.language", "language");
         this.addRenderableWidget(Button.builder(Component.literal(t("commandui.button.settings")),

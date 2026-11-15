@@ -17,7 +17,7 @@ public final class SoundLevelVisualController {
     public static void openFromCommandUi(Screen parent) {
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(new SoundLevelScreen(parent));
+            areahint.util.ClientScreenCompat.setScreen(client, new SoundLevelScreen(parent));
         }
     }
 }

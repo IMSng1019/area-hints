@@ -33,7 +33,7 @@ public class WizardConfirmScreen extends CommandWizardScreen {
         this.addRenderableWidget(Button.builder(Component.literal(t(this.confirmKey)), button -> {
             markFlowHandled();
             if (this.minecraft != null) {
-                this.minecraft.setScreen(null);
+                areahint.util.ClientScreenCompat.setScreen(this.minecraft, null);
             }
             if (this.confirmAction != null) {
                 this.confirmAction.run();

@@ -1,6 +1,7 @@
 package areahint.render;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.Tesselator;
 // 1.21.5 起 VertexFormat 移到 com.mojang.blaze3d.vertex
@@ -68,6 +69,15 @@ public final class BufferCompat {
     /** 取一个已 begin 的缓冲区 */
     public static BufferBuilder begin(VertexFormat.Mode mode, VertexFormat format) {
         return Tesselator.getInstance().begin(mode, format);
+    }
+
+    // 共享几何层只描述用途，具体图元枚举与构造方式由当前版本实现。
+    public static BufferBuilder beginTriangles() {
+        return begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
+    }
+
+    public static BufferBuilder beginLines() {
+        return begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
     }
 
     /** 提交一个带颜色的顶点；本代顶点链末尾不再需要 next() */

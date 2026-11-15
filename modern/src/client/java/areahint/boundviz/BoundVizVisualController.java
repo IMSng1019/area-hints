@@ -18,7 +18,7 @@ public final class BoundVizVisualController {
     public static void openFromCommandUi(Screen parent) {
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(new BoundVizScreen(parent));
+            areahint.util.ClientScreenCompat.setScreen(client, new BoundVizScreen(parent));
         }
     }
 

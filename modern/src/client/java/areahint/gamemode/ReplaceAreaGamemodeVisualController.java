@@ -74,7 +74,7 @@ public final class ReplaceAreaGamemodeVisualController {
             items.add(new WizardSelectionListScreen.SelectionItem<>(area, area.name(), modeDescription(area, defaultMode)));
         }
         setScreen(new WizardSelectionListScreen<>(parentScreen, TITLE, "commandui.replaceareagamemode.prompt", items,
-            area -> CommandUiActions.runCommandAndClose(Minecraft.getInstance().screen,
+            area -> CommandUiActions.runCommandAndClose(areahint.util.ClientScreenCompat.getScreen(Minecraft.getInstance()),
                 ROOT + " select " + quote(dimension) + " " + quote(area.name())),
             ReplaceAreaGamemodeVisualController::clear));
     }
@@ -83,7 +83,7 @@ public final class ReplaceAreaGamemodeVisualController {
         List<WizardOptionScreen.OptionSpec> options = new ArrayList<>();
         for (String mode : List.of("survival", "creative", "adventure", "spectator")) {
             options.add(new WizardOptionScreen.OptionSpec("gamemode.mode." + mode, "", -1,
-                () -> CommandUiActions.runCommandAndClose(Minecraft.getInstance().screen,
+                () -> CommandUiActions.runCommandAndClose(areahint.util.ClientScreenCompat.getScreen(Minecraft.getInstance()),
                     ROOT + " mode " + quote(dimension) + " " + mode + " " + quote(area.name()))));
         }
         setScreen(new WizardOptionScreen(parentScreen, TITLE, "commandui.replaceareagamemode.mode.prompt",
@@ -114,6 +114,6 @@ public final class ReplaceAreaGamemodeVisualController {
     }
 
     private static void setScreen(Screen screen) {
-        Minecraft.getInstance().setScreen(screen);
+        areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), screen);
     }
 }

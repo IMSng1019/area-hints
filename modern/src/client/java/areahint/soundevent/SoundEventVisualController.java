@@ -48,7 +48,7 @@ public final class SoundEventVisualController {
             return;
         }
         SelectionContext context = new SelectionContext(parent, currentSelection, selectionAction);
-        client.setScreen(new SoundEventCategoryScreen(context));
+        areahint.util.ClientScreenCompat.setScreen(client, new SoundEventCategoryScreen(context));
     }
 
     /**
@@ -83,7 +83,7 @@ public final class SoundEventVisualController {
         void returnToOrigin() {
             Minecraft client = Minecraft.getInstance();
             if (client != null) {
-                client.setScreen(this.returnScreen);
+                areahint.util.ClientScreenCompat.setScreen(client, this.returnScreen);
             }
         }
     }

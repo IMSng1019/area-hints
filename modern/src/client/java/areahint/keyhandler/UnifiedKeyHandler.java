@@ -101,7 +101,7 @@ public class UnifiedKeyHandler {
         if (suppressUntilRecordKeyReleased) {
             resetHoldState();
             drainRecordKeyPresses();
-            if (!(client.screen instanceof areahint.commandui.CommandUiScreen)
+            if (!(areahint.util.ClientScreenCompat.getScreen(client) instanceof areahint.commandui.CommandUiScreen)
                     && !isRecordKeyPhysicallyPressed(client)) {
                 suppressUntilRecordKeyReleased = false;
             }
@@ -236,7 +236,7 @@ public class UnifiedKeyHandler {
                 suppressRecordKeyUntilRelease();
                 // 审批预览临时收起后，长按优先恢复原申请；普通状态仍打开统一菜单。
                 if (!areahint.approval.ApprovalClientManager.restorePanel()) {
-                    client.setScreen(new areahint.commandui.CommandPanelScreen());
+                    areahint.util.ClientScreenCompat.setScreen(client, new areahint.commandui.CommandPanelScreen());
                 }
             }
             return;
@@ -267,7 +267,7 @@ public class UnifiedKeyHandler {
                 easyAddVisualRecordPanelOpened = true;
                 waitingForEasyAddVisualRecordRelease = false;
                 suppressRecordKeyUntilRelease();
-                client.setScreen(new areahint.easyadd.EasyAddRecordingActionScreen(null));
+                areahint.util.ClientScreenCompat.setScreen(client, new areahint.easyadd.EasyAddRecordingActionScreen(null));
             }
             return;
         }

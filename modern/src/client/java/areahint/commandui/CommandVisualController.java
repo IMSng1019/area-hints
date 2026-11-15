@@ -37,7 +37,7 @@ public final class CommandVisualController {
     public static void openConfirmCommand(Screen parent, String id, String command) {
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(new WizardConfirmScreen(parent,
+            areahint.util.ClientScreenCompat.setScreen(client, new WizardConfirmScreen(parent,
                 titleKey(id),
                 I18nManager.translate("commandui.common.confirm.prompt"),
                 List.of("/" + command),
@@ -188,14 +188,14 @@ public final class CommandVisualController {
     private static void setScreen(Screen screen) {
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(screen);
+            areahint.util.ClientScreenCompat.setScreen(client, screen);
         }
     }
 
     private static void closeToGame() {
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(null);
+            areahint.util.ClientScreenCompat.setScreen(client, null);
         }
     }
 

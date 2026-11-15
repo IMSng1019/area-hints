@@ -35,7 +35,7 @@ public final class OnVisualController {
     private static void setScreen(Screen screen) {
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(screen);
+            areahint.util.ClientScreenCompat.setScreen(client, screen);
         }
     }
 }

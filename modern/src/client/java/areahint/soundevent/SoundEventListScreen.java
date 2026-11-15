@@ -102,14 +102,14 @@ public final class SoundEventListScreen extends CommandUiScreen {
 
     private void openNotes(SoundEventCatalog.InstrumentGroup instrument) {
         if (this.minecraft != null) {
-            this.minecraft.setScreen(forSelections(this, this.context,
+            areahint.util.ClientScreenCompat.setScreen(this.minecraft, forSelections(this, this.context,
                     t("soundevent.screen.instrument", instrument.soundId()), instrument.notes()));
         }
     }
 
     private void back() {
         if (this.minecraft != null) {
-            this.minecraft.setScreen(this.previousScreen);
+            areahint.util.ClientScreenCompat.setScreen(this.minecraft, this.previousScreen);
         }
     }
 

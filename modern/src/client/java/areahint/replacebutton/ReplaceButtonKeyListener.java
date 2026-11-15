@@ -38,7 +38,7 @@ public class ReplaceButtonKeyListener {
      * 检查按键按下
      */
     private static void checkKeyPress(Minecraft client) {
-        if (client.screen != null) {
+        if (areahint.util.ClientScreenCompat.getScreen(client) != null) {
             // 如果有GUI打开，不处理按键
             return;
         }

@@ -63,7 +63,7 @@ public final class DescriptionBookEditScreen extends Screen {
             return;
         }
         client.player.sendSystemMessage(Component.literal(I18nManager.translate("description.book.instruction")));
-        client.setScreen(new DescriptionBookEditScreen(client.player, splitToBookPages(initialDescription), client.screen));
+        areahint.util.ClientScreenCompat.setScreen(client, new DescriptionBookEditScreen(client.player, splitToBookPages(initialDescription), areahint.util.ClientScreenCompat.getScreen(client)));
     }
 
     @Override
@@ -96,7 +96,7 @@ public final class DescriptionBookEditScreen extends Screen {
         canceled = true;
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(previousScreen);
+            areahint.util.ClientScreenCompat.setScreen(client, previousScreen);
         }
     }
 
@@ -204,7 +204,7 @@ public final class DescriptionBookEditScreen extends Screen {
         submitted = true;
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(previousScreen);
+            areahint.util.ClientScreenCompat.setScreen(client, previousScreen);
         }
         DescriptionManager.getInstance().receiveBookDescription(description.get());
     }
@@ -290,7 +290,7 @@ public final class DescriptionBookEditScreen extends Screen {
         int lineIndex = wrappedLineCountBeforeCurrent + currentWrappedLine;
         int cursorX = textX + Math.min(MAX_TEXT_WIDTH, font.width(currentLine));
         int cursorY = textY + lineIndex * 9;
-        if ((Minecraft.getInstance().gui.getGuiTicks() / 6) % 2 == 0) {
+        if ((areahint.util.ClientScreenCompat.getGuiTicks(Minecraft.getInstance()) / 6) % 2 == 0) {
             context.fill(cursorX, cursorY, cursorX + 1, cursorY + 9, 0xFF000000);
         }
     }

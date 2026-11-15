@@ -12,6 +12,6 @@ final class AreasHintSettingsBridge {
     }
 
     static void open(Screen parent) {
-        Minecraft.getInstance().setScreen(new AreasHintConfigScreen(parent));
+        areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), new AreasHintConfigScreen(parent));
     }
 }

@@ -41,7 +41,7 @@ public class DeleteHintVertexScreen extends CommandWizardScreen {
             if (this.manager.getMarkedIndices().isEmpty()) return;
             markFlowHandled();
             if (this.minecraft != null) {
-                this.minecraft.setScreen(null);
+                areahint.util.ClientScreenCompat.setScreen(this.minecraft, null);
             }
             this.manager.submit();
         }).bounds(x, y, buttonWidth, BUTTON_HEIGHT).build());

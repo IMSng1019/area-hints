@@ -133,6 +133,7 @@ processResources {
     inputs.property 'version', project.version
     inputs.property 'minecraftRange', minecraftRange
     inputs.property 'fabricloaderVersion', loaderDep
+    inputs.property 'fabricApiVersion', fabricDep
     inputs.property 'javaVersion', javaDep
     inputs.property 'xaeroMinimapSuggest', xaeroMinimapSuggest
     inputs.property 'xaeroWorldMapSuggest', xaeroWorldMapSuggest
@@ -149,6 +150,11 @@ processResources {
     doLast {
         // 缺少可选地图坐标时只删除对应建议行，不改写共享资源或任何语言文件。
         def metaFile = new File(destinationDir, 'fabric.mod.json')
+        // 新提取事件与缓冲接口需要对应 API 版本，元数据不能让旧 API 绕过加载器检查。
+        if (metaFile.exists()) {
+            def metadata = metaFile.getText('UTF-8').replace('"fabric-api": "*"', '"fabric-api": ">=' + fabricDep + '"')
+            metaFile.setText(metadata, 'UTF-8')
+        }
         if (metaFile.exists() && metaFile.getText('UTF-8').contains('__DROP__')) {
             def kept = metaFile.getText('UTF-8').readLines().findAll { !it.contains('__DROP__') }
             metaFile.setText(kept.join(System.lineSeparator()) + System.lineSeparator(), 'UTF-8')

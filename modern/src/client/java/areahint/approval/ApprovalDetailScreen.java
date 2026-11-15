@@ -62,10 +62,10 @@ public final class ApprovalDetailScreen extends CommandUiScreen {
         }
         int halfWidth = (contentWidth - 4) / 2;
         button("approval.ui.history", contentX, 124, halfWidth, () -> {
-            if (minecraft != null) minecraft.setScreen(new ApprovalHistoryScreen(this));
+            if (minecraft != null) areahint.util.ClientScreenCompat.setScreen(minecraft, new ApprovalHistoryScreen(this));
         }).setMessage(Component.literal(I18nManager.translate("approval.ui.history", session.request.reviews.size(), session.request.reviews.size())));
         button("approval.ui.changes", contentX + halfWidth + 4, 124, halfWidth, () -> {
-            if (minecraft != null) minecraft.setScreen(new ApprovalHistoryScreen(this, true));
+            if (minecraft != null) areahint.util.ClientScreenCompat.setScreen(minecraft, new ApprovalHistoryScreen(this, true));
         });
 
         if (ApprovalClientManager.isOperator()) {
@@ -88,14 +88,14 @@ public final class ApprovalDetailScreen extends CommandUiScreen {
                         return;
                     }
                     session.editMode = true;
-                    if (minecraft != null) minecraft.setScreen(new ApprovalDetailScreen());
+                    if (minecraft != null) areahint.util.ClientScreenCompat.setScreen(minecraft, new ApprovalDetailScreen());
                 }));
             }
         }
         button("approval.ui.back", width / 2 - 94, height - FOOTER_Y_OFFSET, 90, ApprovalClientManager::returnToList);
         button("approval.ui.close", width / 2 + 4, height - FOOTER_Y_OFFSET, 90, () -> {
             ApprovalClientManager.endSession();
-            if (minecraft != null) minecraft.setScreen(null);
+            if (minecraft != null) areahint.util.ClientScreenCompat.setScreen(minecraft, null);
         });
         tick();
     }
@@ -108,7 +108,7 @@ public final class ApprovalDetailScreen extends CommandUiScreen {
     @Override
     public void tick() {
         var session = ApprovalClientManager.getSession();
-        if (session == null) { if (minecraft != null) minecraft.setScreen(null); return; }
+        if (session == null) { if (minecraft != null) areahint.util.ClientScreenCompat.setScreen(minecraft, null); return; }
         boolean available = !ApprovalClientManager.isBusy() && !session.stale;
         boolean editable = available && ApprovalClientManager.isSessionOperationEnabled();
         for (Button button : mutationButtons) button.active = editable;

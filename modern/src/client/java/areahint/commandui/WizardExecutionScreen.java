@@ -26,7 +26,7 @@ public class WizardExecutionScreen extends CommandUiScreen {
         int y = this.height - FOOTER_Y_OFFSET;
         this.addRenderableWidget(Button.builder(Component.literal(t("commandui.button.execute")), button -> {
             if (this.minecraft != null) {
-                this.minecraft.setScreen(null);
+                areahint.util.ClientScreenCompat.setScreen(this.minecraft, null);
             }
             CommandUiActions.runCommand(this.command);
         }).bounds(x, y, buttonWidth, BUTTON_HEIGHT).build());

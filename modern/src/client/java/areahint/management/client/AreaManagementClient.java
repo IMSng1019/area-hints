@@ -60,7 +60,7 @@ public final class AreaManagementClient {
             items.add(new WizardSelectionListScreen.SelectionItem<>(area, area.displayName(),
                 I18nManager.translate("xaero.areahint.selection.detail", area.name(), area.level())));
         }
-        Minecraft.getInstance().setScreen(new WizardSelectionListScreen<>(parent,
+        areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), new WizardSelectionListScreen<>(parent,
             "xaero.areahint.selection.title", "xaero.areahint.selection.prompt", items,
             area -> requestCapabilities(parent, dimensionId, area), null, true));
     }
@@ -103,7 +103,7 @@ public final class AreaManagementClient {
         buf.writeString(dimensionId);
         buf.writeString(area.name());
         ClientNetworkCompat.get().sendToServer(Channel.C2S_AREA_MANAGEMENT_CAPABILITIES, buf);
-        client.setScreen(new LoadingScreen(parent, requestId, area.displayName()));
+        areahint.util.ClientScreenCompat.setScreen(client, new LoadingScreen(parent, requestId, area.displayName()));
     }
 
     private static void handleResponse(long requestId, String dimensionId, String areaName,
@@ -121,10 +121,10 @@ public final class AreaManagementClient {
         OverlayArea area = AreaOverlayRepository.getInstance().find(dimensionId, areaName);
         pending = null;
         if (!valid || area == null) {
-            client.setScreen(request.parent());
+            areahint.util.ClientScreenCompat.setScreen(client, request.parent());
             return;
         }
-        client.setScreen(new AreaManagementScreen(request.parent(), area, dimensionId, requestId, operations));
+        areahint.util.ClientScreenCompat.setScreen(client, new AreaManagementScreen(request.parent(), area, dimensionId, requestId, operations));
     }
 
     private static void cancelPending(long requestId, boolean returnToParent) {
@@ -134,9 +134,9 @@ public final class AreaManagementClient {
         }
         pending = null;
         Minecraft client = Minecraft.getInstance();
-        if (returnToParent && client != null && client.screen instanceof LoadingScreen loading
+        if (returnToParent && client != null && areahint.util.ClientScreenCompat.getScreen(client) instanceof LoadingScreen loading
             && loading.requestId == requestId) {
-            client.setScreen(request.parent());
+            areahint.util.ClientScreenCompat.setScreen(client, request.parent());
         }
     }
 
@@ -179,7 +179,7 @@ public final class AreaManagementClient {
         public void onClose() {
             cancelPending(requestId, false);
             if (this.minecraft != null) {
-                this.minecraft.setScreen(parent);
+                areahint.util.ClientScreenCompat.setScreen(this.minecraft, parent);
             }
         }
     }

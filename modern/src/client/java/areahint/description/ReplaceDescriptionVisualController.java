@@ -95,7 +95,7 @@ public final class ReplaceDescriptionVisualController {
     public static void closeToGame() {
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(null);
+            areahint.util.ClientScreenCompat.setScreen(client, null);
         }
     }
 
@@ -119,7 +119,7 @@ public final class ReplaceDescriptionVisualController {
     private static void setScreen(Screen screen) {
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(screen);
+            areahint.util.ClientScreenCompat.setScreen(client, screen);
         }
     }
 

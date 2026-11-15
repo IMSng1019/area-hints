@@ -13,7 +13,7 @@ public final class HelpVisualController {
     public static void openFromCommandUi(Screen parent) {
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(new HelpCommandScreen(parent));
+            areahint.util.ClientScreenCompat.setScreen(client, new HelpCommandScreen(parent));
         }
     }
 }

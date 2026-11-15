@@ -93,7 +93,7 @@ public final class CheckVisualController {
     private static void runAndClose(String command) {
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(null);
+            areahint.util.ClientScreenCompat.setScreen(client, null);
         }
         CommandUiActions.runCommand(command);
     }
@@ -101,7 +101,7 @@ public final class CheckVisualController {
     private static void setScreen(Screen screen) {
         Minecraft client = Minecraft.getInstance();
         if (client != null) {
-            client.setScreen(screen);
+            areahint.util.ClientScreenCompat.setScreen(client, screen);
         }
     }
 }

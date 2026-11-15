@@ -11,7 +11,7 @@
 <h1 align="center">Areas Hint</h1>
 
 <p align="center">
-  <img alt="Minecraft build targets" src="https://img.shields.io/badge/Minecraft-1.20.1%20%7C%201.20.4%20%7C%201.20.6%20%7C%201.21.1%20%7C%201.21.4%20%7C%201.21.5%20%7C%201.21.8%20%7C%201.21.10%20%7C%201.21.11%20%7C%2026.1.2-3C8527?style=flat-square">
+  <img alt="Minecraft build targets" src="https://img.shields.io/badge/Minecraft-1.20.1%20%7C%201.20.4%20%7C%201.20.6%20%7C%201.21.1%20%7C%201.21.4%20%7C%201.21.5%20%7C%201.21.8%20%7C%201.21.10%20%7C%201.21.11%20%7C%2026.1.2%20%7C%2026.2-3C8527?style=flat-square">
   <img alt="Fabric" src="https://img.shields.io/badge/Loader-Fabric-DBD0B4?style=flat-square">
   <img alt="Java" src="https://img.shields.io/badge/Java-17%20%2F%2021-ED8B00?style=flat-square&logo=openjdk&logoColor=white">
   <img alt="Source version" src="https://img.shields.io/badge/Mod-4.8.0-8A2BE2?style=flat-square">
@@ -99,8 +99,9 @@ These are the targets currently enabled in `settings.gradle`, with dependencies 
 | `1.21.10` | `21` | `0.19.5` | `0.138.4+1.21.10` |
 | `1.21.11` | `21` | `0.19.5` | `0.141.6+1.21.11` |
 | `26.1.2` | `25` | `0.19.5` | `0.155.3+26.1.2` |
+| `26.2` | `25` | `0.19.5` | `0.161.0+26.2` |
 
-Each JAR targets one Minecraft version. Install the matching JAR and Fabric API. Work on `26.2` and `26.3` remains in progress. Builds from `1.21.5` use version-specific GPU rendering backends; in-game rendering and multiplayer verification are still pending.
+Each JAR targets one Minecraft version. Install the matching JAR and Fabric API. Work on `26.3` remains in progress. Builds from `1.21.5` use version-specific GPU rendering backends; in-game rendering and multiplayer verification are still pending.
 
 LuckPerms, BlueMap, Mod Menu, Xaero's Minimap, Xaero's World Map, and VulkanMod are optional. See [Optional integrations](#compatibility) for their roles and the exact Xaero versions.
 
@@ -835,6 +836,7 @@ Xaero integrations check exact versions. If a mod is absent or its version does 
 | `1.21.10` | `25.3.2` | `1.40.2` |
 | `1.21.11` | `25.3.2` | `1.40.2` |
 | `26.1.2` | `26.6.2` | `1.47.2` |
+| `26.2` | `26.6.2` | `1.47.2` |
 
 Sodium is listed as a suggested mod in the metadata. Compatibility with other rendering, performance, and map mods depends on the Minecraft version and modpack. Optional integrations are not bundled with Areas Hint.
 

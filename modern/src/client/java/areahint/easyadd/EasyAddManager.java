@@ -367,7 +367,7 @@ public class EasyAddManager {
             boolean wasVisualMode = visualMode;
             cancelEasyAdd();
             if (wasVisualMode && Minecraft.getInstance() != null) {
-                Minecraft.getInstance().setScreen(null);
+                areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), null);
             }
             return;
         }

@@ -77,7 +77,7 @@ final class AreaManagementScreen extends Screen {
     public void onClose() {
         CommandVisualLaunchContext.clear();
         if (this.minecraft != null) {
-            this.minecraft.setScreen(parent);
+            areahint.util.ClientScreenCompat.setScreen(this.minecraft, parent);
         }
     }
 

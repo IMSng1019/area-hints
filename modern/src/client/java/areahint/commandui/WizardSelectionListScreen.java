@@ -78,7 +78,7 @@ public class WizardSelectionListScreen<T> extends CommandWizardScreen {
         }
         cancelFlow();
         if (this.minecraft != null) {
-            this.minecraft.setScreen(this.parent);
+            areahint.util.ClientScreenCompat.setScreen(this.minecraft, this.parent);
         }
     }
 

@@ -30,7 +30,7 @@ public final class BookDescriptionScreenUtil {
         List<String> pageTexts = paginate(description == null || description.isEmpty() ? fallbackDescription : description);
         ItemStack book = BookStackFactory.createBook(safeTitle, safeAuthor, pageTexts);
 
-        client.setScreen(new DescriptionBookScreen(BookViewScreen.BookAccess.fromItem(book)));
+        areahint.util.ClientScreenCompat.setScreen(client, new DescriptionBookScreen(BookViewScreen.BookAccess.fromItem(book)));
     }
 
     static boolean isDescriptionBookScreen(Screen screen) {

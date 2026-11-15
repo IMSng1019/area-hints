@@ -213,7 +213,7 @@ public final class ApprovalClientManager {
         }
         endSession();
         requestSnapshot("list");
-        Minecraft.getInstance().setScreen(new ApprovalListScreen(parent));
+        areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), new ApprovalListScreen(parent));
     }
 
     public static void refresh() { requestSnapshot("list"); }
@@ -222,7 +222,7 @@ public final class ApprovalClientManager {
     public static void afterVisualDraft(String id, int revision, Screen parent) {
         visualDraftId = id; visualDraftRevision = revision; visualDraftParent = parent;
         if (session != null) session.stale = true;
-        Minecraft.getInstance().setScreen(parent);
+        areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), parent);
         requestSnapshot("list");
         completeVisualDraftWhenReady();
     }
@@ -242,19 +242,19 @@ public final class ApprovalClientManager {
         if (request == null) return;
         endSession();
         session = new Session(copyRequest(request), parent);
-        Minecraft.getInstance().setScreen(new ApprovalDetailScreen());
+        areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), new ApprovalDetailScreen());
     }
 
     public static boolean restorePanel() {
         if (session == null || !canOpenPanel()) return false;
-        Minecraft.getInstance().setScreen(new ApprovalDetailScreen());
+        areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), new ApprovalDetailScreen());
         return true;
     }
 
     public static void returnToList() {
         Screen parent = session == null ? null : session.parent;
         endSession();
-        Minecraft.getInstance().setScreen(parent instanceof ApprovalListScreen ? parent : new ApprovalListScreen(parent));
+        areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), parent instanceof ApprovalListScreen ? parent : new ApprovalListScreen(parent));
     }
 
     public static void endSession() {
@@ -277,7 +277,7 @@ public final class ApprovalClientManager {
         Runnable launch = () -> {
             if (session != current) return;
             enablePreview();
-            Minecraft.getInstance().setScreen(null);
+            areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), null);
             CommandUiActions.runCommand("areahint tcp approval " + current.request.id + " " + index);
             message("approval.ui.restore", areahint.keyhandler.UnifiedKeyHandler.getRecordKeyDisplayName());
         };
@@ -335,15 +335,15 @@ public final class ApprovalClientManager {
             current.editing = false;
             updateOverlay();
             message("approval.ui.temporary");
-            client.setScreen(new ApprovalDetailScreen());
+            areahint.util.ClientScreenCompat.setScreen(client, new ApprovalDetailScreen());
         };
         if ("approval_addhint".equals(parts[0])) {
             areahint.addhint.AddHintManager.getInstance().beginTemporary(current.areas.get(index), current.request.dimensionId, callback);
-            client.setScreen(null);
+            areahint.util.ClientScreenCompat.setScreen(client, null);
         } else if ("approval_deletehint".equals(parts[0])) {
             var manager = areahint.deletehint.DeleteHintManager.getInstance();
             manager.beginTemporary(current.areas.get(index), current.request.dimensionId, callback);
-            client.setScreen(new DeleteHintVertexScreen(new ApprovalDetailScreen(), manager));
+            areahint.util.ClientScreenCompat.setScreen(client, new DeleteHintVertexScreen(new ApprovalDetailScreen(), manager));
         }
     }
 

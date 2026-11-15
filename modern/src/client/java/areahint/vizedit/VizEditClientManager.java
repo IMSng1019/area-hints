@@ -78,11 +78,11 @@ public final class VizEditClientManager {
     public static boolean mapAvailable() { return mapAccess != null && mapAccess.available(); }
     public static void installMap(MapAccess access) { mapAccess = access; }
 
-    public static void open() { open(Minecraft.getInstance().screen); }
+    public static void open() { open(areahint.util.ClientScreenCompat.getScreen(Minecraft.getInstance())); }
     public static void open(Screen parent) {
         if (session != null && !session.invalid) { show(); return; }
         if (session != null && session.dirty() && !session.readOnly) {
-            Minecraft.getInstance().setScreen(VizEditDialog.unsaved(session, () -> requestOpen(parent, null, null)));
+            areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), VizEditDialog.unsaved(session, () -> requestOpen(parent, null, null)));
             return;
         }
         requestOpen(parent, null, null);
@@ -90,7 +90,7 @@ public final class VizEditClientManager {
 
     public static void openApproval(ApprovalRequest request, Screen parent) {
         if (session != null && session.dirty()) {
-            Minecraft.getInstance().setScreen(VizEditDialog.unsaved(session, () -> requestOpen(parent, request.id, null)));
+            areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), VizEditDialog.unsaved(session, () -> requestOpen(parent, request.id, null)));
             return;
         }
         requestOpen(parent, request.id, null);
@@ -115,7 +115,7 @@ public final class VizEditClientManager {
     // 审批预览使用服务器审批快照，完全不建立写会话，也不改变正式域名数据。
     public static void preview(ApprovalRequest request, Screen parent) {
         if (session != null && session.dirty() && !session.readOnly) {
-            Minecraft.getInstance().setScreen(VizEditDialog.unsaved(session, () -> previewNow(request, parent)));
+            areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), VizEditDialog.unsaved(session, () -> previewNow(request, parent)));
             return;
         }
         previewNow(request, parent);
@@ -196,7 +196,7 @@ public final class VizEditClientManager {
             session.status = I18nManager.translate("vizedit.client.map_unavailable");
         }
         session.mapMode = false;
-        client.setScreen(new VizEditScreen(session, session.grid, null));
+        areahint.util.ClientScreenCompat.setScreen(client, new VizEditScreen(session, session.grid, null));
     }
 
     public static void switchCanvas() {
@@ -210,14 +210,14 @@ public final class VizEditClientManager {
         if (session == null || busy) return;
         VizEditSession current = session;
         if (current.dirty() && !current.readOnly) {
-            Minecraft.getInstance().setScreen(VizEditDialog.unsaved(current, () -> close(current.parentScreen)));
+            areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), VizEditDialog.unsaved(current, () -> close(current.parentScreen)));
         } else close(current.parentScreen);
     }
 
     private static void close(Screen parent) {
         session = null;
         clearWaiting();
-        Minecraft.getInstance().setScreen(parent);
+        areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), parent);
     }
 
     public static void changeTarget(String name) {
@@ -227,7 +227,7 @@ public final class VizEditClientManager {
             if (name == null) session.create(); else session.select(name);
             show();
         };
-        if (session.dirty()) Minecraft.getInstance().setScreen(VizEditDialog.unsaved(session, action));
+        if (session.dirty()) areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), VizEditDialog.unsaved(session, action));
         else action.run();
     }
 
@@ -243,7 +243,7 @@ public final class VizEditClientManager {
             int before = deleting ? 0 : areahint.vizedit.geometry.VizEditGeometry.contours(session.draft.shape).stream().mapToInt(List::size).sum();
             JsonObject fields = session.prepareSave();
             if (!deleting) session.status = I18nManager.translate("vizedit.client.save_normalized", before, fields.getAsJsonArray("vertices").size());
-            Minecraft.getInstance().setScreen(VizEditDialog.review(session, fields, draftOnly, continuation));
+            areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), VizEditDialog.review(session, fields, draftOnly, continuation));
         } catch (areahint.vizedit.geometry.VizEditGeometry.GeometryException e) {
             report(e.errorKey());
         } catch (IllegalArgumentException e) { report("vizedit.client.invalid_fields"); }
@@ -304,7 +304,7 @@ public final class VizEditClientManager {
             if (completed.approvalId != null && "draft".equals(outcome)) {
                 ApprovalClientManager.afterVisualDraft(completed.approvalId, completed.approvalRevision + 1, completed.parentScreen);
             } else if (completed.approvalId != null && "resubmitted".equals(outcome)) ApprovalClientManager.returnToList();
-            else Minecraft.getInstance().setScreen(completed.parentScreen);
+            else areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), completed.parentScreen);
         }
     }
 

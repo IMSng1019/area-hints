@@ -35,7 +35,7 @@ public class EasyAddRecordingActionScreen extends CommandUiScreen {
             this.handled = true;
             EasyAddManager.getInstance().cancelEasyAdd();
             if (this.minecraft != null) {
-                this.minecraft.setScreen(null);
+                areahint.util.ClientScreenCompat.setScreen(this.minecraft, null);
             }
         }).bounds(x + buttonWidth + 8, y, buttonWidth, BUTTON_HEIGHT).build());
     }
@@ -52,7 +52,7 @@ public class EasyAddRecordingActionScreen extends CommandUiScreen {
     public void onClose() {
         onDiscard();
         if (this.minecraft != null) {
-            this.minecraft.setScreen(null);
+            areahint.util.ClientScreenCompat.setScreen(this.minecraft, null);
         }
     }
 

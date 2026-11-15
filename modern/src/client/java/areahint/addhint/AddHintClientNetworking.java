@@ -1,0 +1,49 @@
+package areahint.addhint;
+
+import areahint.data.AreaData;
+import areahint.network.Channel;
+import areahint.network.ClientNetworkCompat;
+import areahint.network.NetworkBuf;
+import areahint.network.TranslatableMessage;
+import areahint.util.AreaDataConverter;
+import com.google.gson.JsonObject;
+
+/**
+ * AddHint客户端网络通信
+ */
+public class AddHintClientNetworking {
+
+    /**
+     * 发送修改后的域名数据到服务端
+     */
+    public static void sendToServer(AreaData area, String dimension) {
+        try {
+            NetworkBuf buf = ClientNetworkCompat.get().newBuffer();
+            JsonObject json = AreaDataConverter.toJsonObject(area);
+            buf.writeString(json.toString());
+            buf.writeString(dimension);
+            ClientNetworkCompat.get().sendToServer(Channel.ADDHINT_AREA_CHANNEL, buf);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 注册客户端网络接收器
+     */
+    public static void registerClientReceivers() {
+        ClientNetworkCompat.get().registerClientReceiver(
+            Channel.ADDHINT_AREA_RESPONSE_CHANNEL,
+            (client, buf) -> {
+                boolean success = buf.readBoolean();
+                net.minecraft.network.chat.MutableComponent message = TranslatableMessage.read(buf);
+                client.execute(() -> {
+                    if (client.player != null) {
+                        client.player.sendSystemMessage(
+                            message.withStyle(success ? net.minecraft.ChatFormatting.GREEN : net.minecraft.ChatFormatting.RED));
+                    }
+                });
+            }
+        );
+    }
+}

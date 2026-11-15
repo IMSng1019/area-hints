@@ -21,8 +21,11 @@ stonecutter {
 	centralScript = 'build.gradle'
 
 	// 活跃版本均构建完整模组；1.20.4 保持为共享源码的开发基线。
-	// 26.x 需要官方命名、不重映射的 Loom 和 Java 25，另行迁移，不直接加入此列表。
+	// 26.x 使用独立官方命名源码分支，保留旧版共享源码和构建入口。
 	create(getRootProject()) {
 		versions '1.20.4', '1.20.1', '1.20.6', '1.21.1', '1.21.4', '1.21.5', '1.21.8', '1.21.10', '1.21.11'
+		branch('modern') {
+			versions('26.1.2').buildscript('../build-modern.gradle')
+		}
 	}
 }

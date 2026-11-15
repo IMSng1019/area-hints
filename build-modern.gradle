@@ -1,0 +1,205 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
+    id 'maven-publish'
+}
+
+// modern 分支由 Stonecutter 挂载 modern/src 与 modern/versions/<版本>/src，Java 源码目录不在这里重设。
+def stonecutterExt = project.extensions.findByName('stonecutter')
+def mcVersion = stonecutterExt?.current?.version?.toString() ?: project.name
+
+// 26.x 必须显式提供节点坐标，不能回退到根目录中保留的 1.20.4 单版本属性。
+def optionalProp = { String name ->
+    def value = project.findProperty("deps.${mcVersion}.${name}")
+    return value == null || value.toString().trim().isEmpty() ? null : value.toString().trim()
+}
+def requiredProp = { String name ->
+    def value = optionalProp(name)
+    if (value == null) {
+        throw new GradleException("缺少现代版本依赖参数：deps.${mcVersion}.${name}")
+    }
+    return value
+}
+def mcVersionDep = requiredProp('minecraft')
+def loaderDep = requiredProp('loader')
+def fabricDep = requiredProp('fabric')
+def javaDep = Integer.parseInt(requiredProp('java'))
+def minecraftRange = optionalProp('mc_depends') ?: "=${mcVersionDep}"
+
+version = project.mod_version
+group = project.maven_group
+def modLoader = (project.findProperty('mod_loader') ?: 'fabric').toString().trim().toLowerCase(Locale.ROOT)
+
+base {
+    archivesName = "${project.archives_base_name}-${modLoader}-${mcVersionDep}"
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.bluecolored.de/releases' }
+    maven { url = 'https://maven.terraformersmc.com/' }
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
+}
+
+loom {
+    splitEnvironmentSourceSets()
+    mods {
+        'areas-hint' {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+
+// 根资源是所有构建节点的唯一翻译与元数据来源，保留 Stonecutter 已配置的节点资源目录。
+sourceSets.main.resources.srcDir(rootProject.file('src/main/resources'))
+sourceSets.client.resources.srcDir(rootProject.file('src/client/resources'))
+
+fabricApi {
+    configureDataGeneration {
+        client = true
+    }
+}
+
+def declareThirdParty = { String name, String displayName, Closure declare ->
+    def value = optionalProp(name)
+    if (value == null) {
+        logger.lifecycle("[areas-hint] ${mcVersion} 未声明 ${displayName} 可选依赖")
+    } else {
+        declare(value)
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${mcVersionDep}"
+    implementation "net.fabricmc:fabric-loader:${loaderDep}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabricDep}"
+
+    // 客户端集成不进入主环境的编译类路径；本地联调依赖不会写入发布 POM 或嵌入成品。
+    declareThirdParty('modmenu', 'ModMenu') { v ->
+        clientCompileOnly "maven.modrinth:modmenu:${v}"
+        localRuntime "maven.modrinth:modmenu:${v}"
+    }
+    declareThirdParty('xaero_minimap', 'Xaero 小地图') { v ->
+        clientCompileOnly "maven.modrinth:xaeros-minimap:${v}"
+        localRuntime "maven.modrinth:xaeros-minimap:${v}"
+    }
+    declareThirdParty('xaero_world_map', 'Xaero 世界地图') { v ->
+        clientCompileOnly "maven.modrinth:xaeros-world-map:${v}"
+        localRuntime "maven.modrinth:xaeros-world-map:${v}"
+        // 编译 Xaero 公共接口时使用地图构件内的同一份库，避免引入与目标地图不匹配的独立版本。
+        def bundledLibrary = optionalProp('xaero_bundled_library')
+        if (bundledLibrary != null) {
+            def bundle = configurations.detachedConfiguration(dependencies.create("maven.modrinth:xaeros-world-map:${v}"))
+            bundle.transitive = false
+            def library = zipTree(bundle.singleFile).matching { include "META-INF/jars/${bundledLibrary}" }.singleFile
+            clientCompileOnly files(library)
+            localRuntime files(library)
+        }
+    }
+    // 这两个参数保留完整 Maven 坐标，以支持 BlueMap 在不同版本间调整 group 与 artifact。
+    declareThirdParty('bluemap', 'BlueMap') { v -> compileOnly v }
+    declareThirdParty('luckperms', 'LuckPerms') { v -> compileOnly v }
+
+    testImplementation platform('org.junit:junit-bom:5.12.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// 新版 Modrinth 版本标签不一定等于模组 metadata 版本，禁止把游戏版本后缀猜成联动版本。
+def xaeroSuggest = { String name ->
+    def dependencyVersion = optionalProp(name)
+    if (dependencyVersion == null) {
+        return '__DROP__'
+    }
+    def metadataVersion = optionalProp("${name}_suggest")
+    if (metadataVersion != null) {
+        return metadataVersion
+    }
+    if (dependencyVersion ==~ /\d+(?:\.\d+)+/) {
+        return dependencyVersion
+    }
+    throw new GradleException("deps.${mcVersion}.${name}_suggest 必须填写该模组 fabric.mod.json 中的实际版本号")
+}
+def xaeroMinimapSuggest = xaeroSuggest('xaero_minimap')
+def xaeroWorldMapSuggest = xaeroSuggest('xaero_world_map')
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'minecraftRange', minecraftRange
+    inputs.property 'fabricloaderVersion', loaderDep
+    inputs.property 'javaVersion', javaDep
+    inputs.property 'xaeroMinimapSuggest', xaeroMinimapSuggest
+    inputs.property 'xaeroWorldMapSuggest', xaeroWorldMapSuggest
+
+    filesMatching('fabric.mod.json') {
+        expand 'version': project.version,
+                'minecraft_range': minecraftRange,
+                'fabricloader_version': loaderDep,
+                'java_version': javaDep,
+                'xaero_minimap': xaeroMinimapSuggest,
+                'xaero_world_map': xaeroWorldMapSuggest
+    }
+
+    doLast {
+        // 缺少可选地图坐标时只删除对应建议行，不改写共享资源或任何语言文件。
+        def metaFile = new File(destinationDir, 'fabric.mod.json')
+        if (metaFile.exists() && metaFile.getText('UTF-8').contains('__DROP__')) {
+            def kept = metaFile.getText('UTF-8').readLines().findAll { !it.contains('__DROP__') }
+            metaFile.setText(kept.join(System.lineSeparator()) + System.lineSeparator(), 'UTF-8')
+        }
+    }
+}
+
+// 主环境和客户端资源由不同任务复制，两套 Mixin 都必须匹配现代字节码而不修改旧版模板。
+tasks.withType(ProcessResources).configureEach {
+    inputs.property 'mixinJavaVersion', javaDep
+    filesMatching(['areas-hint.mixins.json', 'areas-hint.client.mixins.json']) {
+        filter { line -> line.replace('"JAVA_17"', '"JAVA_' + javaDep + '"') }
+    }
+}
+
+java {
+    // 编译、测试和开发运行统一选择节点声明的 Java 25 工具链，Gradle 本身仍可运行于 Java 21。
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(javaDep)
+    }
+    sourceCompatibility = JavaVersion.toVersion(javaDep)
+    targetCompatibility = JavaVersion.toVersion(javaDep)
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = javaDep
+    options.encoding = 'UTF-8'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    inputs.property 'archivesName', project.archives_base_name
+    from(rootProject.file('LICENSE')) {
+        rename { "${it}_${inputs.properties.archivesName}" }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+sourcesJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+publishing {
+    publications {
+        create('mavenJava', MavenPublication) {
+            artifactId = project.archives_base_name
+            from components.java
+        }
+    }
+}

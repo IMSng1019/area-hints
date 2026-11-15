@@ -11,7 +11,7 @@
 <h1 align="center">Areas Hint 域名模组</h1>
 
 <p align="center">
-  <img alt="Minecraft 构建目标" src="https://img.shields.io/badge/Minecraft-1.20.1%20%7C%201.20.4%20%7C%201.20.6%20%7C%201.21.1%20%7C%201.21.4%20%7C%201.21.5%20%7C%201.21.8%20%7C%201.21.10%20%7C%201.21.11-3C8527?style=flat-square">
+  <img alt="Minecraft 构建目标" src="https://img.shields.io/badge/Minecraft-1.20.1%20%7C%201.20.4%20%7C%201.20.6%20%7C%201.21.1%20%7C%201.21.4%20%7C%201.21.5%20%7C%201.21.8%20%7C%201.21.10%20%7C%201.21.11%20%7C%2026.1.2-3C8527?style=flat-square">
   <img alt="Fabric" src="https://img.shields.io/badge/Loader-Fabric-DBD0B4?style=flat-square">
   <img alt="Java" src="https://img.shields.io/badge/Java-17%20%2F%2021-ED8B00?style=flat-square&logo=openjdk&logoColor=white">
   <img alt="源码版本" src="https://img.shields.io/badge/Mod-4.8.0-8A2BE2?style=flat-square">
@@ -165,8 +165,9 @@ Areas Hint 是一个适用于 **Minecraft Fabric** 的区域提示模组，当�
 | `1.21.8` | `21` | `0.19.5` | `0.136.1+1.21.8` |
 | `1.21.10` | `21` | `0.19.5` | `0.138.4+1.21.10` |
 | `1.21.11` | `21` | `0.19.5` | `0.141.6+1.21.11` |
+| `26.1.2` | `25` | `0.19.5` | `0.155.3+26.1.2` |
 
-每个 JAR 对应一个 Minecraft 构建目标，请安装匹配的文件与 Fabric API。`26.x` 正在适配。`1.21.5` 及之后的版本使用对应版本的 GPU 绘制实现，游戏内画面与联机效果仍待验证。
+每个 JAR 对应一个 Minecraft 构建目标，请安装匹配的文件与 Fabric API。`26.2`、`26.3` 正在适配。`1.21.5` 及之后的版本使用对应版本的 GPU 绘制实现，游戏内画面与联机效果仍待验证。
 
 ### 可选兼容 / 集成
 
@@ -1228,6 +1229,7 @@ Xaero 联动按精确版本检查；未安装或版本不匹配时，对应覆�
 | `1.21.8` | `25.3.2` | `1.40.2` |
 | `1.21.10` | `25.3.2` | `1.40.2` |
 | `1.21.11` | `25.3.2` | `1.40.2` |
+| `26.1.2` | `26.6.2` | `1.47.2` |
 
 Sodium 在模组元数据中列为建议项。其他渲染、性能或地图模组的共存情况取决于 Minecraft 版本和整合包组合；这些可选模组不随 Areas Hint 一起打包。
 
@@ -1239,14 +1241,15 @@ Sodium 在模组元数据中列为建议项。其他渲染、性能或地图模�
 
 ### 常用开发命令
 
-从仓库根目录使用 Gradle Wrapper。构建全部目标时使用 **JDK 21**；`settings.gradle` 决定参与构建的版本，`stonecutter.gradle` 当前活跃版本为 `1.20.4`。
+从仓库根目录使用 Gradle Wrapper。构建全部目标时使用 **JDK 25**；`settings.gradle` 决定参与构建的版本，`stonecutter.gradle` 当前活跃版本仍为 `1.20.4`。`modern` 源码分支使用 Minecraft 官方名称和独立的 no-remap 构建脚本。
 
 ```bash
 # 构建所有已启用的版本
-./gradlew build
+./gradlew build --no-parallel
 
 # 只构建一个目标
 ./gradlew :1.20.4:build
+./gradlew :modern:26.1.2:build
 
 # 运行指定版本的开发环境
 ./gradlew :1.20.4:runClient
@@ -1266,11 +1269,12 @@ Windows PowerShell 中将 `./gradlew` 换成 `.\gradlew.bat`，例如：
 
 ### 构建产物命名
 
-当前 Stonecutter 构建产物位于 `versions/<Minecraft版本>/build/libs/`，文件名遵循「模组名-平台-MC版本-模组版本」格式：
+旧版 Stonecutter 产物位于 `versions/<Minecraft版本>/build/libs/`，现代分支产物位于 `modern/versions/<Minecraft版本>/build/libs/`，文件名遵循「模组名-平台-MC版本-模组版本」格式：
 
 ```text
 versions/1.20.4/build/libs/areas-hint-fabric-1.20.4-4.8.0.jar
 versions/1.21.4/build/libs/areas-hint-fabric-1.21.4-4.8.0.jar
+modern/versions/26.1.2/build/libs/areas-hint-fabric-26.1.2-4.8.0.jar
 ```
 
 安装普通 `.jar`，不要安装 `-sources.jar` 或 `-dev.jar`。`mod_loader` 只参与产物命名，修改它不会把 Fabric 模组转换为 Forge / NeoForge 模组。

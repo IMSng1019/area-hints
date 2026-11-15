@@ -1,0 +1,193 @@
+package areahint.approval;
+
+import areahint.commandui.CommandUiScreen;
+import areahint.i18n.I18nManager;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
+
+// 每次只显示一个申请的操作，完整历史放在独立分页界面，窄窗口也保留回复输入框。
+public final class ApprovalDetailScreen extends CommandUiScreen {
+    private final List<Button> mutationButtons = new ArrayList<>();
+    private Button previewButton;
+    private Button addButton;
+    private Button deleteButton;
+    private EditBox comment;
+    private int contentX;
+    private int contentWidth;
+
+    public ApprovalDetailScreen() {
+        super(ApprovalClientManager.getSession() != null && ApprovalClientManager.getSession().editMode
+            ? "approval.ui.edit" : "approval.ui.detail", null);
+    }
+
+    @Override
+    protected void init() {
+        var session = ApprovalClientManager.getSession();
+        if (session == null) return;
+        mutationButtons.clear();
+        comment = null;
+        addButton = null;
+        deleteButton = null;
+        contentWidth = Math.min(520, width - 28);
+        contentX = (width - contentWidth) / 2;
+        int columns = (contentWidth - 8) / 3;
+        int actionsY = height - 52;
+        addRenderableWidget(Button.builder(Component.literal("<"), button -> {
+            if (!session.areas.isEmpty()) session.areaIndex = Math.floorMod(session.areaIndex - 1, session.areas.size());
+        }).bounds(contentX, 76, 20, BUTTON_HEIGHT).build());
+        addRenderableWidget(Button.builder(Component.literal(">"), button -> {
+            if (!session.areas.isEmpty()) session.areaIndex = (session.areaIndex + 1) % session.areas.size();
+        }).bounds(contentX + contentWidth - 20, 76, 20, BUTTON_HEIGHT).build());
+        boolean editing = ApprovalClientManager.isOperator() || session.editMode;
+        boolean visualEditor = "vizedit".equals(session.request.operation);
+        previewButton = button(visualEditor ? "vizedit.ui.preview" : "approval.ui.preview", contentX, 100, editing ? columns : contentWidth,
+            () -> {
+                if (visualEditor) areahint.vizedit.VizEditClientManager.preview(session.request, this);
+                else ApprovalClientManager.preview(session.areaIndex);
+            });
+        // 回复只展示查看入口，打回后进入独立的修改页面才提供临时顶点编辑按钮。
+        if (editing && visualEditor) {
+            addButton = button("vizedit.ui.edit", contentX + columns + 4, 100, columns * 2 + 4,
+                () -> areahint.vizedit.VizEditClientManager.openApproval(session.request, this));
+        } else if (editing) {
+            addButton = button("approval.ui.addhint", contentX + columns + 4, 100, columns,
+                () -> ApprovalClientManager.editGeometry(true, session.areaIndex));
+            deleteButton = button("approval.ui.deletehint", contentX + (columns + 4) * 2, 100, columns,
+                () -> ApprovalClientManager.editGeometry(false, session.areaIndex));
+        }
+        int halfWidth = (contentWidth - 4) / 2;
+        button("approval.ui.history", contentX, 124, halfWidth, () -> {
+            if (minecraft != null) minecraft.setScreen(new ApprovalHistoryScreen(this));
+        }).setMessage(Component.literal(I18nManager.translate("approval.ui.history", session.request.reviews.size(), session.request.reviews.size())));
+        button("approval.ui.changes", contentX + halfWidth + 4, 124, halfWidth, () -> {
+            if (minecraft != null) minecraft.setScreen(new ApprovalHistoryScreen(this, true));
+        });
+
+        if (ApprovalClientManager.isOperator()) {
+            comment = new EditBox(font, contentX, height - 80, contentWidth, BUTTON_HEIGHT, Component.empty());
+            comment.setMaxLength(2048);
+            comment.setValue(session.comment);
+            comment.setHint(Component.literal(t("approval.ui.comment_hint")));
+            comment.setResponder(value -> session.comment = value);
+            addRenderableWidget(comment);
+            mutationButtons.add(button("approval.ui.approve", contentX, actionsY, columns, () -> ApprovalClientManager.decide("approved")));
+            mutationButtons.add(button("approval.ui.reject", contentX + columns + 4, actionsY, columns, () -> ApprovalClientManager.decide("rejected")));
+            mutationButtons.add(button("approval.ui.return", contentX + (columns + 4) * 2, actionsY, columns, () -> ApprovalClientManager.decide("returned")));
+        } else if ("returned".equals(session.request.status)) {
+            if (session.editMode) {
+                mutationButtons.add(button("approval.ui.resubmit", contentX, actionsY, contentWidth, ApprovalClientManager::resubmit));
+            } else {
+                mutationButtons.add(button("approval.ui.modify", contentX, actionsY, contentWidth, () -> {
+                    if (visualEditor) {
+                        areahint.vizedit.VizEditClientManager.openApproval(session.request, this);
+                        return;
+                    }
+                    session.editMode = true;
+                    if (minecraft != null) minecraft.setScreen(new ApprovalDetailScreen());
+                }));
+            }
+        }
+        button("approval.ui.back", width / 2 - 94, height - FOOTER_Y_OFFSET, 90, ApprovalClientManager::returnToList);
+        button("approval.ui.close", width / 2 + 4, height - FOOTER_Y_OFFSET, 90, () -> {
+            ApprovalClientManager.endSession();
+            if (minecraft != null) minecraft.setScreen(null);
+        });
+        tick();
+    }
+
+    private Button button(String key, int x, int y, int width, Runnable action) {
+        return addRenderableWidget(Button.builder(Component.literal(t(key)), ignored -> action.run())
+            .bounds(x, y, width, BUTTON_HEIGHT).build());
+    }
+
+    @Override
+    public void tick() {
+        var session = ApprovalClientManager.getSession();
+        if (session == null) { if (minecraft != null) minecraft.setScreen(null); return; }
+        boolean available = !ApprovalClientManager.isBusy() && !session.stale;
+        boolean editable = available && ApprovalClientManager.isSessionOperationEnabled();
+        for (Button button : mutationButtons) button.active = editable;
+        if (previewButton != null) previewButton.active = available && !session.areas.isEmpty();
+        if (addButton != null) addButton.active = available && ("vizedit".equals(session.request.operation)
+            ? editable && (ApprovalClientManager.isOperator() && "pending".equals(session.request.status)
+                || "returned".equals(session.request.status)) : ApprovalClientManager.canEdit(session.areaIndex));
+        if (deleteButton != null) deleteButton.active = available && ApprovalClientManager.canEdit(session.areaIndex);
+        if (comment != null) comment.setEditable(editable);
+    }
+
+    @Override
+    public void onClose() { ApprovalClientManager.returnToList(); }
+
+    @Override
+    protected void onDiscard() {
+        // 绑定键只临时收起界面，会话保留以供下一次长按恢复；显式关闭按钮才丢弃草稿。
+    }
+
+    @Override
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent inputEvent) {
+        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();
+    /*public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    */
+        // 输入意见时绑定键也可能是普通字母，交给随后到达的字符事件，不能关闭审批页面。
+        if (comment != null && comment.isFocused()
+                && areahint.keyhandler.UnifiedKeyHandler.matchesRecordKey(keyCode, scanCode)) return true;
+        if (comment != null && comment.isFocused() && comment.keyPressed(inputEvent)) return true;
+        /*if (comment != null && comment.isFocused() && comment.keyPressed(keyCode, scanCode, modifiers)) return true;
+        */
+        return super.keyPressed(inputEvent);
+        /*return super.keyPressed(keyCode, scanCode, modifiers);
+        */
+    }
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
+        var session = ApprovalClientManager.getSession();
+        if (session == null) return;
+        var request = session.request;
+        boolean reply = !ApprovalClientManager.isOperator() && !request.reviews.isEmpty();
+        var latestReview = reply ? request.reviews.get(request.reviews.size() - 1) : null;
+        line(context, reply ? "approval.ui.reviewer" : "approval.ui.applicant", 30,
+            reply ? latestReview.reviewerName : request.applicantName);
+        line(context, reply ? "approval.ui.review_type" : "approval.ui.type", 42,
+            ApprovalClientManager.operationName(request.operation));
+        // 重新申请后请求状态会变成待审批，回复仍展示上一轮实际结果，不能把打回意见标成待审批结果。
+        line(context, "approval.ui.result", 54, ApprovalClientManager.statusName(reply ? latestReview.result : request.status));
+        String state = ApprovalClientManager.isBusy() ? "approval.ui.busy" : session.stale ? "approval.ui.changed" : null;
+        if (state == null && reply && "pending".equals(request.status)) state = "approval.ui.status.pending";
+        if (state == null) line(context, "approval.ui.dimension", 66, request.dimensionId);
+        else drawTrimmed(context, Component.literal(t(state)), contentX, 66, contentWidth, 0xFFAA55);
+        String areaLabel = session.areas.isEmpty() ? t("approval.ui.no_preview") : I18nManager.translate("approval.ui.area",
+            session.areas.get(Math.min(session.areaIndex, session.areas.size() - 1)).getName(), session.areaIndex + 1, session.areas.size());
+        drawTrimmed(context, Component.literal(areaLabel), contentX + 24, 82, contentWidth - 48, BRIGHT_YELLOW);
+        if (ApprovalClientManager.isOperator()) {
+            drawTrimmed(context, Component.literal(t("approval.ui.comment")), contentX, height - 92, contentWidth, 0xAAAAAA);
+        } else if (latestReview != null) {
+            drawTrimmed(context, Component.literal(t("approval.ui.comment")), contentX, 150, contentWidth, 0xAAAAAA);
+            String replyText = latestReview.comment == null || latestReview.comment.isBlank()
+                ? t("approval.ui.no_comment") : latestReview.comment;
+            int bottom = "returned".equals(request.status) ? height - 60 : height - 34;
+            int y = 162;
+            // 意见按窗口可用高度换行，剩余内容和此前各轮意见仍可从历史页面完整查看。
+            for (FormattedCharSequence line : font.split(Component.literal(replyText), contentWidth)) {
+                if (y + font.lineHeight > bottom) break;
+                context.text(font, line, contentX, y, 0xFFFFFFFF);
+                y += 12;
+            }
+        }
+        // 禁用的编辑按钮提供原因提示，回复详情要先点击修改才进入可编辑草稿。
+        if (addButton != null && !addButton.active && addButton.isHovered()
+                || deleteButton != null && !deleteButton.active && deleteButton.isHovered()) {
+            drawWrappedTooltip(context, Component.literal(t("approval.ui.geometry_unavailable")), mouseX, mouseY);
+        }
+    }
+
+    private void line(GuiGraphicsExtractor context, String key, int y, Object value) {
+        drawTrimmed(context, Component.literal(I18nManager.translate(key, value)), contentX, y, contentWidth, 0xFFFFFF);
+    }
+}

@@ -1,0 +1,484 @@
+package areahint.detection;
+
+import areahint.AreashintClient;
+import areahint.config.ClientConfig;
+import areahint.data.AreaData;
+import areahint.file.FileManager;
+import areahint.geometry.AreaSpatialIndex;
+import areahint.util.AreaDataConverter;
+import areahint.debug.ClientDebugManager;
+import areahint.debug.ClientDebugManager.DebugCategory;
+import areahint.render.DomainRenderer;
+
+import java.nio.file.Path;
+import java.util.*;
+
+/**
+ * 区域检测器类
+ * 用于检测玩家所在的区域
+ */
+public class AreaDetector {
+    // 当前维度的域名索引快照（volatile整体替换：域名列表与全部索引同一时刻原子可见）
+    private volatile AreaIndex index = AreaIndex.EMPTY;
+
+    // 候选列表缓存：每个线程独占一份，热路径不再反复创建临时List（绝不与主线程共享同一实例）
+    private final ThreadLocal<List<AreaData>> candidateBuffer = ThreadLocal.withInitial(ArrayList::new);
+
+    // 最后一次检测的时间（毫秒）
+    private long lastDetectionTime = 0;
+    
+    /**
+     * 加载区域数据
+     * @param fileName 区域数据文件名
+     */
+    public void loadAreaData(String fileName) {
+        // 使用客户端世界文件夹管理器获取文件路径
+        Path areaFile = areahint.world.ClientWorldFolderManager.getWorldDimensionFile(fileName);
+        List<AreaData> loadedAreas = FileManager.readAreaData(areaFile);
+        AreashintClient.LOGGER.info("已加载区域数据: {} 个区域", loadedAreas.size());
+
+        // 预计算AABB边界和中心点缓存
+        for (AreaData area : loadedAreas) {
+            area.computeCache();
+        }
+
+        // 一次性预建全部索引：名称索引、等级分组、子域名分组（键为上级域名name）
+        Map<String, AreaData> areasByName = new HashMap<>();
+        Map<Integer, List<AreaData>> areasByLevel = new HashMap<>();
+        Map<String, List<AreaData>> areasByBaseName = new HashMap<>();
+        for (AreaData area : loadedAreas) {
+            // 同名域名与旧实现的线性扫描保持一致：取最先出现的那个
+            if (area.getName() != null) {
+                areasByName.putIfAbsent(area.getName(), area);
+            }
+            areasByLevel.computeIfAbsent(area.getLevel(), k -> new ArrayList<>()).add(area);
+            String baseName = area.getBaseName();
+            if (baseName != null) {
+                areasByBaseName.computeIfAbsent(baseName, k -> new ArrayList<>()).add(area);
+            }
+        }
+
+        // 升序去重的等级数组：逐级查找时只遍历数据中真实存在的等级，等级数值异常时也不会空转
+        int[] sortedLevels = new int[areasByLevel.size()];
+        int levelCursor = 0;
+        for (Integer level : areasByLevel.keySet()) {
+            sortedLevels[levelCursor++] = level;
+        }
+        Arrays.sort(sortedLevels);
+
+        // 一级域名与每组子域名分别建立空间索引，查询只对玩家所在包围盒范围内的候选做距离排序。
+        AreaSpatialIndex levelOneIndex = new AreaSpatialIndex(areasByLevel.getOrDefault(1, Collections.emptyList()));
+        Map<String, AreaSpatialIndex> childIndexes = new HashMap<>();
+        for (Map.Entry<String, List<AreaData>> entry : areasByBaseName.entrySet()) {
+            childIndexes.put(entry.getKey(), new AreaSpatialIndex(entry.getValue()));
+        }
+
+        // 显示沿用同名域名后者覆盖的历史规则，与名称查找所需的先出现者优先索引分别保存。
+        Map<String, AreaData> displayAreasByName = DomainRenderer.buildAreaIndex(loadedAreas);
+
+        // 列表与索引整体发布：检测线程读到的只会是完整一致的旧数据或完整一致的新数据，不会读到半成品
+        index = new AreaIndex(loadedAreas, areasByName, areasByLevel, sortedLevels,
+                levelOneIndex, childIndexes, displayAreasByName);
+
+        // 输出所有加载的区域名称
+        if (!loadedAreas.isEmpty()) {
+            StringBuilder names = new StringBuilder("加载的区域名称: ");
+            for (AreaData area : loadedAreas) {
+                names.append(area.getName()).append("(等级:").append(area.getLevel()).append("), ");
+            }
+            AreashintClient.LOGGER.info(names.toString());
+        }
+
+        // 输出按等级分组的信息
+        for (Map.Entry<Integer, List<AreaData>> entry : areasByLevel.entrySet()) {
+            AreashintClient.LOGGER.info("等级 {} 的区域数量: {}", entry.getKey(), entry.getValue().size());
+        }
+    }
+    
+    /**
+     * 检测玩家所在的区域
+     * @param x 玩家的X坐标
+     * @param y 玩家的Y坐标（高度）
+     * @param z 玩家的Z坐标
+     * @return 玩家所在的区域名称（根据配置的样式格式化），如果不在任何区域内则返回null
+     */
+    public String detectPlayerArea(double x, double y, double z) {
+        // 如果模组被禁用，直接返回null，不进行任何检测
+        if (!ClientConfig.isEnabled()) {
+            return null;
+        }
+        
+        // 更新最后一次检测时间
+        lastDetectionTime = System.currentTimeMillis();
+        
+        // 获取玩家当前所在的区域
+        if (ClientDebugManager.isDebugEnabled()) {
+            ClientDebugManager.sendDebugInfo(DebugCategory.PLAYER_POSITION, 
+                String.format("检测玩家位置: (%.2f, %.2f, %.2f)", x, y, z));
+        }
+        
+        AreaData currentArea = findArea(x, y, z);
+        
+        // 如果没有找到区域
+        if (currentArea == null) {
+            if (ClientDebugManager.isDebugEnabled()) {
+                ClientDebugManager.sendDebugInfo(DebugCategory.AREA_DETECTION, "没有找到玩家所在区域");
+            }
+            return null;
+        }
+        
+        // 根据配置的样式格式化区域名称
+        String style = ClientConfig.getTitleStyle();
+        String formattedName = formatAreaName(currentArea, style);
+        if (AreashintClient.LOGGER.isDebugEnabled()) {
+            AreashintClient.LOGGER.debug("玩家在区域: {}, 格式化后的名称: {}", currentArea.getName(), formattedName);
+        }
+        
+        if (ClientDebugManager.isDebugEnabled()) {
+            ClientDebugManager.sendDebugInfo(DebugCategory.AREA_DETECTION, 
+                String.format("玩家在区域: %s, 等级: %d, 格式化后: %s", 
+                currentArea.getName(), currentArea.getLevel(), formattedName));
+        }
+        
+        return formattedName;
+    }
+    
+    /**
+     * 检查是否应该进行检测（根据配置的频率）
+     * @return 如果应该进行检测返回true，否则返回false
+     */
+    public boolean shouldDetect() {
+        double frequency = ClientConfig.getFrequency();
+        long interval = Math.max(1L, Math.round(1000.0 / frequency)); // 小数频率也按每秒次数换算为毫秒间隔
+        return System.currentTimeMillis() - lastDetectionTime >= interval;
+    }
+    
+    /**
+     * 根据已有的AreaData格式化区域名称（避免重复检测）
+     */
+    public String formatAreaNameFromData(AreaData area) {
+        if (area == null) return null;
+        return formatAreaName(area, ClientConfig.getTitleStyle());
+    }
+
+    /**
+     * 查找玩家所在的区域（返回原始AreaData，不格式化）
+     * @param x 玩家的X坐标
+     * @param y 玩家的Y坐标（高度）
+     * @param z 玩家的Z坐标
+     * @return 玩家所在的区域数据，如果不在任何区域内则返回null
+     */
+    public AreaData findAreaRaw(double x, double y, double z) {
+        // 模组关闭时禁止任何域名计算，仍保留已同步到本地的文件数据。
+        if (!ClientConfig.isEnabled()) {
+            return null;
+        }
+
+        return findArea(x, y, z);
+    }
+
+    /**
+     * 为独立开启的 Xaero 覆盖层执行同一套域名命中，不受主标题显示开关限制。
+     * @param x 玩家X坐标
+     * @param y 玩家Y坐标
+     * @param z 玩家Z坐标
+     * @return 玩家所在的最深层域名，不在任何域名内时返回null
+     */
+    public AreaData findAreaForXaeroOverlay(double x, double y, double z) {
+        return findArea(x, y, z);
+    }
+
+    // 服务端要求的游戏模式独立于客户端提示开关，仍使用与标题完全一致的域名层级判定。
+    public AreaData findAreaForGamemode(double x, double y, double z) {
+        return findArea(x, y, z);
+    }
+
+    /**
+     * 查找玩家所在的区域
+     * 全程只读一次索引快照，不再重建HashMap分组、不再拷贝排序列表，也不再逐级新建子域名列表
+     * @param x 玩家的X坐标
+     * @param y 玩家的Y坐标（高度）
+     * @param z 玩家的Z坐标
+     * @return 玩家所在的区域，如果不在任何区域内则返回null
+     */
+    private AreaData findArea(double x, double y, double z) {
+        // 读取一次索引快照，整个检测过程使用同一份一致的索引
+        AreaIndex snapshot = index;
+
+        // 如果没有加载任何区域数据，直接返回null
+        if (snapshot.areas.isEmpty()) {
+            if (AreashintClient.LOGGER.isDebugEnabled()) {
+                AreashintClient.LOGGER.debug("没有加载任何区域数据，无法检测");
+            }
+            return null;
+        }
+
+        // 热路径日志开关：关闭debug时不做任何字符串格式化与参数数组分配
+        boolean debugLog = AreashintClient.LOGGER.isDebugEnabled();
+        boolean debugInfo = ClientDebugManager.isDebugEnabled();
+
+        // 步骤1：空间树先筛选一级域名的AABB和高度，仅对真正可能命中的候选按距离排序。
+        List<AreaData> levelOneAreas = snapshot.areasByLevel.get(1);
+        int levelOneCount = levelOneAreas == null ? 0 : levelOneAreas.size();
+        List<AreaData> candidates = candidateBuffer.get();
+        snapshot.levelOneIndex.collectCandidates(x, y, z, 1, candidates);
+
+        if (debugInfo) {
+            ClientDebugManager.sendDebugInfo(DebugCategory.AREA_DETECTION, String.format(
+                "空间与高度预筛选(一级域名): 玩家高度=%.1f, 一级域名总数=%d, 筛选后=%d",
+                y, levelOneCount, candidates.size()));
+        }
+
+        // 空间或高度范围均无法命中时直接返回，避免为远处域名分配排序工作。
+        if (candidates.isEmpty()) {
+            if (debugLog) {
+                AreashintClient.LOGGER.debug("经过空间与高度预筛选后，没有符合条件的一级域名");
+            }
+            return null;
+        }
+
+        // 索引已按中心距离排序，距离相同时按原文件顺序选择，避免树的遍历顺序改变重叠域名结果。
+
+        if (debugLog) {
+            AreashintClient.LOGGER.debug("检查玩家({}, {})是否在一级域名内，一级域名数量: {}", x, z, candidates.size());
+        }
+
+        AreaData inLevelOne = null;
+        for (AreaData area : candidates) {
+            if (isInsideArea(area, x, z, debugLog)) {
+                inLevelOne = area;
+                break;
+            }
+        }
+
+        // 如果玩家不在任何一级域名内
+        if (inLevelOne == null) {
+            if (debugLog) {
+                AreashintClient.LOGGER.debug("玩家不在任何一级域名内");
+            }
+            return null;
+        }
+        
+        if (debugLog) {
+            AreashintClient.LOGGER.debug("玩家在一级域名 {} 内，继续检查更高级别域名", inLevelOne.getName());
+        }
+
+        // 步骤2: 沿 baseName 链逐级向下查找子域名（等级语义与旧实现一致：某一级没命中就停止）
+        AreaData highestArea = inLevelOne;
+        String baseName = inLevelOne.getName();
+
+        for (int levelIndex = 0; levelIndex < snapshot.sortedLevels.length; levelIndex++) {
+            int level = snapshot.sortedLevels[levelIndex];
+            // 只往下找比一级域名更深的等级（升序，与旧实现的等级遍历顺序一致）
+            if (level <= inLevelOne.getLevel()) {
+                continue;
+            }
+
+            // 当前父域名的空间索引同时筛选等级、AABB和高度，不再扫描整组子域名后排序。
+            candidates.clear();
+            if (baseName != null) {
+                AreaSpatialIndex childIndex = snapshot.childIndexes.get(baseName);
+                if (childIndex != null) {
+                    childIndex.collectCandidates(x, y, z, level, candidates);
+                }
+            }
+
+            if (candidates.isEmpty()) {
+                // AABB未命中也必须停止；只有全局该等级均无高度候选时才能沿用旧规则跳过这一等级。
+                if (hasAreaInAltitudeRange(snapshot.areasByLevel.get(level), y)) {
+                    if (debugLog) {
+                        AreashintClient.LOGGER.debug("在当前级别没有找到区域，停止查找");
+                    }
+                    break;
+                }
+                continue;
+            }
+
+            if (debugLog) {
+                AreashintClient.LOGGER.debug("检查 {} 级域名，基于上级域名 {}，符合条件的下级域名数量: {}",
+                        level, baseName, candidates.size());
+            }
+
+            boolean foundInCurrentLevel = false;
+
+            for (AreaData area : candidates) {
+                if (isInsideArea(area, x, z, debugLog)) {
+                    highestArea = area;
+                    baseName = area.getName();
+                    foundInCurrentLevel = true;
+                    if (debugLog) {
+                        AreashintClient.LOGGER.debug("找到更高级别域名: {}", area.getName());
+                    }
+                    break;
+                }
+            }
+
+            // 如果在当前级别没有找到区域，就停止查找
+            if (!foundInCurrentLevel) {
+                if (debugLog) {
+                    AreashintClient.LOGGER.debug("在当前级别没有找到区域，停止查找");
+                }
+                break;
+            }
+        }
+
+        if (debugLog) {
+            AreashintClient.LOGGER.debug("最终确定玩家在区域: {}", highestArea.getName());
+        }
+        return highestArea;
+    }
+    
+    /**
+     * 对空间索引筛出的域名继续使用原射线法，保留多边形边界的原有命中规则
+     * @param area 域名
+     * @param x 玩家的X坐标
+     * @param z 玩家的Z坐标
+     * @param debugLog 是否输出热路径debug日志
+     * @return 是否在域名内
+     */
+    private boolean isInsideArea(AreaData area, double x, double z, boolean debugLog) {
+        // 候选已经通过缓存AABB判定，此处只进行多边形精查，避免重复筛选。
+        boolean inPolygon = RayCasting.isPointInPolygon(x, z, area.getVertices());
+        if (debugLog) {
+            AreashintClient.LOGGER.debug("检查区域 {} 的多边形: {}", area.getName(), inPolygon ? "在内部" : "在外部");
+        }
+        return inPolygon;
+    }
+
+    /**
+     * 判断某个等级下是否存在通过高度预筛选的域名（只判定，不产生任何列表分配）
+     * @param levelAreas 该等级的域名列表
+     * @param y 玩家的Y坐标
+     * @return 是否存在符合高度条件的域名
+     */
+    private static boolean hasAreaInAltitudeRange(List<AreaData> levelAreas, double y) {
+        if (levelAreas == null) {
+            return false;
+        }
+        for (AreaData area : levelAreas) {
+            if (AltitudeFilter.isPlayerInAltitudeRange(y, area)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * 根据配置的样式格式化区域名称
+     * @param area 区域
+     * @param style 样式（full、simple、mixed）
+     * @return 格式化后的区域名称（带颜色）
+     */
+    private String formatAreaName(AreaData area, String style) {
+        if (area == null) {
+            return null;
+        }
+        
+        String result;
+        
+        // 显示索引随域名快照一次构建，格式化时不再遍历全部域名重新分配HashMap。
+        Map<String, AreaData> displayIndex = index.displayAreasByName;
+        
+        switch (style) {
+            case "full":
+                // 显示完整路径（带颜色）
+                result = DomainRenderer.buildDomainDisplayText(area, displayIndex);
+                break;
+            case "simple":
+                // 仅显示当前级别（带颜色）
+                result = DomainRenderer.getSimpleDomainText(area);
+                break;
+            case "mixed":
+                // 混合模式（带颜色）
+                if (area.getLevel() == 1) {
+                    // 一级域名只显示自身
+                    result = DomainRenderer.getSimpleDomainText(area);
+                } else if (area.getLevel() == 2) {
+                    // 二级域名显示一级+二级
+                    result = DomainRenderer.buildDomainDisplayText(area, displayIndex);
+                } else {
+                    // 三级及以上只显示当前级别
+                    result = DomainRenderer.getSimpleDomainText(area);
+                }
+                break;
+            default:
+                result = DomainRenderer.getSimpleDomainText(area);
+                break;
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 构建区域的完整路径
+     * @param area 区域
+     * @return 完整路径
+     */
+    private String buildFullPath(AreaData area) {
+        if (area == null) {
+            return "";
+        }
+        
+        List<String> path = new ArrayList<>();
+        path.add(AreaDataConverter.getDisplayName(area));
+        
+        AreaData current = area;
+        while (current.getLevel() > 1 && current.getBaseName() != null) {
+            AreaData parent = findAreaByName(current.getBaseName());
+            if (parent == null) {
+                break;
+            }
+            
+            path.add(0, parent.getName());
+            current = parent;
+        }
+        
+        return String.join("·", path);
+    }
+    
+    /**
+     * 根据名称查找区域
+     * @param name 区域名称
+     * @return 找到的区域，如果未找到则返回null
+     */
+    private AreaData findAreaByName(String name) {
+        if (name == null) {
+            return null;
+        }
+        
+        // 直接用预建的名称索引，避免全量线性扫描
+        return index.areasByName.get(name);
+    }
+
+    /**
+     * 域名索引快照
+     * 域名列表、空间索引和显示索引通过一次volatile写入整体发布，检测线程只读取构建完成的快照
+     */
+    private static final class AreaIndex {
+        // 尚未加载任何域名数据时使用的空索引
+        static final AreaIndex EMPTY = new AreaIndex(Collections.emptyList(), Collections.emptyMap(),
+                Collections.emptyMap(), new int[0], new AreaSpatialIndex(Collections.emptyList()),
+                Collections.emptyMap(), Collections.emptyMap());
+
+        final List<AreaData> areas;                            // 当前维度的全部域名（与旧实现的areas顺序一致）
+        final Map<String, AreaData> areasByName;               // 域名name -> AreaData
+        final Map<Integer, List<AreaData>> areasByLevel;       // 等级 -> 该等级的域名列表
+        final int[] sortedLevels;                              // 数据中出现的等级，升序去重
+        final AreaSpatialIndex levelOneIndex;                  // 一级域名的空间索引
+        final Map<String, AreaSpatialIndex> childIndexes;      // 上级域名name -> 子域名空间索引
+        final Map<String, AreaData> displayAreasByName;         // 标题显示索引，同名取最后出现的域名
+
+        AreaIndex(List<AreaData> areas, Map<String, AreaData> areasByName,
+                  Map<Integer, List<AreaData>> areasByLevel, int[] sortedLevels,
+                  AreaSpatialIndex levelOneIndex, Map<String, AreaSpatialIndex> childIndexes,
+                  Map<String, AreaData> displayAreasByName) {
+            this.areas = areas;
+            this.areasByName = areasByName;
+            this.areasByLevel = areasByLevel;
+            this.sortedLevels = sortedLevels;
+            this.levelOneIndex = levelOneIndex;
+            this.childIndexes = childIndexes;
+            this.displayAreasByName = displayAreasByName;
+        }
+    }
+} 

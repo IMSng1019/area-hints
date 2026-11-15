@@ -1,0 +1,302 @@
+package areahint.command;
+
+import areahint.Areashint;
+import areahint.data.AreaData;
+import areahint.approval.ApprovalManager;
+import areahint.file.FileManager;
+import areahint.management.AreaManagementCapabilityService;
+import areahint.network.Channel;
+import areahint.network.NetworkBuf;
+import areahint.network.NetworkCompat;
+import areahint.network.Packets;
+import areahint.network.ServerNetworking;
+import areahint.network.TranslatableMessage;
+import areahint.network.TranslatableMessage.Part;
+import static areahint.network.TranslatableMessage.key;
+import static areahint.network.TranslatableMessage.lit;
+import areahint.util.ColorUtil;
+import com.mojang.brigadier.context.CommandContext;
+import java.nio.file.Path;
+import areahint.i18n.ServerI18nManager;
+
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+
+/**
+ * 域名重新着色指令处理器
+ */
+public class RecolorCommand {
+    
+    /**
+     * 执行recolor指令
+     * @param context 指令上下文
+     * @return 执行结果
+     */
+    public static int executeRecolor(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        if (source.getPlayer() == null) {
+            source.sendSystemMessage(Component.translatable("command.error.general_10"));
+            return 0;
+        }
+
+        ServerPlayer player = source.getPlayer();
+        String playerName = player.getName().getString();
+
+        // 获取玩家当前维度
+        String dimension = areahint.util.ServerPlayerCompat.world(player).dimension().identifier().toString();
+        String dimensionType = convertDimensionIdToType(dimension);
+        String fileName = Packets.getFileNameForDimension(dimensionType);
+
+        if (fileName == null) {
+            source.sendSystemMessage(Component.translatable("command.error.dimension_3"));
+            return 0;
+        }
+
+        // 获取可编辑的域名列表
+        List<AreaData> editableAreas = getEditableAreas(player, fileName, playerName);
+
+        if (editableAreas.isEmpty()) {
+            source.sendSystemMessage(Component.translatable("command.error.area.dimension_3"));
+            return 0;
+        }
+
+        // 发送域名列表到客户端，包含交互式颜色选择界面
+        sendInteractiveRecolorToClient(player, editableAreas, dimensionType);
+
+        source.sendSystemMessage(Component.translatable("command.prompt.area.list"));
+        return 1;
+    }
+    
+    /**
+     * 执行带参数的recolor指令（直接修改颜色）
+     * @param context 指令上下文
+     * @param areaName 域名名称
+     * @param colorInput 颜色输入
+     * @return 执行结果
+     */
+    public static int executeRecolorChange(CommandContext<CommandSourceStack> context, String areaName, String colorInput) {
+        CommandSourceStack source = context.getSource();
+        
+        if (source.getPlayer() == null) {
+            source.sendSystemMessage(Component.translatable("command.error.general_10"));
+            return 0;
+        }
+
+        ServerPlayer player = source.getPlayer();
+        String playerName = player.getName().getString();
+
+        // 标准化颜色输入
+        String normalizedColor = areahint.util.ColorUtil.normalizeColor(colorInput);
+        if (!areahint.util.ColorUtil.isValidColor(normalizedColor)) {
+            source.sendSystemMessage(Component.translatable("command.error.color").append(Component.literal(colorInput)));
+            source.sendSystemMessage(Component.translatable("message.message.color"));
+            source.sendSystemMessage(Component.translatable("message.message.general_45"));
+            return 0;
+        }
+        
+        // 获取玩家当前维度
+        String dimension = areahint.util.ServerPlayerCompat.world(player).dimension().identifier().toString();
+        String dimensionType = convertDimensionIdToType(dimension);
+        
+        // 处理重新着色请求
+        handleRecolorRequest(player, areaName, normalizedColor, dimensionType);
+        
+        return 1;
+    }
+    
+    /**
+     * 获取玩家可编辑的域名列表
+     */
+    private static List<AreaData> getEditableAreas(ServerPlayer player, String fileName, String playerName) {
+        List<AreaData> editableAreas = new ArrayList<>();
+
+        try {
+            Path areaFile = areahint.world.WorldFolderManager.getWorldDimensionFile(fileName);
+            if (areaFile == null || !areaFile.toFile().exists()) {
+                return editableAreas;
+            }
+
+            List<AreaData> allAreas = FileManager.readAreaData(areaFile);
+
+            for (AreaData area : allAreas) {
+                if (canEditArea(player, area, allAreas)) {
+                    editableAreas.add(area);
+                }
+            }
+
+        } catch (Exception e) {
+            Areashint.LOGGER.error(ServerI18nManager.translate("command.error.area.list_2"), e);
+        }
+
+        return editableAreas;
+    }
+    
+    /**
+     * 发送域名列表到客户端
+     */
+    private static void sendAreaListToClient(ServerPlayer player, List<AreaData> areas, String dimension) {
+        try {
+            NetworkBuf buf = NetworkCompat.get().newBuffer();
+            buf.writeString("recolor_list");
+            buf.writeString(dimension);
+            buf.writeInt(areas.size());
+            
+            for (AreaData area : areas) {
+                buf.writeString(area.getName());
+                buf.writeString(area.getColor());
+                buf.writeInt(area.getLevel());
+                buf.writeString(area.getBaseName() != null ? area.getBaseName() : "");
+                buf.writeString(area.getSignature() != null ? area.getSignature() : "");
+            }
+            
+            NetworkCompat.get().sendToPlayer(player, Channel.S2C_RECOLOR_RESPONSE, buf);
+            
+        } catch (Exception e) {
+            Areashint.LOGGER.error(ServerI18nManager.translate("command.error.area.list"), e);
+        }
+    }
+    
+    /**
+     * 处理客户端发送的重新着色请求
+     */
+    public static void handleRecolorRequest(ServerPlayer player, String areaName, String newColor, String dimension) {
+        try {
+            String playerName = player.getName().getString();
+
+            if (!AreaManagementCapabilityService.isCurrentDimension(player, dimension)) {
+                sendRecolorResponse(player, false, key("addhint.error.dimension"), lit(String.valueOf(dimension)));
+                return;
+            }
+
+            // 验证颜色格式
+            if (!ColorUtil.isValidColor(newColor)) {
+                sendRecolorResponse(player, false, key("command.error.color_3"), lit(newColor));
+                return;
+            }
+            
+            // 获取维度文件
+            String fileName = Packets.getFileNameForDimension(dimension);
+            if (fileName == null) {
+                sendRecolorResponse(player, false, key("addhint.error.dimension"), lit(dimension));
+                return;
+            }
+            
+            Path areaFile = areahint.world.WorldFolderManager.getWorldDimensionFile(fileName);
+            if (areaFile == null || !areaFile.toFile().exists()) {
+                sendRecolorResponse(player, false, key("command.message.dimension_5"));
+                return;
+            }
+            
+            // 读取和更新域名数据
+            List<AreaData> areas = FileManager.readAreaData(areaFile);
+            boolean found = false;
+            String oldColor = "";
+            
+            for (AreaData area : areas) {
+                if (area.getName().equals(areaName)) {
+                    if (!canEditArea(player, area, areas)) {
+                        sendRecolorResponse(player, false, key("command.message.area.modify.permission"), lit(areaName + "\""));
+                        return;
+                    }
+                    
+                    oldColor = area.getColor();
+                    area.setColor(newColor);
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                sendRecolorResponse(player, false, key("addhint.message.area_3"), lit(areaName));
+                return;
+            }
+            
+            // 修改后的颜色只作为审批候选数据，未通过时保持服务器原文件不变。
+            if (ApprovalManager.submitAreasIfRequired(player, "recolor", areaFile, areas)) {
+                sendRecolorResponse(player, true, key("approval.message.submitted"));
+                return;
+            }
+
+            // 保存文件
+            if (FileManager.writeAreaData(areaFile, areas)) {
+                sendRecolorResponse(player, true, key("command.message.area_10"), lit(areaName), key("command.message.color_4"), lit(oldColor), lit(" → "), lit(newColor));
+                
+                // 重新加载并发送给所有客户端
+                ServerNetworking.sendAllAreaDataToAll();
+                
+                Areashint.LOGGER.info(ServerI18nManager.translate("command.message.general_28") + playerName + ServerI18nManager.translate("command.message.area_4") + areaName + "\"" + ServerI18nManager.translate("command.message.color_3") + oldColor + ServerI18nManager.translate("command.message.general_5") + newColor);
+                
+            } else {
+                sendRecolorResponse(player, false, key("command.error.area.save"));
+            }
+            
+        } catch (Exception e) {
+            Areashint.LOGGER.error(ServerI18nManager.translate("command.error.general_20"), e);
+            sendRecolorResponse(player, false, key("command.error.general_19"), lit(e.getMessage()));
+        }
+    }
+    
+    private static boolean canEditArea(ServerPlayer player, AreaData area, List<AreaData> allAreas) {
+        return AreaManagementCapabilityService.canPerform(
+            player, AreaManagementCapabilityService.RECOLOR, area, allAreas);
+    }
+
+    /**
+     * 发送重新着色响应
+     */
+    private static void sendRecolorResponse(ServerPlayer player, boolean success, Part... parts) {
+        try {
+            NetworkBuf buf = NetworkCompat.get().newBuffer();
+            buf.writeString("recolor_response");
+            buf.writeBoolean(success);
+            TranslatableMessage.write(buf, parts);
+            NetworkCompat.get().sendToPlayer(player, Channel.S2C_RECOLOR_RESPONSE, buf);
+        } catch (Exception e) {
+            Areashint.LOGGER.error(ServerI18nManager.translate("command.error.general_18"), e);
+        }
+    }
+    
+    /**
+     * 发送交互式recolor界面到客户端
+     */
+    private static void sendInteractiveRecolorToClient(ServerPlayer player, List<AreaData> areas, String dimension) {
+        try {
+            NetworkBuf buf = NetworkCompat.get().newBuffer();
+            buf.writeString("recolor_interactive");
+            buf.writeString(dimension);
+            buf.writeInt(areas.size());
+            
+            for (AreaData area : areas) {
+                buf.writeString(area.getName());
+                buf.writeString(area.getColor());
+                buf.writeInt(area.getLevel());
+                buf.writeString(area.getBaseName() != null ? area.getBaseName() : "");
+                buf.writeString(area.getSignature() != null ? area.getSignature() : "");
+            }
+            
+            NetworkCompat.get().sendToPlayer(player, Channel.S2C_RECOLOR_RESPONSE, buf);
+            
+        } catch (Exception e) {
+            Areashint.LOGGER.error(ServerI18nManager.translate("command.error.general_15"), e);
+        }
+    }
+    
+    /**
+     * 将维度ID转换为Packets期望的维度类型
+     */
+    private static String convertDimensionIdToType(String dimension) {
+        if (dimension == null) return null;
+        
+        if (dimension.contains("overworld")) {
+            return Packets.DIMENSION_OVERWORLD;
+        } else if (dimension.contains("nether")) {
+            return Packets.DIMENSION_NETHER;
+        } else if (dimension.contains("end")) {
+            return Packets.DIMENSION_END;
+        }
+        return null;
+    }
+}

@@ -1,0 +1,76 @@
+package areahint.management;
+
+import areahint.Areashint;
+import areahint.data.AreaData;
+import areahint.file.FileManager;
+import areahint.network.Channel;
+import areahint.network.NetworkBuf;
+import areahint.network.NetworkCompat;
+import areahint.network.Packets;
+import areahint.util.AreaPermissionUtil;
+import areahint.world.WorldFolderManager;
+import java.nio.file.Path;
+import java.util.List;
+import net.minecraft.server.level.ServerPlayer;
+
+/**
+ * 世界地图域名管理能力查询协议。
+ */
+public final class AreaManagementServerNetworking {
+    private AreaManagementServerNetworking() {
+    }
+
+    public static void register() {
+        NetworkCompat.get().registerServerReceiver(Channel.C2S_AREA_MANAGEMENT_CAPABILITIES,
+            (server, player, buf) -> {
+                long requestId = buf.readLong();
+                String dimensionId = buf.readString();
+                String areaName = buf.readString();
+                server.execute(() -> handleRequest(player, requestId, dimensionId, areaName));
+            });
+    }
+
+    private static void handleRequest(ServerPlayer player, long requestId, String dimensionId, String areaName) {
+        String playerDimension = areahint.util.ServerPlayerCompat.world(player).dimension().identifier().toString();
+        if (!playerDimension.equals(dimensionId)) {
+            sendResponse(player, requestId, dimensionId, areaName, false, List.of());
+            return;
+        }
+
+        String dimensionType = Packets.convertDimensionPathToType(areahint.util.ServerPlayerCompat.world(player).dimension().identifier().getPath());
+        String fileName = Packets.getFileNameForDimension(dimensionType);
+        if (fileName == null) {
+            sendResponse(player, requestId, dimensionId, areaName, false, List.of());
+            return;
+        }
+
+        try {
+            Path areaFile = WorldFolderManager.getWorldDimensionFile(fileName);
+            List<AreaData> areas = FileManager.readAreaData(areaFile);
+            AreaData area = AreaPermissionUtil.findByName(areas, areaName);
+            if (area == null) {
+                sendResponse(player, requestId, dimensionId, areaName, false, List.of());
+                return;
+            }
+            List<String> allowed = AreaManagementCapabilityService.getAllowedOperations(player, area, areas);
+            sendResponse(player, requestId, dimensionId, areaName, true, allowed);
+        } catch (Exception e) {
+            Areashint.LOGGER.warn("处理域名管理能力查询失败: {} / {}", dimensionId, areaName, e);
+            sendResponse(player, requestId, dimensionId, areaName, false, List.of());
+        }
+    }
+
+    private static void sendResponse(ServerPlayer player, long requestId, String dimensionId,
+                                     String areaName, boolean valid, List<String> operations) {
+        NetworkBuf buf = NetworkCompat.get().newBuffer();
+        buf.writeLong(requestId);
+        buf.writeString(dimensionId == null ? "" : dimensionId);
+        buf.writeString(areaName == null ? "" : areaName);
+        buf.writeBoolean(valid);
+        buf.writeInt(operations.size());
+        for (String operation : operations) {
+            buf.writeString(operation);
+        }
+        NetworkCompat.get().sendToPlayer(player, Channel.S2C_AREA_MANAGEMENT_CAPABILITIES, buf);
+    }
+}

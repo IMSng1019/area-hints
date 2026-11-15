@@ -1,0 +1,539 @@
+package areahint.boundviz;
+
+import areahint.data.AreaData;
+import areahint.render.BufferCompat;
+import areahint.render.FlashColorHelper;
+import areahint.geometry.PolygonGeometry;
+import areahint.util.ColorUtil;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
+// 1.21.5 起 VertexFormat 移到 com.mojang.blaze3d.vertex，通配 import 覆盖不到，需显式导入
+import com.mojang.blaze3d.vertex.VertexFormat;
+import org.joml.Matrix4f;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class BoundVizRenderer {
+
+    // ========== 缓存数据结构 ==========
+    private static class CachedArea {
+        List<int[]> triangles;          // 预计算的三角剖分
+        List<AreaData.Vertex> vertices; // 顶点引用（方块交接线计算用）
+        float[] vx, vz;                // 预计算的float顶点坐标
+        float minY, maxY;
+        float r, g, b;
+        String colorMode; // 闪烁颜色模式（null表示静态颜色）
+        float[] vr, vg, vb; // 单字模式逐顶点颜色
+        // AABB（用于视锥剔除）
+        double aabbMinX, aabbMaxX, aabbMinZ, aabbMaxZ;
+        AABB bounds; // 世界坐标包围盒随域名缓存重建，视锥测试无需逐帧分配。
+        // 方块交接线缓存
+        List<float[]> blockIntersections;
+        int lastPlayerBX, lastPlayerBY, lastPlayerBZ;
+    }
+
+    // ========== 静态缓存 ==========
+    private static final List<CachedArea> cachedAreas = new ArrayList<>();
+    private static int cachedVersion = -1;
+    // 可见性缓存，避免两个pass重复视锥检测
+    private static boolean[] visibleFlags = new boolean[0];
+
+    // ========== 主渲染方法 ==========
+    // 提取阶段使用原版该帧剔除视锥与相机位置，保留动态 FOV、第三人称和视锥偏移规则。
+    public static void render(PoseStack matrices, Frustum frustum, Vec3 cameraPos) {
+        BoundVizManager manager = BoundVizManager.getInstance();
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null) return;
+
+        boolean hasTempVertices = manager.shouldShowTemporaryVertices();
+        if (!manager.isEnabled() && !hasTempVertices) return;
+
+        // 更新几何缓存（仅在数据变化时重建）
+        if (manager.isEnabled()) {
+            updateCache(manager, client);
+        }
+
+        // 绘制状态和 GPU 提交由各版本适配器处理，共享层只负责域名几何与相机坐标。
+        BufferCompat.beginWorld();
+
+        matrices.pushPose();
+        // 新版栈只承载局部变换，相机旋转由 GPU 的全局 model-view 应用，不能再次乘入相机旋转。
+        matrices.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
+
+        Matrix4f matrix = matrices.last().pose();
+
+        if (manager.isEnabled()) {
+            renderCachedAreas(matrix, cameraPos, frustum);
+        }
+
+        if (hasTempVertices) {
+            renderTemporaryVertices(matrices, manager.getTemporaryVerticesDirect(), client);
+        }
+
+        matrices.popPose();
+        BufferCompat.endWorld();
+    }
+
+    // ========== 缓存管理 ==========
+
+    /**
+     * 更新缓存：仅在版本变化时重建几何数据
+     */
+    private static void updateCache(BoundVizManager manager, Minecraft client) {
+        List<AreaData> areas = manager.getCurrentDimensionAreasDirect();
+        int ver = manager.getVersion();
+        if (ver == cachedVersion) return;
+        cachedVersion = ver;
+
+        cachedAreas.clear();
+        for (AreaData area : areas) {
+            CachedArea ca = buildAreaCache(area);
+            if (ca != null) cachedAreas.add(ca);
+        }
+    }
+
+    /**
+     * 为单个域名构建缓存：三角剖分、AABB、颜色
+     */
+    private static CachedArea buildAreaCache(AreaData area) {
+        List<AreaData.Vertex> verts = area.getVertices();
+        if (verts == null || verts.size() < 3) return null;
+
+        CachedArea ca = new CachedArea();
+        ca.vertices = verts;
+        ca.triangles = earClipTriangulate(verts);
+
+        // 预计算float顶点坐标，避免每帧double→float转换
+        int n = verts.size();
+        ca.vx = new float[n];
+        ca.vz = new float[n];
+        ca.aabbMinX = ca.aabbMaxX = verts.get(0).getX();
+        ca.aabbMinZ = ca.aabbMaxZ = verts.get(0).getZ();
+        for (int i = 0; i < n; i++) {
+            double x = verts.get(i).getX(), z = verts.get(i).getZ();
+            ca.vx[i] = (float) x;
+            ca.vz[i] = (float) z;
+            if (x < ca.aabbMinX) ca.aabbMinX = x;
+            if (x > ca.aabbMaxX) ca.aabbMaxX = x;
+            if (z < ca.aabbMinZ) ca.aabbMinZ = z;
+            if (z > ca.aabbMaxZ) ca.aabbMaxZ = z;
+        }
+
+        AreaData.AltitudeData alt = area.getAltitude();
+        ca.minY = (float) (alt != null && alt.getMin() != null ? alt.getMin() : -64);
+        ca.maxY = (float) (alt != null && alt.getMax() != null ? alt.getMax() : 320);
+        ca.bounds = new AABB(ca.aabbMinX, ca.minY, ca.aabbMinZ, ca.aabbMaxX, ca.maxY, ca.aabbMaxZ);
+
+        String color = area.getColor();
+        if (ColorUtil.isFlashColor(color)) {
+            ca.colorMode = color;
+            ca.r = 1f; ca.g = 1f; ca.b = 1f;
+            if (FlashColorHelper.isPerCharMode(color)) {
+                ca.vr = new float[n];
+                ca.vg = new float[n];
+                ca.vb = new float[n];
+            }
+        } else {
+            ca.colorMode = null;
+            int[] rgb = ColorUtil.parseColor(color);
+            ca.r = rgb[0] / 255.0f;
+            ca.g = rgb[1] / 255.0f;
+            ca.b = rgb[2] / 255.0f;
+        }
+
+        // 方块交接线初始化为空，延迟计算
+        ca.blockIntersections = null;
+        ca.lastPlayerBX = Integer.MIN_VALUE;
+        return ca;
+    }
+
+    // ========== 批量渲染（2次draw call替代数百次） ==========
+
+    /**
+     * 渲染所有可见域名：视锥剔除 + 批量提交
+     * 所有三角形合并为1次draw call，所有线段合并为1次draw call
+     */
+    private static void renderCachedAreas(Matrix4f matrix, Vec3 cam, Frustum frustum) {
+        Minecraft client = Minecraft.getInstance();
+        int playerBX = (int) Math.floor(cam.x);
+        int playerBY = (int) Math.floor(cam.y);
+        int playerBZ = (int) Math.floor(cam.z);
+        int size = cachedAreas.size();
+
+        // 一次性计算可见性，两个pass复用
+        if (visibleFlags.length < size) visibleFlags = new boolean[size];
+        long now = System.currentTimeMillis();
+        for (int i = 0; i < size; i++) {
+            CachedArea ca = cachedAreas.get(i);
+            visibleFlags[i] = frustum.isVisible(ca.bounds);
+            // 动态更新闪烁颜色
+            if (ca.colorMode != null && visibleFlags[i]) {
+                if (ca.vr != null) {
+                    // 单字模式：逐顶点不同相位
+                    for (int vi = 0; vi < ca.vr.length; vi++) {
+                        int rgb = FlashColorHelper.getCharColor(ca.colorMode, now, vi);
+                        ca.vr[vi] = ((rgb >> 16) & 0xFF) / 255.0f;
+                        ca.vg[vi] = ((rgb >> 8) & 0xFF) / 255.0f;
+                        ca.vb[vi] = (rgb & 0xFF) / 255.0f;
+                    }
+                    // r,g,b用于方块交接线（取顶点0的颜色）
+                    ca.r = ca.vr[0]; ca.g = ca.vg[0]; ca.b = ca.vb[0];
+                } else {
+                    // 整体模式
+                    int rgb = FlashColorHelper.getWholeColor(ca.colorMode, now);
+                    ca.r = ((rgb >> 16) & 0xFF) / 255.0f;
+                    ca.g = ((rgb >> 8) & 0xFF) / 255.0f;
+                    ca.b = (rgb & 0xFF) / 255.0f;
+                }
+            }
+        }
+
+        // === Pass 1: 批量三角形 ===
+        boolean hasTriangles = false;
+        // 1.21 起 begin 返回新实例，缓冲区只能在本 pass 内创建
+        BufferBuilder buffer = null;
+        for (int i = 0; i < size; i++) {
+            if (!visibleFlags[i]) continue;
+            if (!hasTriangles) {
+                buffer = BufferCompat.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
+                hasTriangles = true;
+            }
+            emitAreaTriangles(matrix, buffer, cachedAreas.get(i));
+        }
+        if (hasTriangles) BufferCompat.drawWorld(buffer);
+
+        // === Pass 2: 批量线段 ===
+        boolean hasLines = false;
+        for (int i = 0; i < size; i++) {
+            if (!visibleFlags[i]) continue;
+            CachedArea ca = cachedAreas.get(i);
+            if (!hasLines) {
+                buffer = BufferCompat.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
+                hasLines = true;
+            }
+            emitAreaLines(matrix, buffer, ca);
+            updateBlockIntersectionsIfNeeded(ca, playerBX, playerBY, playerBZ, client);
+            if (ca.blockIntersections != null) {
+                for (float[] seg : ca.blockIntersections) {
+                    BufferCompat.vertex(buffer, matrix, seg[0], seg[1], seg[2], ca.r, ca.g, ca.b, 0.8f);
+                    BufferCompat.vertex(buffer, matrix, seg[3], seg[4], seg[5], ca.r, ca.g, ca.b, 0.8f);
+                }
+            }
+        }
+        if (hasLines) BufferCompat.drawWorld(buffer);
+    }
+
+    /**
+     * 将单个域名的三角形数据写入批量buffer
+     * 包含底面、顶面、侧面（TRIANGLE_STRIP转为TRIANGLES以支持批量）
+     */
+    private static void emitAreaTriangles(Matrix4f matrix, BufferBuilder buffer, CachedArea ca) {
+        float[] vx = ca.vx, vz = ca.vz;
+        float r = ca.r, g = ca.g, b = ca.b;
+        float[] vr = ca.vr, vg = ca.vg, vb = ca.vb;
+        boolean perVertex = vr != null;
+        float minY = ca.minY, maxY = ca.maxY;
+
+        // 底面 + 顶面
+        for (int[] tri : ca.triangles) {
+            for (int idx : tri) {
+                float cr = perVertex ? vr[idx] : r, cg = perVertex ? vg[idx] : g, cb = perVertex ? vb[idx] : b;
+                BufferCompat.vertex(buffer, matrix, vx[idx], minY, vz[idx], cr, cg, cb, 0.2f);
+            }
+            for (int idx : tri) {
+                float cr = perVertex ? vr[idx] : r, cg = perVertex ? vg[idx] : g, cb = perVertex ? vb[idx] : b;
+                BufferCompat.vertex(buffer, matrix, vx[idx], maxY, vz[idx], cr, cg, cb, 0.2f);
+            }
+        }
+
+        // 侧面：每个边的quad拆为2个三角形
+        int n = vx.length;
+        for (int i = 0; i < n; i++) {
+            int j = (i + 1) % n;
+            float ri = perVertex ? vr[i] : r, gi = perVertex ? vg[i] : g, bi = perVertex ? vb[i] : b;
+            float rj = perVertex ? vr[j] : r, gj = perVertex ? vg[j] : g, bj = perVertex ? vb[j] : b;
+            BufferCompat.vertex(buffer, matrix, vx[i], minY, vz[i], ri, gi, bi, 0.2f);
+            BufferCompat.vertex(buffer, matrix, vx[i], maxY, vz[i], ri, gi, bi, 0.2f);
+            BufferCompat.vertex(buffer, matrix, vx[j], minY, vz[j], rj, gj, bj, 0.2f);
+            BufferCompat.vertex(buffer, matrix, vx[i], maxY, vz[i], ri, gi, bi, 0.2f);
+            BufferCompat.vertex(buffer, matrix, vx[j], maxY, vz[j], rj, gj, bj, 0.2f);
+            BufferCompat.vertex(buffer, matrix, vx[j], minY, vz[j], rj, gj, bj, 0.2f);
+        }
+    }
+
+    /**
+     * 将单个域名的边界线数据写入批量buffer（DEBUG_LINES模式）
+     * 底部线、顶部线、垂直线全部转为独立线段对
+     */
+    private static void emitAreaLines(Matrix4f matrix, BufferBuilder buffer, CachedArea ca) {
+        float[] vx = ca.vx, vz = ca.vz;
+        float r = ca.r, g = ca.g, b = ca.b;
+        float[] vr = ca.vr, vg = ca.vg, vb = ca.vb;
+        boolean perVertex = vr != null;
+        float minY = ca.minY, maxY = ca.maxY;
+        int n = vx.length;
+
+        for (int i = 0; i < n; i++) {
+            int j = (i + 1) % n;
+            float ri = perVertex ? vr[i] : r, gi = perVertex ? vg[i] : g, bi = perVertex ? vb[i] : b;
+            float rj = perVertex ? vr[j] : r, gj = perVertex ? vg[j] : g, bj = perVertex ? vb[j] : b;
+            BufferCompat.vertex(buffer, matrix, vx[i], minY, vz[i], ri, gi, bi, 0.8f);
+            BufferCompat.vertex(buffer, matrix, vx[j], minY, vz[j], rj, gj, bj, 0.8f);
+            BufferCompat.vertex(buffer, matrix, vx[i], maxY, vz[i], ri, gi, bi, 0.8f);
+            BufferCompat.vertex(buffer, matrix, vx[j], maxY, vz[j], rj, gj, bj, 0.8f);
+        }
+
+        for (int i = 0; i < n; i++) {
+            float ri = perVertex ? vr[i] : r, gi = perVertex ? vg[i] : g, bi = perVertex ? vb[i] : b;
+            BufferCompat.vertex(buffer, matrix, vx[i], minY, vz[i], ri, gi, bi, 0.8f);
+            BufferCompat.vertex(buffer, matrix, vx[i], maxY, vz[i], ri, gi, bi, 0.8f);
+        }
+    }
+
+    // ========== 方块交接线（带位置缓存） ==========
+
+    private static final int BLOCK_REBUILD_DIST_SQ = 16; // 玩家移动4格才重算
+
+    /**
+     * 仅当玩家移动超过阈值时重新计算方块交接线
+     */
+    private static void updateBlockIntersectionsIfNeeded(CachedArea ca, int pbx, int pby, int pbz, Minecraft client) {
+        int dx = pbx - ca.lastPlayerBX, dy = pby - ca.lastPlayerBY, dz = pbz - ca.lastPlayerBZ;
+        if (ca.blockIntersections != null && dx * dx + dy * dy + dz * dz < BLOCK_REBUILD_DIST_SQ) return;
+
+        ca.lastPlayerBX = pbx;
+        ca.lastPlayerBY = pby;
+        ca.lastPlayerBZ = pbz;
+        ca.blockIntersections = computeBlockIntersections(ca, client);
+    }
+
+    private static final float FACE_OFFSET = 0.002f;
+
+    /**
+     * 计算域名侧面与方块的交接线段
+     */
+    private static List<float[]> computeBlockIntersections(CachedArea ca, Minecraft client) {
+        Level world = client.level;
+        if (world == null) return null;
+
+        // 独立坐标访问器跨版本保持一致，避免 1.21.9 起实体位置方法改名影响方块交接线范围。
+        Vec3 playerPos = new Vec3(client.player.getX(), client.player.getY(), client.player.getZ());
+        int renderDist = 64;
+        int renderDistSq = renderDist * renderDist;
+        int yMin = Math.max((int) Math.floor(ca.minY), (int) playerPos.y - renderDist);
+        int yMax = Math.min((int) Math.ceil(ca.maxY) - 1, (int) playerPos.y + renderDist);
+
+        List<float[]> segments = new ArrayList<>();
+        List<AreaData.Vertex> verts = ca.vertices;
+
+        for (int ei = 0; ei < verts.size(); ei++) {
+            AreaData.Vertex v1 = verts.get(ei);
+            AreaData.Vertex v2 = verts.get((ei + 1) % verts.size());
+            double ex1 = v1.getX(), ez1 = v1.getZ();
+            double edx = v2.getX() - ex1, edz = v2.getZ() - ez1;
+            if (Math.abs(edx) < 0.001 && Math.abs(edz) < 0.001) continue;
+
+            // DDA光栅化：精确遍历边线经过的每个方块格子
+            int bx = (int) Math.floor(ex1), bz = (int) Math.floor(ez1);
+            int endBx = (int) Math.floor(v2.getX()), endBz = (int) Math.floor(v2.getZ());
+            int stepX = edx > 0 ? 1 : edx < 0 ? -1 : 0;
+            int stepZ = edz > 0 ? 1 : edz < 0 ? -1 : 0;
+
+            // tMaxX/Z: 到达下一个X/Z格线的t值; tDeltaX/Z: 跨越一个格子的t增量
+            double tMaxX = Math.abs(edx) > 0.001 ? ((stepX > 0 ? bx + 1 : bx) - ex1) / edx : Double.MAX_VALUE;
+            double tMaxZ = Math.abs(edz) > 0.001 ? ((stepZ > 0 ? bz + 1 : bz) - ez1) / edz : Double.MAX_VALUE;
+            double tDeltaX = Math.abs(edx) > 0.001 ? Math.abs(1.0 / edx) : Double.MAX_VALUE;
+            double tDeltaZ = Math.abs(edz) > 0.001 ? Math.abs(1.0 / edz) : Double.MAX_VALUE;
+
+            int maxSteps = Math.abs(endBx - bx) + Math.abs(endBz - bz) + 2;
+            for (int s = 0; s < maxSteps; s++) {
+                double ddx = bx + 0.5 - playerPos.x, ddz = bz + 0.5 - playerPos.z;
+                if (ddx * ddx + ddz * ddz <= renderDistSq) {
+                    collectFaceIntersections(segments, world, ex1, ez1, edx, edz,
+                            bx, bz, yMin, yMax, ca.minY, ca.maxY);
+                    collectHorizontalLines(segments, world, ex1, ez1, edx, edz,
+                            bx, bz, yMin, yMax, ca.minY, ca.maxY);
+                }
+                if (bx == endBx && bz == endBz) break;
+                if (tMaxX < tMaxZ) { bx += stepX; tMaxX += tDeltaX; }
+                else { bz += stepZ; tMaxZ += tDeltaZ; }
+            }
+        }
+        return segments;
+    }
+
+    /**
+     * 收集边线与方块面的交点线段（北/南/东/西面）
+     */
+    private static void collectFaceIntersections(List<float[]> segments, Level world,
+            double ex1, double ez1, double edx, double edz,
+            int bx, int bz, int yMin, int yMax, float fMinY, float fMaxY) {
+
+        if (Math.abs(edz) > 0.001) {
+            double t = (bz - ez1) / edz;
+            if (t >= 0 && t <= 1) {
+                double ix = ex1 + edx * t;
+                if (ix >= bx && ix <= bx + 1) {
+                    collectVerticalLines(segments, world, (float) ix, (float) bz - FACE_OFFSET, bx, bz, yMin, yMax, fMinY, fMaxY);
+                    collectVerticalLines(segments, world, (float) ix, (float) bz + FACE_OFFSET, bx, bz - 1, yMin, yMax, fMinY, fMaxY);
+                }
+            }
+            t = (bz + 1 - ez1) / edz;
+            if (t >= 0 && t <= 1) {
+                double ix = ex1 + edx * t;
+                if (ix >= bx && ix <= bx + 1) {
+                    collectVerticalLines(segments, world, (float) ix, (float) (bz + 1) + FACE_OFFSET, bx, bz, yMin, yMax, fMinY, fMaxY);
+                    collectVerticalLines(segments, world, (float) ix, (float) (bz + 1) - FACE_OFFSET, bx, bz + 1, yMin, yMax, fMinY, fMaxY);
+                }
+            }
+        }
+
+        if (Math.abs(edx) > 0.001) {
+            double t = (bx - ex1) / edx;
+            if (t >= 0 && t <= 1) {
+                double iz = ez1 + edz * t;
+                if (iz >= bz && iz <= bz + 1) {
+                    collectVerticalLines(segments, world, (float) bx - FACE_OFFSET, (float) iz, bx, bz, yMin, yMax, fMinY, fMaxY);
+                    collectVerticalLines(segments, world, (float) bx + FACE_OFFSET, (float) iz, bx - 1, bz, yMin, yMax, fMinY, fMaxY);
+                }
+            }
+            t = (bx + 1 - ex1) / edx;
+            if (t >= 0 && t <= 1) {
+                double iz = ez1 + edz * t;
+                if (iz >= bz && iz <= bz + 1) {
+                    collectVerticalLines(segments, world, (float) (bx + 1) + FACE_OFFSET, (float) iz, bx, bz, yMin, yMax, fMinY, fMaxY);
+                    collectVerticalLines(segments, world, (float) (bx + 1) - FACE_OFFSET, (float) iz, bx + 1, bz, yMin, yMax, fMinY, fMaxY);
+                }
+            }
+        }
+    }
+
+    /**
+     * 收集方块顶面/底面与边界墙交接处的水平线段
+     */
+    private static void collectHorizontalLines(List<float[]> segments, Level world,
+            double ex1, double ez1, double edx, double edz,
+            int bx, int bz, int yMin, int yMax, float fMinY, float fMaxY) {
+
+        double tMin = 0, tMax = 1;
+        if (Math.abs(edx) > 0.001) {
+            double t1 = (bx - ex1) / edx, t2 = (bx + 1 - ex1) / edx;
+            if (t1 > t2) { double tmp = t1; t1 = t2; t2 = tmp; }
+            tMin = Math.max(tMin, t1);
+            tMax = Math.min(tMax, t2);
+        } else if (ex1 < bx || ex1 > bx + 1) return;
+
+        if (Math.abs(edz) > 0.001) {
+            double t1 = (bz - ez1) / edz, t2 = (bz + 1 - ez1) / edz;
+            if (t1 > t2) { double tmp = t1; t1 = t2; t2 = tmp; }
+            tMin = Math.max(tMin, t1);
+            tMax = Math.min(tMax, t2);
+        } else if (ez1 < bz || ez1 > bz + 1) return;
+
+        if (tMin >= tMax) return;
+
+        float x1 = (float)(ex1 + edx * tMin), z1 = (float)(ez1 + edz * tMin);
+        float x2 = (float)(ex1 + edx * tMax), z2 = (float)(ez1 + edz * tMax);
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+
+        for (int by = yMin; by <= yMax; by++) {
+            pos.set(bx, by, bz);
+            if (!isOpaqueFullCube(world, pos)) continue;
+
+            float bottom = Math.max(by, fMinY);
+            float top = Math.min(by + 1, fMaxY);
+            if (top <= bottom) continue;
+
+            pos.set(bx, by + 1, bz);
+            if (top == by + 1 && !isOpaqueFullCube(world, pos)) {
+                segments.add(new float[]{x1, top + FACE_OFFSET, z1, x2, top + FACE_OFFSET, z2});
+            }
+            pos.set(bx, by - 1, bz);
+            if (bottom == by && !isOpaqueFullCube(world, pos)) {
+                segments.add(new float[]{x1, bottom - FACE_OFFSET, z1, x2, bottom - FACE_OFFSET, z2});
+            }
+        }
+    }
+
+    /** 1.21.2 起 isOpaqueFullCube 改为无参版本（形状在方块状态里预计算）。 */
+    private static boolean isOpaqueFullCube(Level world, BlockPos pos) {
+        /*return world.getBlockState(pos).isOpaqueFullCube(world, pos);
+        */
+        return world.getBlockState(pos).isSolidRender();
+    }
+
+    /**
+     * 收集方块面上的垂直线段（仅对实心方块）
+     */
+    private static void collectVerticalLines(List<float[]> segments, Level world,
+            float fx, float fz, int bx, int bz,
+            int yMin, int yMax, float fMinY, float fMaxY) {
+
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int by = yMin; by <= yMax; by++) {
+            pos.set(bx, by, bz);
+            if (!isOpaqueFullCube(world, pos)) continue;
+
+            float lineBottom = Math.max(by, fMinY);
+            float lineTop = Math.min(by + 1, fMaxY);
+            if (lineTop <= lineBottom) continue;
+
+            segments.add(new float[]{fx, lineBottom, fz, fx, lineTop, fz});
+        }
+    }
+
+    // ========== 临时顶点渲染 ==========
+
+    private static void renderTemporaryVertices(PoseStack matrices, List<BlockPos> vertices, Minecraft client) {
+        if (vertices.isEmpty()) return;
+
+        Matrix4f matrix = matrices.last().pose();
+        float py = (float) client.player.getY();
+
+        BufferBuilder buffer = BufferCompat.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
+        for (BlockPos pos : vertices) {
+            float px = pos.getX() + 0.5f, pz = pos.getZ() + 0.5f;
+            float size = 0.4f;
+            BufferCompat.vertex(buffer, matrix, px - size, py, pz, 1f, 1f, 1f, 1f);
+            BufferCompat.vertex(buffer, matrix, px + size, py, pz, 1f, 1f, 1f, 1f);
+            BufferCompat.vertex(buffer, matrix, px, py, pz - size, 1f, 1f, 1f, 1f);
+            BufferCompat.vertex(buffer, matrix, px, py, pz + size, 1f, 1f, 1f, 1f);
+        }
+        // 虚线连接（批量）
+        for (int i = 0; i < vertices.size() - 1; i++) {
+            BlockPos v1 = vertices.get(i), v2 = vertices.get(i + 1);
+            emitDashedLine(matrix, buffer, v1.getX() + 0.5f, v2.getX() + 0.5f,
+                    v1.getZ() + 0.5f, v2.getZ() + 0.5f, py);
+        }
+        BufferCompat.drawWorld(buffer);
+    }
+
+    private static void emitDashedLine(Matrix4f matrix, BufferBuilder buffer,
+                                        float x1, float x2, float z1, float z2, float y) {
+        double dx = x2 - x1, dz = z2 - z1;
+        double distance = Math.sqrt(dx * dx + dz * dz);
+        if (distance < 0.01) return;
+
+        double segLen = 0.5, total = 0.8; // seg + gap
+        for (double d = 0; d < distance; d += total) {
+            double t1 = d / distance;
+            double t2 = Math.min((d + segLen) / distance, 1.0);
+            BufferCompat.vertex(buffer, matrix, (float)(x1 + dx * t1), y, (float)(z1 + dz * t1), 1f, 1f, 1f, 1f);
+            BufferCompat.vertex(buffer, matrix, (float)(x1 + dx * t2), y, (float)(z1 + dz * t2), 1f, 1f, 1f, 1f);
+        }
+    }
+
+    // ========== 耳切法三角剖分 ==========
+
+    private static List<int[]> earClipTriangulate(List<AreaData.Vertex> polygon) {
+        return PolygonGeometry.triangulate(polygon);
+    }
+}

@@ -1,10 +1,10 @@
 package areahint.command;
 
+import areahint.util.TextEventCompat;
+
 import areahint.i18n.I18nManager;
 import areahint.network.ClientNetworking;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -75,8 +75,8 @@ public class SetHighClientCommand {
             String areaName = areaNames.get(i);
             MutableText areaButton = Text.literal(String.format("§a%d. §f%s", i + 1, areaName))
                 .setStyle(Style.EMPTY
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint sethigh " + areaName))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    .withClickEvent(TextEventCompat.runCommand("/areahint sethigh " + areaName))
+                    .withHoverEvent(TextEventCompat.showText(
                         Text.of(I18nManager.translate("sethigh.prompt.select.hover") + areaName)))
                     .withColor(Formatting.AQUA));
             client.player.sendMessage(areaButton, false);
@@ -85,8 +85,8 @@ public class SetHighClientCommand {
         // 取消按钮
         MutableText cancelButton = Text.literal(I18nManager.translate("command.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint sethigh cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withClickEvent(TextEventCompat.runCommand("/areahint sethigh cancel"))
+                .withHoverEvent(TextEventCompat.showText(
                     Text.of(I18nManager.translate("command.message.altitude.cancel"))))
                 .withColor(Formatting.RED));
         client.player.sendMessage(cancelButton, false);
@@ -127,24 +127,24 @@ public class SetHighClientCommand {
         // 自定义高度按钮
         MutableText customButton = Text.literal(I18nManager.translate("command.button.altitude"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint sethigh custom " + selectedArea))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withClickEvent(TextEventCompat.runCommand("/areahint sethigh custom " + selectedArea))
+                .withHoverEvent(TextEventCompat.showText(
                     Text.of(I18nManager.translate("command.prompt.altitude_5"))))
                 .withColor(Formatting.LIGHT_PURPLE));
         
         // 不限制高度按钮
         MutableText unlimitedButton = Text.literal(I18nManager.translate("command.button.altitude_2"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint sethigh unlimited " + selectedArea))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withClickEvent(TextEventCompat.runCommand("/areahint sethigh unlimited " + selectedArea))
+                .withHoverEvent(TextEventCompat.showText(
                     Text.of(I18nManager.translate("command.message.area.altitude.coordinate"))))
                 .withColor(Formatting.YELLOW));
         
         // 取消按钮
         MutableText cancelButton = Text.literal(I18nManager.translate("command.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint sethigh cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withClickEvent(TextEventCompat.runCommand("/areahint sethigh cancel"))
+                .withHoverEvent(TextEventCompat.showText(
                     Text.of(I18nManager.translate("command.message.altitude.cancel"))))
                 .withColor(Formatting.RED));
         

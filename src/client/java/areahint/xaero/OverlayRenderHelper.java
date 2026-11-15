@@ -1,59 +1,23 @@
 package areahint.xaero;
 
-import areahint.render.BufferCompat;
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.BufferRenderer;
-import net.minecraft.client.render.GameRenderer;
-// 1.21.5 起 VertexFormat 由 net.minecraft.client.render 移到 com.mojang.blaze3d.vertex
-//? if <=1.21.4 {
-import net.minecraft.client.render.VertexFormat;
-//?} else {
-/*import com.mojang.blaze3d.vertex.VertexFormat;*/
-//?}
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.gl.ShaderProgram;
 import org.joml.Matrix4f;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL14;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
-/**
- * Xaero 两类地图共用的二维彩色几何提交工具。
- */
+/** 两类地图共用的绘制门面，版本工厂提供具体后端，共享侧只管理成对的状态恢复。 */
 public final class OverlayRenderHelper {
     /** 两张 Xaero 地图共用的域名名称放大倍数。 */
     public static final float AREA_NAME_SCALE = 4.0F;
-
-    private static final ThreadLocal<Deque<RenderState>> RENDER_STATES =
-        ThreadLocal.withInitial(ArrayDeque::new);
+    private static final OverlayBackend BACKEND = OverlayRendererFactory.create();
+    private static final ThreadLocal<Deque<RenderState>> RENDER_STATES = ThreadLocal.withInitial(ArrayDeque::new);
 
     private OverlayRenderHelper() {
     }
 
     public static void beginOverlay() {
-        RENDER_STATES.get().push(RenderState.capture());
-        prepareGeometryState();
-    }
-
-    /**
-     * 文字渲染会切换全局着色器，因此每次提交几何前都必须恢复覆盖层状态。
-     */
-    private static void prepareGeometryState() {
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.disableDepthTest();
-        // 域名顶点允许按任意方向记录，关闭背面剔除可避免某一种绕序的填充面被 Xaero 丢弃
-        RenderSystem.disableCull();
-        // 1.21.2 起 GameRenderer 的 shader program getter 被移除，改用 ShaderProgramKeys
-        //? if <=1.21.1 {
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        //?} else {
-        /*RenderSystem.setShader(net.minecraft.client.gl.ShaderProgramKeys.POSITION_COLOR);*/
-        //?}
+        RENDER_STATES.get().push(BACKEND.beginOverlay());
     }
 
     public static void endOverlay() {
@@ -69,86 +33,15 @@ public final class OverlayRenderHelper {
     }
 
     public static void drawTriangles(Matrix4f matrix, List<float[]> triangles, int rgb, float alpha, float depth) {
-        if (triangles == null || triangles.isEmpty()) {
-            return;
-        }
-        prepareGeometryState();
-        float red = ((rgb >> 16) & 0xFF) / 255.0F;
-        float green = ((rgb >> 8) & 0xFF) / 255.0F;
-        float blue = (rgb & 0xFF) / 255.0F;
-        BufferBuilder buffer = BufferCompat.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
-        for (float[] triangle : triangles) {
-            if (triangle.length < 6) {
-                continue;
-            }
-            BufferCompat.vertex(buffer, matrix, triangle[0], triangle[1], depth, red, green, blue, alpha);
-            BufferCompat.vertex(buffer, matrix, triangle[2], triangle[3], depth, red, green, blue, alpha);
-            BufferCompat.vertex(buffer, matrix, triangle[4], triangle[5], depth, red, green, blue, alpha);
-        }
-        BufferRenderer.drawWithGlobalProgram(buffer.end());
+        BACKEND.drawTriangles(matrix, triangles, rgb, alpha, depth);
     }
 
     public static void drawLines(Matrix4f matrix, List<float[]> lines, int rgb, float alpha, float depth) {
-        if (lines == null || lines.isEmpty()) {
-            return;
-        }
-        prepareGeometryState();
-        float red = ((rgb >> 16) & 0xFF) / 255.0F;
-        float green = ((rgb >> 8) & 0xFF) / 255.0F;
-        float blue = (rgb & 0xFF) / 255.0F;
-        BufferBuilder buffer = BufferCompat.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
-        for (float[] line : lines) {
-            if (line.length < 4) {
-                continue;
-            }
-            BufferCompat.vertex(buffer, matrix, line[0], line[1], depth, red, green, blue, alpha);
-            BufferCompat.vertex(buffer, matrix, line[2], line[3], depth, red, green, blue, alpha);
-        }
-        BufferRenderer.drawWithGlobalProgram(buffer.end());
+        BACKEND.drawLines(matrix, lines, rgb, alpha, depth);
     }
 
-    private record RenderState(boolean blendEnabled, boolean depthEnabled, boolean cullEnabled,
-                               int blendSourceRgb, int blendDestinationRgb,
-                               int blendSourceAlpha, int blendDestinationAlpha,
-                               ShaderProgram shader) {
-        private static RenderState capture() {
-            return new RenderState(
-                GL11.glIsEnabled(GL11.GL_BLEND),
-                GL11.glIsEnabled(GL11.GL_DEPTH_TEST),
-                GL11.glIsEnabled(GL11.GL_CULL_FACE),
-                GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB),
-                GL11.glGetInteger(GL14.GL_BLEND_DST_RGB),
-                GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA),
-                GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA),
-                RenderSystem.getShader());
-        }
-
-        private void restore() {
-            RenderSystem.blendFuncSeparate(
-                blendSourceRgb, blendDestinationRgb, blendSourceAlpha, blendDestinationAlpha);
-            if (blendEnabled) {
-                RenderSystem.enableBlend();
-            } else {
-                RenderSystem.disableBlend();
-            }
-            if (depthEnabled) {
-                RenderSystem.enableDepthTest();
-            } else {
-                RenderSystem.disableDepthTest();
-            }
-            if (cullEnabled) {
-                RenderSystem.enableCull();
-            } else {
-                RenderSystem.disableCull();
-            }
-            if (shader != null) {
-                // 1.21.2 起 setShader 不再接受 Supplier，改为直接传 ShaderProgram
-                //? if <=1.21.1 {
-                RenderSystem.setShader(() -> shader);
-                //?} else {
-                /*RenderSystem.setShader(shader);*/
-                //?}
-            }
-        }
+    /** 旧后端恢复绘制状态，新后端关闭目标附件作用域；保留同名类型并让其承担真实的跨版本恢复契约。 */
+    public interface RenderState {
+        void restore();
     }
 }

@@ -1,9 +1,9 @@
 package areahint.soundevent;
 
+import areahint.util.TextEventCompat;
+
 import areahint.i18n.I18nManager;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -218,8 +218,8 @@ public final class SoundEventChatUI {
 
     private static MutableText createButton(String label, String command, Formatting color, String hoverText) {
         return Text.literal(label).setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(hoverText)))
+                .withClickEvent(TextEventCompat.runCommand(command))
+                .withHoverEvent(TextEventCompat.showText(Text.literal(hoverText)))
                 .withColor(color));
     }
 

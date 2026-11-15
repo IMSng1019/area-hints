@@ -74,17 +74,8 @@ public class BoundVizRenderer {
             updateCache(manager, client);
         }
 
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(false);
-        RenderSystem.disableCull();
-        // 1.21.2 起 GameRenderer 的 shader program getter 被移除，改用 ShaderProgramKeys
-        //? if <=1.21.1 {
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        //?} else {
-        /*RenderSystem.setShader(net.minecraft.client.gl.ShaderProgramKeys.POSITION_COLOR);*/
-        //?}
+        // 绘制状态和 GPU 提交由各版本适配器处理，共享层只负责域名几何与相机坐标。
+        BufferCompat.beginWorld();
 
         matrices.push();
         matrices.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
@@ -100,9 +91,7 @@ public class BoundVizRenderer {
         }
 
         matrices.pop();
-        RenderSystem.depthMask(true);
-        RenderSystem.enableCull();
-        RenderSystem.disableBlend();
+        BufferCompat.endWorld();
     }
 
     // ========== 视锥剔除 ==========
@@ -305,7 +294,7 @@ public class BoundVizRenderer {
             }
             emitAreaTriangles(matrix, buffer, cachedAreas.get(i));
         }
-        if (hasTriangles) BufferRenderer.drawWithGlobalProgram(buffer.end());
+        if (hasTriangles) BufferCompat.drawWorld(buffer);
 
         // === Pass 2: 批量线段 ===
         boolean hasLines = false;
@@ -325,7 +314,7 @@ public class BoundVizRenderer {
                 }
             }
         }
-        if (hasLines) BufferRenderer.drawWithGlobalProgram(buffer.end());
+        if (hasLines) BufferCompat.drawWorld(buffer);
     }
 
     /**
@@ -611,7 +600,7 @@ public class BoundVizRenderer {
             emitDashedLine(matrix, buffer, v1.getX() + 0.5f, v2.getX() + 0.5f,
                     v1.getZ() + 0.5f, v2.getZ() + 0.5f, py);
         }
-        BufferRenderer.drawWithGlobalProgram(buffer.end());
+        BufferCompat.drawWorld(buffer);
     }
 
     private static void emitDashedLine(Matrix4f matrix, BufferBuilder buffer,

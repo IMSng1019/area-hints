@@ -1,5 +1,7 @@
 package areahint.teleport;
 
+import areahint.util.TextEventCompat;
+
 import areahint.AreashintClient;
 import areahint.config.ClientConfig;
 import areahint.data.AreaData;
@@ -8,8 +10,6 @@ import areahint.network.ClientNetworking;
 import areahint.network.Packets;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -91,8 +91,8 @@ public class TeleportClientManager {
             AreaData area = areas.get(i);
             MutableText line = Text.literal(String.format("§a%d. §f%s", i + 1, area.getName()))
                     .setStyle(Style.EMPTY
-                            .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint " + mode + " " + area.getName()))
-                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(I18nManager.translate("teleport.hover.teleport_to", area.getName()))))
+                            .withClickEvent(TextEventCompat.runCommand("/areahint " + mode + " " + area.getName()))
+                            .withHoverEvent(TextEventCompat.showText(Text.literal(I18nManager.translate("teleport.hover.teleport_to", area.getName()))))
                             .withColor(Formatting.AQUA));
             client.player.sendMessage(line, false);
         }

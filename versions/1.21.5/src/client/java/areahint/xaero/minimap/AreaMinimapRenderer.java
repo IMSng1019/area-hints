@@ -1,5 +1,4 @@
-// 阶段 6 第三方隔离：与 1.21.1 同代际（Xaero 25.3.2 / 世界地图 1.39.x，BlueMap 2.7.8），逐字复制。
-// 复制理由：机制 ② 要求每个活跃节点各挂一份实现；本文件与 1.21.1 版本目录的对应文件保持一致。
+// 1.21.5 小地图沿用既有几何裁剪，绘制目标与 DrawContext 裁剪坐标由本节点适配。
 
 package areahint.xaero.minimap;
 
@@ -12,13 +11,13 @@ import areahint.xaero.AreaOverlayRepository.OverlayArea;
 import areahint.xaero.AreaOverlayRepository.OverlaySnapshot;
 import areahint.xaero.AreaOverlayRepository.Point;
 import areahint.xaero.OverlayRenderHelper;
+import areahint.xaero.OverlayRenderer1215;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import xaero.common.graphics.renderer.multitexture.MultiTextureRenderTypeRendererProvider;
 import xaero.hud.minimap.element.render.MinimapElementRenderInfo;
 import xaero.hud.minimap.element.render.MinimapElementRenderLocation;
@@ -89,17 +88,12 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
         context.visibleAreas = List.copyOf(visible);
         context.fillPlan = fillPlan;
         context.active = !visible.isEmpty();
-        if (context.active) {
-            OverlayRenderHelper.beginOverlay();
-        }
     }
 
     @Override
     public void postRender(MinimapElementRenderInfo renderInfo, VertexConsumerProvider.Immediate immediate,
                            MultiTextureRenderTypeRendererProvider multiTextureProvider) {
-        if (context.active) {
-            OverlayRenderHelper.endOverlay();
-        }
+        // 每个 renderElement 已在 finally 中恢复裁剪与目标作用域，此处只履行 Xaero 的抽象回调契约。
     }
 
     @Override
@@ -109,26 +103,35 @@ final class AreaMinimapRenderer extends MinimapElementRenderer<AreaMinimapElemen
                                  VertexConsumerProvider.Immediate immediate) {
         MatrixStack matrices = drawContext.getMatrices();
         matrices.push();
-        matrices.translate(partialX, partialZ, depth);
-        Matrix4f matrix = matrices.peek().getPositionMatrix();
-        Vector3f origin = matrix.transformPosition(new Vector3f());
-        int halfWidth = context.transform.halfViewW();
-        int halfHeight = context.transform.halfViewH();
-        drawContext.enableScissor((int) Math.floor(origin.x - halfWidth), (int) Math.floor(origin.y - halfHeight),
-            (int) Math.ceil(origin.x + halfWidth), (int) Math.ceil(origin.y + halfHeight));
-
-        long now = System.currentTimeMillis();
-        // 先提交进入状态处理后的填充网格，再统一绘制边界，避免后绘制的填充遮住已有边线。
-        for (OverlayArea area : context.visibleAreas) {
-            drawAreaFill(matrix, context.fillPlan.trianglesFor(area),
-                AreaOverlayColorResolver.resolve(area, now));
+        try {
+            matrices.translate(partialX, partialZ, depth);
+            Matrix4f matrix = matrices.peek().getPositionMatrix();
+            int halfWidth = context.transform.halfViewW();
+            int halfHeight = context.transform.halfViewH();
+            // 1.21.5 的 DrawContext 会自行变换裁剪矩形，此处只传局部范围，避免地图中心偏移被应用两次。
+            drawContext.enableScissor(-halfWidth, -halfHeight, halfWidth, halfHeight);
+            try {
+                // OVER_MINIMAP 通常不提供附件；若 Xaero 提供离屏目标则优先采用，否则即时捕获当前客户端目标。
+                OverlayRenderer1215.beginOverlay(renderInfo.framebuffer);
+                try {
+                    long now = System.currentTimeMillis();
+                    // 先提交进入状态处理后的填充网格，再统一绘制边界，避免后绘制的填充遮住已有边线。
+                    for (OverlayArea area : context.visibleAreas) {
+                        drawAreaFill(matrix, context.fillPlan.trianglesFor(area),
+                            AreaOverlayColorResolver.resolve(area, now));
+                    }
+                    for (OverlayArea area : context.visibleAreas) {
+                        drawAreaBoundary(matrix, area, AreaOverlayColorResolver.resolve(area, now));
+                    }
+                } finally {
+                    OverlayRenderer1215.endOverlay();
+                }
+            } finally {
+                drawContext.disableScissor();
+            }
+        } finally {
+            matrices.pop();
         }
-        for (OverlayArea area : context.visibleAreas) {
-            drawAreaBoundary(matrix, area, AreaOverlayColorResolver.resolve(area, now));
-        }
-
-        drawContext.disableScissor();
-        matrices.pop();
         return true;
     }
 

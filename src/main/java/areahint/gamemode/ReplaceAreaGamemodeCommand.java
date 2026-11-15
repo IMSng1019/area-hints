@@ -253,7 +253,7 @@ public final class ReplaceAreaGamemodeCommand {
         NetworkBuf buffer = NetworkCompat.get().newBuffer();
         buffer.writeString(action);
         buffer.writeString(dimension);
-        buffer.writeString(ServerConfig.getDefaultGamemode().getName());
+        buffer.writeString(ServerConfig.getDefaultGamemode().asString());
         buffer.writeInt(areas.size());
         for (JsonObject area : areas) {
             buffer.writeString(area.get("name").getAsString());
@@ -275,7 +275,7 @@ public final class ReplaceAreaGamemodeCommand {
         String mode = explicitMode(area);
         if (mode.isEmpty()) {
             return translate(source, "gamemode.mode.default",
-                translate(source, "gamemode.mode." + ServerConfig.getDefaultGamemode().getName()));
+                translate(source, "gamemode.mode." + ServerConfig.getDefaultGamemode().asString()));
         }
         return translate(source, "gamemode.mode." + mode);
     }

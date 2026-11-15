@@ -1,5 +1,7 @@
 package areahint.dividearea;
 
+import areahint.util.TextEventCompat;
+
 import areahint.commandui.CommandVisualLaunchContext;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
@@ -318,8 +320,8 @@ public class DivideAreaManager {
     private void showCancelButton() {
         if (client.player == null) return;
         net.minecraft.text.MutableText cancel = Text.literal(I18nManager.translate("addhint.error.cancel")).setStyle(net.minecraft.text.Style.EMPTY
-            .withClickEvent(new net.minecraft.text.ClickEvent(net.minecraft.text.ClickEvent.Action.RUN_COMMAND, "/areahint dividearea cancel"))
-            .withHoverEvent(new net.minecraft.text.HoverEvent(net.minecraft.text.HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("dividearea.message.cancel.divide"))))
+            .withClickEvent(TextEventCompat.runCommand("/areahint dividearea cancel"))
+            .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("dividearea.message.cancel.divide"))))
             .withColor(Formatting.RED));
         client.player.sendMessage(cancel, false);
     }
@@ -524,20 +526,20 @@ public class DivideAreaManager {
         sendMsg(I18nManager.translate("dividearea.prompt.general_2") + areaNum + I18nManager.translate("dividearea.message.level_3"), Formatting.GREEN);
 
         net.minecraft.text.MutableText l1 = Text.literal(I18nManager.translate("dividearea.button.area")).setStyle(net.minecraft.text.Style.EMPTY
-            .withClickEvent(new net.minecraft.text.ClickEvent(net.minecraft.text.ClickEvent.Action.RUN_COMMAND, "/areahint dividearea level 1"))
-            .withHoverEvent(new net.minecraft.text.HoverEvent(net.minecraft.text.HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("dividearea.prompt.area_2"))))
+            .withClickEvent(TextEventCompat.runCommand("/areahint dividearea level 1"))
+            .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("dividearea.prompt.area_2"))))
             .withColor(Formatting.AQUA));
         net.minecraft.text.MutableText l2 = Text.literal(I18nManager.translate("dividearea.button.area_3")).setStyle(net.minecraft.text.Style.EMPTY
-            .withClickEvent(new net.minecraft.text.ClickEvent(net.minecraft.text.ClickEvent.Action.RUN_COMMAND, "/areahint dividearea level 2"))
-            .withHoverEvent(new net.minecraft.text.HoverEvent(net.minecraft.text.HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("dividearea.prompt.area_3"))))
+            .withClickEvent(TextEventCompat.runCommand("/areahint dividearea level 2"))
+            .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("dividearea.prompt.area_3"))))
             .withColor(Formatting.YELLOW));
         net.minecraft.text.MutableText l3 = Text.literal(I18nManager.translate("dividearea.button.area_2")).setStyle(net.minecraft.text.Style.EMPTY
-            .withClickEvent(new net.minecraft.text.ClickEvent(net.minecraft.text.ClickEvent.Action.RUN_COMMAND, "/areahint dividearea level 3"))
-            .withHoverEvent(new net.minecraft.text.HoverEvent(net.minecraft.text.HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("dividearea.prompt.area_4"))))
+            .withClickEvent(TextEventCompat.runCommand("/areahint dividearea level 3"))
+            .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("dividearea.prompt.area_4"))))
             .withColor(Formatting.LIGHT_PURPLE));
         net.minecraft.text.MutableText cancel = Text.literal(I18nManager.translate("addhint.error.cancel")).setStyle(net.minecraft.text.Style.EMPTY
-            .withClickEvent(new net.minecraft.text.ClickEvent(net.minecraft.text.ClickEvent.Action.RUN_COMMAND, "/areahint dividearea cancel"))
-            .withHoverEvent(new net.minecraft.text.HoverEvent(net.minecraft.text.HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("dividearea.message.cancel.divide"))))
+            .withClickEvent(TextEventCompat.runCommand("/areahint dividearea cancel"))
+            .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("dividearea.message.cancel.divide"))))
             .withColor(Formatting.RED));
 
         client.player.sendMessage(Text.empty().append(l1).append(Text.of("  ")).append(l2).append(Text.of("  ")).append(l3).append(Text.of("  ")).append(cancel), false);
@@ -554,9 +556,9 @@ public class DivideAreaManager {
             if (a.getLevel() == targetLevel) {
                 String dn = areahint.util.AreaDataConverter.getDisplayName(a);
                 net.minecraft.text.MutableText btn = Text.literal("§6[" + dn + "]").setStyle(net.minecraft.text.Style.EMPTY
-                    .withClickEvent(new net.minecraft.text.ClickEvent(net.minecraft.text.ClickEvent.Action.RUN_COMMAND,
+                    .withClickEvent(TextEventCompat.runCommand(
                         "/areahint dividearea base \"" + a.getName() + "\""))
-                    .withHoverEvent(new net.minecraft.text.HoverEvent(net.minecraft.text.HoverEvent.Action.SHOW_TEXT,
+                    .withHoverEvent(TextEventCompat.showText(
                         Text.of(I18nManager.translate("addhint.prompt.general") + dn + I18nManager.translate("dividearea.message.area.parent"))))
                     .withColor(Formatting.GOLD));
                 client.player.sendMessage(btn, false);
@@ -564,8 +566,8 @@ public class DivideAreaManager {
         }
 
         net.minecraft.text.MutableText cancel = Text.literal(I18nManager.translate("addhint.error.cancel")).setStyle(net.minecraft.text.Style.EMPTY
-            .withClickEvent(new net.minecraft.text.ClickEvent(net.minecraft.text.ClickEvent.Action.RUN_COMMAND, "/areahint dividearea cancel"))
-            .withHoverEvent(new net.minecraft.text.HoverEvent(net.minecraft.text.HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("dividearea.message.cancel.divide"))))
+            .withClickEvent(TextEventCompat.runCommand("/areahint dividearea cancel"))
+            .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("dividearea.message.cancel.divide"))))
             .withColor(Formatting.RED));
         client.player.sendMessage(cancel, false);
     }
@@ -611,16 +613,16 @@ public class DivideAreaManager {
         client.player.sendMessage(Text.of(""), false);
 
         net.minecraft.text.MutableText cancel = Text.literal(I18nManager.translate("addhint.error.cancel")).setStyle(net.minecraft.text.Style.EMPTY
-            .withClickEvent(new net.minecraft.text.ClickEvent(net.minecraft.text.ClickEvent.Action.RUN_COMMAND, "/areahint dividearea cancel"))
-            .withHoverEvent(new net.minecraft.text.HoverEvent(net.minecraft.text.HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("dividearea.message.cancel.divide"))))
+            .withClickEvent(TextEventCompat.runCommand("/areahint dividearea cancel"))
+            .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("dividearea.message.cancel.divide"))))
             .withColor(Formatting.RED));
         client.player.sendMessage(cancel, false);
     }
 
     private net.minecraft.text.MutableText colorBtn(String name, String value, String mc) {
         return Text.literal(mc + "[" + name + "]").setStyle(net.minecraft.text.Style.EMPTY
-            .withClickEvent(new net.minecraft.text.ClickEvent(net.minecraft.text.ClickEvent.Action.RUN_COMMAND, "/areahint dividearea color " + value))
-            .withHoverEvent(new net.minecraft.text.HoverEvent(net.minecraft.text.HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("addhint.prompt.general") + name + I18nManager.translate("dividearea.message.area.color")))));
+            .withClickEvent(TextEventCompat.runCommand("/areahint dividearea color " + value))
+            .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("addhint.prompt.general") + name + I18nManager.translate("dividearea.message.area.color")))));
     }
 
     // ===== 几何算法 =====

@@ -1,9 +1,9 @@
 package areahint.titlesize;
 
+import areahint.util.TextEventCompat;
+
 import areahint.i18n.I18nManager;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -49,8 +49,8 @@ public class TitleSizeUI {
         // 取消按钮
         MutableText cancelButton = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint titlesize cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("gui.message.cancel_4"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint titlesize cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("gui.message.cancel_4"))))
                 .withColor(Formatting.RED));
 
         client.player.sendMessage(row1, false);
@@ -66,9 +66,9 @@ public class TitleSizeUI {
     private static MutableText createSizeButton(String displayName, String sizeValue, String colorCode) {
         return Text.literal(colorCode + "[" + displayName + "]")
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint titlesize select " + sizeValue))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withHoverEvent(TextEventCompat.showText(
                     Text.of(I18nManager.translate("addhint.prompt.general") + displayName + I18nManager.translate("gui.message.general_2")))));
     }
 

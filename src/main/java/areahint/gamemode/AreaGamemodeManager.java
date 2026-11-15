@@ -89,7 +89,7 @@ public final class AreaGamemodeManager {
     private static void sendPolicy(ServerPlayerEntity player) {
         NetworkBuf buffer = NetworkCompat.get().newBuffer();
         buffer.writeBoolean(ServerConfig.isForceUseAreahint());
-        buffer.writeString(ServerConfig.getDefaultGamemode().getName());
+        buffer.writeString(ServerConfig.getDefaultGamemode().asString());
         NetworkCompat.get().sendToPlayer(player, Channel.S2C_AREA_GAMEMODE_POLICY, buffer);
     }
 

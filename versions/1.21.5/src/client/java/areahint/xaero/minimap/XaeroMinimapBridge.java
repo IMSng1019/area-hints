@@ -11,7 +11,7 @@ import xaero.hud.minimap.element.render.MinimapElementRendererHandler;
 import java.lang.reflect.Field;
 
 /**
- * Xaero 小地图 25.2.0 桥接入口。
+ * Xaero 小地图 25.3.2 桥接入口。
  */
 public final class XaeroMinimapBridge {
     private static boolean registered;
@@ -82,7 +82,7 @@ public final class XaeroMinimapBridge {
             circleField = field(handlerClass, "circle");
         } catch (Exception e) {
             failed = true;
-            AreashintClient.LOGGER.warn("Xaero 小地图 25.2.0 反射接口不匹配，已安全禁用。", e);
+            AreashintClient.LOGGER.warn("Xaero 小地图 25.3.2 反射接口不匹配，已安全禁用。", e);
         }
     }
 

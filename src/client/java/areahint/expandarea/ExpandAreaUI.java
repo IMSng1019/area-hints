@@ -1,12 +1,12 @@
 package areahint.expandarea;
 
+import areahint.util.TextEventCompat;
+
 import areahint.data.AreaData;
 import areahint.i18n.I18nManager;
 import areahint.util.AreaDataConverter;
 import areahint.util.ClientAreaText;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -41,8 +41,8 @@ public class ExpandAreaUI {
             client.player.sendMessage(Text.of(I18nManager.translate("expandarea.error.area.expand_4")), false);
             MutableText cancelButton = Text.literal(I18nManager.translate("addhint.error.cancel"))
                 .setStyle(Style.EMPTY
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint expandarea cancel"))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("expandarea.message.cancel.expand"))))
+                    .withClickEvent(TextEventCompat.runCommand("/areahint expandarea cancel"))
+                    .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("expandarea.message.cancel.expand"))))
                     .withColor(Formatting.RED));
             client.player.sendMessage(cancelButton, false);
             return;
@@ -55,9 +55,9 @@ public class ExpandAreaUI {
             
             MutableText areaButton = Text.literal("§6[" + displayName + "]")
                 .setStyle(Style.EMPTY
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, 
+                    .withClickEvent(TextEventCompat.runCommand(
                         "/areahint expandarea select \"" + area.getName() + "\""))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    .withHoverEvent(TextEventCompat.showText(
                         Text.of(I18nManager.translate("expandarea.message.expand") + displayName + I18nManager.translate("addhint.message.general") + signature)))
                     .withColor(Formatting.GOLD));
             
@@ -69,8 +69,8 @@ public class ExpandAreaUI {
         // 显示取消按钮
         MutableText cancelButton = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint expandarea cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("expandarea.message.cancel.expand"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint expandarea cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("expandarea.message.cancel.expand"))))
                 .withColor(Formatting.RED));
         
         client.player.sendMessage(cancelButton, false);
@@ -98,14 +98,14 @@ public class ExpandAreaUI {
         // 显示操作选项
         net.minecraft.text.MutableText continueButton = Text.literal(I18nManager.translate("addhint.button.record.continue"))
             .setStyle(net.minecraft.text.Style.EMPTY
-                .withClickEvent(new net.minecraft.text.ClickEvent(net.minecraft.text.ClickEvent.Action.RUN_COMMAND, "/areahint expandarea continue"))
-                .withHoverEvent(new net.minecraft.text.HoverEvent(net.minecraft.text.HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("dividearea.message.coordinate.record.continue"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint expandarea continue"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("dividearea.message.coordinate.record.continue"))))
                 .withColor(net.minecraft.util.Formatting.GREEN));
         
         net.minecraft.text.MutableText saveButton = Text.literal(I18nManager.translate("expandarea.button.area.save"))
             .setStyle(net.minecraft.text.Style.EMPTY
-                .withClickEvent(new net.minecraft.text.ClickEvent(net.minecraft.text.ClickEvent.Action.RUN_COMMAND, "/areahint expandarea save"))
-                .withHoverEvent(new net.minecraft.text.HoverEvent(net.minecraft.text.HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("expandarea.message.area.save.expand"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint expandarea save"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("expandarea.message.area.save.expand"))))
                 .withColor(net.minecraft.util.Formatting.AQUA));
         
         if (vertexCount >= 3) {

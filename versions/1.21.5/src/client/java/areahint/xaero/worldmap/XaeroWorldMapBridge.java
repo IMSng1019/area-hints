@@ -16,7 +16,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
- * Xaero 世界地图 1.39.2 桥接入口。
+ * Xaero 世界地图 1.39.5 桥接入口。
  */
 public final class XaeroWorldMapBridge {
     private static boolean registered;
@@ -30,6 +30,7 @@ public final class XaeroWorldMapBridge {
 
     public static void initialize() {
         resolveReflection();
+        if (!failed) VizEditXaeroBridge.initialize();
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             // 先处理右键双击安排好的域名管理打开，再补齐渲染器注册
             AreaWorldMapRightClick.tick();
@@ -99,7 +100,7 @@ public final class XaeroWorldMapBridge {
             coordinateScaleMethod.setAccessible(true);
         } catch (Exception e) {
             failed = true;
-            AreashintClient.LOGGER.warn("Xaero 世界地图 1.39.2 反射接口不匹配，已安全禁用。", e);
+            AreashintClient.LOGGER.warn("Xaero 世界地图 1.39.5 反射接口不匹配，已安全禁用。", e);
         }
     }
 

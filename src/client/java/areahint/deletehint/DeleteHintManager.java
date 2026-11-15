@@ -1,5 +1,7 @@
 package areahint.deletehint;
 
+import areahint.util.TextEventCompat;
+
 import areahint.commandui.CommandVisualLaunchContext;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
@@ -279,9 +281,9 @@ public class DeleteHintManager {
             String displayName = AreaDataConverter.getDisplayName(area);
             MutableText btn = Text.literal("§6[" + displayName + "]")
                 .setStyle(Style.EMPTY
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    .withClickEvent(TextEventCompat.runCommand(
                         "/areahint deletehint select \"" + area.getName() + "\""))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    .withHoverEvent(TextEventCompat.showText(
                         Text.of(I18nManager.translate("addhint.prompt.general") + displayName + I18nManager.translate("addhint.message.general") + ClientAreaText.signature(area)
                             + I18nManager.translate("deletehint.message.vertex_3") + area.getVertices().size())))
                     .withColor(Formatting.GOLD));
@@ -290,8 +292,8 @@ public class DeleteHintManager {
 
         MutableText cancelBtn = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint deletehint cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("addhint.message.cancel"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint deletehint cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("addhint.message.cancel"))))
                 .withColor(Formatting.RED));
         client.player.sendMessage(cancelBtn, false);
     }
@@ -311,9 +313,9 @@ public class DeleteHintManager {
 
             MutableText btn = Text.literal(label)
                 .setStyle(Style.EMPTY
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    .withClickEvent(TextEventCompat.runCommand(
                         "/areahint deletehint toggle " + i))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    .withHoverEvent(TextEventCompat.showText(
                         Text.of(marked ? I18nManager.translate("deletehint.message.cancel") : I18nManager.translate("deletehint.message.delete"))))
                     .withColor(marked ? Formatting.RED : Formatting.GREEN));
             client.player.sendMessage(btn, false);
@@ -322,14 +324,14 @@ public class DeleteHintManager {
         // 操作按钮
         MutableText submitBtn = Text.literal(I18nManager.translate("deletehint.button.delete"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint deletehint submit"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("deletehint.message.vertex.delete_2"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint deletehint submit"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("deletehint.message.vertex.delete_2"))))
                 .withColor(Formatting.AQUA));
 
         MutableText cancelBtn = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint deletehint cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("addhint.message.cancel"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint deletehint cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("addhint.message.cancel"))))
                 .withColor(Formatting.RED));
 
         MutableText row = Text.empty()

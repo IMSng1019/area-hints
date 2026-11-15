@@ -35,7 +35,12 @@ public final class ServerConfig {
     private static final Option<Boolean> FORCE_USE_AREAHINT = booleanOption("force_use_areahint", false);
     private static final Option<GameMode> DEFAULT_GAMEMODE = register(new Option<>(
             "default_gamemode", ServerConfig::serverDefaultGamemode, ServerConfig::isValidGamemode,
-            value -> GameMode.byName(value.getAsString()), mode -> new JsonPrimitive(mode.getName())));
+            // 1.21.5 将按名称查找改名为 byId；asString 在各版本均返回相同的配置与协议标识。
+            //? if <=1.21.4 {
+            value -> GameMode.byName(value.getAsString()), mode -> new JsonPrimitive(mode.asString())));
+            //?} else {
+            /*value -> GameMode.byId(value.getAsString()), mode -> new JsonPrimitive(mode.asString())));*/
+            //?}
     // 完整快照一次替换，登录网络线程不会读到配置修复过程中的中间状态。
     private static volatile JsonObject current = defaults();
 

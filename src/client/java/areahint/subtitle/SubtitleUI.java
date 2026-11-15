@@ -1,10 +1,10 @@
 package areahint.subtitle;
 
+import areahint.util.TextEventCompat;
+
 import areahint.data.AreaData;
 import areahint.i18n.I18nManager;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -43,9 +43,9 @@ public class SubtitleUI {
             String subtitlePreview = area.hasSubtitle() ? area.getSubtitle().replace("\n", " / ") : tr("subtitle.ui.none");
             MutableText areaButton = Text.literal("§6[" + displayName + "]")
                 .setStyle(Style.EMPTY
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    .withClickEvent(TextEventCompat.runCommand(
                         "/areahint " + commandPrefix + " select \"" + area.getName() + "\""))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    .withHoverEvent(TextEventCompat.showText(
                         Text.literal(tr("subtitle.ui.area.hover", area.getName(), area.getLevel(), subtitlePreview))))
                     .withColor(Formatting.GOLD));
 
@@ -89,8 +89,8 @@ public class SubtitleUI {
 
         MutableText confirmButton = Text.literal(tr("subtitle.ui.button.confirm"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint addsubtitle confirm"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(tr("subtitle.ui.hover.save_subtitle"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint addsubtitle confirm"))
+                .withHoverEvent(TextEventCompat.showText(Text.literal(tr("subtitle.ui.hover.save_subtitle"))))
                 .withColor(Formatting.GREEN));
 
         client.player.sendMessage(buttonRow(confirmButton, createCancelButton("addsubtitle")), false);
@@ -108,8 +108,8 @@ public class SubtitleUI {
 
         MutableText confirmButton = Text.literal(tr("subtitle.ui.button.delete_subtitle"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint deletesubtitle confirm"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(tr("subtitle.ui.hover.delete_subtitle"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint deletesubtitle confirm"))
+                .withHoverEvent(TextEventCompat.showText(Text.literal(tr("subtitle.ui.hover.delete_subtitle"))))
                 .withColor(Formatting.RED)
                 .withBold(true));
 
@@ -167,8 +167,8 @@ public class SubtitleUI {
 
         MutableText confirmButton = Text.literal(tr("subtitle.ui.button.confirm"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint replacesubtitlecolor confirm"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(tr("subtitle.ui.hover.save_color"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint replacesubtitlecolor confirm"))
+                .withHoverEvent(TextEventCompat.showText(Text.literal(tr("subtitle.ui.hover.save_color"))))
                 .withColor(Formatting.GREEN));
 
         client.player.sendMessage(buttonRow(confirmButton, createCancelButton("replacesubtitlecolor")), false);
@@ -257,9 +257,9 @@ public class SubtitleUI {
         String displayName = tr(displayNameKey);
         return Text.literal(colorCode + "[" + displayName + "]")
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint " + commandPrefix + " color " + colorValue))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(tr("subtitle.ui.hover.select_color", displayName)))));
+                .withHoverEvent(TextEventCompat.showText(Text.literal(tr("subtitle.ui.hover.select_color", displayName)))));
     }
 
     private static MutableText sizeButton(String commandPrefix, String sizeValue, String colorCode) {
@@ -267,16 +267,16 @@ public class SubtitleUI {
         String subCommand = "replacesubtitlesize".equals(commandPrefix) ? "select" : "size";
         return Text.literal(colorCode + "[" + displayName + "]")
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint " + commandPrefix + " " + subCommand + " " + sizeValue))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(tr("subtitle.ui.hover.select_size", displayName)))));
+                .withHoverEvent(TextEventCompat.showText(Text.literal(tr("subtitle.ui.hover.select_size", displayName)))));
     }
 
     private static MutableText createCancelButton(String commandPrefix) {
         return Text.literal(tr("subtitle.ui.button.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint " + commandPrefix + " cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(tr("subtitle.ui.hover.cancel"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint " + commandPrefix + " cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.literal(tr("subtitle.ui.hover.cancel"))))
                 .withColor(Formatting.RED));
     }
 

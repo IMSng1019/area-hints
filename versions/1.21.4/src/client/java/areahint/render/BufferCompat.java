@@ -1,6 +1,9 @@
 package areahint.render;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormat;
 import org.joml.Matrix4f;
@@ -12,6 +15,28 @@ import org.joml.Matrix4f;
  */
 public final class BufferCompat {
     private BufferCompat() {
+    }
+
+    // 世界边界保留本版本原有全局状态：透明混合、读取深度、不写深度，并允许任意顶点绕序。
+    public static void beginWorld() {
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthMask(false);
+        RenderSystem.disableCull();
+        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
+    }
+
+    // 世界边界结束后恢复原有深度写入、背面剔除和混合状态，保持该版本既有渲染行为。
+    public static void endWorld() {
+        RenderSystem.depthMask(true);
+        RenderSystem.enableCull();
+        RenderSystem.disableBlend();
+    }
+
+    // 本版本仍由 BufferRenderer 提交并释放构建后的缓冲，共享几何不直接依赖具体绘制后端。
+    public static void drawWorld(BufferBuilder buffer) {
+        BufferRenderer.drawWithGlobalProgram(buffer.end());
     }
 
     /** 取一个已 begin 的缓冲区 */

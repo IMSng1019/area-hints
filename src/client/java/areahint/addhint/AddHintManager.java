@@ -1,5 +1,7 @@
 package areahint.addhint;
 
+import areahint.util.TextEventCompat;
+
 import areahint.commandui.CommandVisualLaunchContext;
 import areahint.data.AreaData;
 import areahint.file.FileManager;
@@ -348,9 +350,9 @@ public class AddHintManager {
             String displayName = AreaDataConverter.getDisplayName(area);
             MutableText btn = Text.literal("§6[" + displayName + "]")
                 .setStyle(Style.EMPTY
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    .withClickEvent(TextEventCompat.runCommand(
                         "/areahint addhint select \"" + area.getName() + "\""))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    .withHoverEvent(TextEventCompat.showText(
                         Text.of(I18nManager.translate("addhint.prompt.general") + displayName + I18nManager.translate("addhint.message.general") + ClientAreaText.signature(area))))
                     .withColor(Formatting.GOLD));
             client.player.sendMessage(btn, false);
@@ -358,8 +360,8 @@ public class AddHintManager {
 
         MutableText cancelBtn = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint addhint cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("addhint.message.cancel"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint addhint cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("addhint.message.cancel"))))
                 .withColor(Formatting.RED));
         client.player.sendMessage(cancelBtn, false);
     }
@@ -370,20 +372,20 @@ public class AddHintManager {
 
         MutableText continueBtn = Text.literal(I18nManager.translate("addhint.button.record.continue"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint addhint continue"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("addhint.message.record.continue"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint addhint continue"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("addhint.message.record.continue"))))
                 .withColor(Formatting.GREEN));
 
         MutableText submitBtn = Text.literal(I18nManager.translate("addhint.button.general"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint addhint submit"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("addhint.message.vertex_3"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint addhint submit"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("addhint.message.vertex_3"))))
                 .withColor(Formatting.AQUA));
 
         MutableText cancelBtn = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint addhint cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("addhint.message.cancel"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint addhint cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("addhint.message.cancel"))))
                 .withColor(Formatting.RED));
 
         MutableText row = Text.empty()

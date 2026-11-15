@@ -1,8 +1,8 @@
 package areahint.description;
 
+import areahint.util.TextEventCompat;
+
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -42,9 +42,9 @@ public final class DescriptionUI {
         for (DescriptionListEntry entry : entries) {
             MutableText button = Text.literal("[" + nullToText(entry.displayName()) + "]")
                 .setStyle(Style.EMPTY
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    .withClickEvent(TextEventCompat.runCommand(
                         "/areahint " + commandPrefix + " select " + quoteCommandArgument(entry.id())))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, createHoverText(entry)))
+                    .withHoverEvent(TextEventCompat.showText(createHoverText(entry)))
                     .withColor(Formatting.GOLD));
             client.player.sendMessage(button, false);
         }
@@ -79,9 +79,9 @@ public final class DescriptionUI {
 
         MutableText confirm = Text.literal(I18nManager.translate("description.ui.button.confirm.save"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint " + commandPrefix + " confirm"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(I18nManager.translate("description.ui.hover.save"))))
+                .withHoverEvent(TextEventCompat.showText(Text.literal(I18nManager.translate("description.ui.hover.save"))))
                 .withColor(Formatting.GREEN));
         client.player.sendMessage(Text.empty().append(confirm).append(Text.literal(" ")).append(cancelButton(commandPrefix)), false);
     }
@@ -97,9 +97,9 @@ public final class DescriptionUI {
         client.player.sendMessage(Text.literal(I18nManager.translate("description.ui.confirm.delete.warning")), false);
         MutableText confirm = Text.literal(I18nManager.translate("description.ui.button.continue.delete"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint " + commandPrefix + " confirm"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(I18nManager.translate("description.ui.hover.second.confirm"))))
+                .withHoverEvent(TextEventCompat.showText(Text.literal(I18nManager.translate("description.ui.hover.second.confirm"))))
                 .withColor(Formatting.RED));
         client.player.sendMessage(Text.empty().append(confirm).append(Text.literal(" ")).append(cancelButton(commandPrefix)), false);
     }
@@ -114,9 +114,9 @@ public final class DescriptionUI {
         client.player.sendMessage(Text.literal(I18nManager.translate("description.ui.confirm.target", nullToText(entry.displayName()))), false);
         MutableText confirm = Text.literal(I18nManager.translate("description.ui.button.confirm.delete.only"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint " + commandPrefix + " confirm2"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(I18nManager.translate("description.ui.hover.confirm.delete"))))
+                .withHoverEvent(TextEventCompat.showText(Text.literal(I18nManager.translate("description.ui.hover.confirm.delete"))))
                 .withColor(Formatting.RED)
                 .withBold(true));
         client.player.sendMessage(Text.empty().append(confirm).append(Text.literal(" ")).append(cancelButton(commandPrefix)), false);
@@ -125,9 +125,9 @@ public final class DescriptionUI {
     private static MutableText cancelButton(String commandPrefix) {
         return Text.literal(I18nManager.translate("description.ui.button.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint " + commandPrefix + " cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(I18nManager.translate("description.ui.hover.cancel"))))
+                .withHoverEvent(TextEventCompat.showText(Text.literal(I18nManager.translate("description.ui.hover.cancel"))))
                 .withColor(Formatting.RED));
     }
 

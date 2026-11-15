@@ -1,5 +1,7 @@
 package areahint.dimensional;
 
+import areahint.util.TextEventCompat;
+
 import areahint.i18n.I18nManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.*;
@@ -43,9 +45,9 @@ public class DimensionalNameUI {
 
             MutableText btn = Text.literal(label)
                 .setStyle(Style.EMPTY
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    .withClickEvent(TextEventCompat.runCommand(
                         "/areahint " + cmdBase + " select \"" + dimId + "\""))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    .withHoverEvent(TextEventCompat.showText(
                         Text.of(I18nManager.translate("addhint.prompt.general") + dimName)))
                     .withColor(Formatting.GOLD));
             client.player.sendMessage(btn, false);
@@ -54,9 +56,9 @@ public class DimensionalNameUI {
         client.player.sendMessage(Text.of(""), false);
         MutableText cancelBtn = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint " + cmdBase + " cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("gui.message.cancel_5"))))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("gui.message.cancel_5"))))
                 .withColor(Formatting.RED));
         client.player.sendMessage(cancelBtn, false);
     }
@@ -76,18 +78,18 @@ public class DimensionalNameUI {
         // 提供一个可点击的建议命令
         MutableText inputHint = Text.literal(I18nManager.translate("gui.prompt.name_2"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+                .withClickEvent(TextEventCompat.suggestCommand(
                     "/areahint dimensionalityname name "))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withHoverEvent(TextEventCompat.showText(
                     Text.of(I18nManager.translate("gui.prompt.name_3")))));
         client.player.sendMessage(inputHint, false);
 
         client.player.sendMessage(Text.of(""), false);
         MutableText cancelBtn = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint dimensionalityname cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("gui.message.cancel_5"))))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("gui.message.cancel_5"))))
                 .withColor(Formatting.RED));
         client.player.sendMessage(cancelBtn, false);
     }
@@ -109,16 +111,16 @@ public class DimensionalNameUI {
 
         MutableText confirmBtn = Text.literal(I18nManager.translate("gui.button.general_2"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint dimensionalityname confirm"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("gui.message.confirm.modify"))))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("gui.message.confirm.modify"))))
                 .withColor(Formatting.GREEN));
 
         MutableText cancelBtn = Text.literal(I18nManager.translate("gui.error.general"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint dimensionalityname cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("gui.message.cancel.modify"))))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("gui.message.cancel.modify"))))
                 .withColor(Formatting.RED));
 
         client.player.sendMessage(Text.empty().append(confirmBtn).append(Text.of("  ")).append(cancelBtn), false);
@@ -143,9 +145,9 @@ public class DimensionalNameUI {
         client.player.sendMessage(Text.of(""), false);
         MutableText cancelBtn = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint dimensionalitycolor cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("gui.message.cancel_5"))))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("gui.message.cancel_5"))))
                 .withColor(Formatting.RED));
         client.player.sendMessage(cancelBtn, false);
     }
@@ -207,9 +209,9 @@ public class DimensionalNameUI {
         client.player.sendMessage(Text.of(""), false);
         MutableText customBtn = Text.literal(I18nManager.translate("gui.button.color_2"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+                .withClickEvent(TextEventCompat.suggestCommand(
                     "/areahint dimensionalitycolor color #"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withHoverEvent(TextEventCompat.showText(
                     Text.of(I18nManager.translate("gui.prompt.color_2")))));
         client.player.sendMessage(customBtn, false);
     }
@@ -217,9 +219,9 @@ public class DimensionalNameUI {
     private static MutableText colorBtn(String name, String value, String mcColor) {
         return Text.literal(mcColor + "[" + name + "]")
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint dimensionalitycolor color " + value))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withHoverEvent(TextEventCompat.showText(
                     Text.of(I18nManager.translate("addhint.prompt.general") + name))));
     }
 
@@ -241,16 +243,16 @@ public class DimensionalNameUI {
 
         MutableText confirmBtn = Text.literal(I18nManager.translate("gui.button.general_2"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint dimensionalitycolor confirm"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("gui.message.confirm.modify"))))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("gui.message.confirm.modify"))))
                 .withColor(Formatting.GREEN));
 
         MutableText cancelBtn = Text.literal(I18nManager.translate("gui.error.general"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint dimensionalitycolor cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("gui.message.cancel.modify"))))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("gui.message.cancel.modify"))))
                 .withColor(Formatting.RED));
 
         client.player.sendMessage(Text.empty().append(confirmBtn).append(Text.of("  ")).append(cancelBtn), false);
@@ -270,18 +272,18 @@ public class DimensionalNameUI {
 
         MutableText inputBtn = Text.literal(I18nManager.translate("gui.prompt.name"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+                .withClickEvent(TextEventCompat.suggestCommand(
                     "/areahint firstdimname "))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withHoverEvent(TextEventCompat.showText(
                     Text.of(I18nManager.translate("gui.prompt.dimension.name_2")))));
         client.player.sendMessage(inputBtn, false);
 
         client.player.sendMessage(Text.of(""), false);
         MutableText skipBtn = Text.literal(I18nManager.translate("gui.button.general"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint firstdimname_skip"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withHoverEvent(TextEventCompat.showText(
                     Text.of(I18nManager.translate("gui.message.name_5")))));
         client.player.sendMessage(skipBtn, false);
     }

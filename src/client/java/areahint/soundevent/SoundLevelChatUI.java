@@ -1,11 +1,11 @@
 package areahint.soundevent;
 
+import areahint.util.TextEventCompat;
+
 import areahint.config.ClientConfig;
 import areahint.data.ConfigData;
 import areahint.i18n.I18nManager;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -60,8 +60,8 @@ public final class SoundLevelChatUI {
         // 指令和显示共用稳定格式，避免按钮发送包含浮点尾数的参数。
         String command = "/areahint soundlevel " + formattedLevel;
         return Text.literal(t("soundlevel.button.level", formattedLevel)).setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withClickEvent(TextEventCompat.runCommand(command))
+                .withHoverEvent(TextEventCompat.showText(
                         Text.literal(t("soundlevel.hover.level", formattedLevel))))
                 .withColor(Formatting.AQUA));
     }

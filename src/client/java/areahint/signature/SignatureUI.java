@@ -1,10 +1,10 @@
 package areahint.signature;
 
+import areahint.util.TextEventCompat;
+
 import areahint.data.AreaData;
 import areahint.util.AreaDataConverter;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -47,9 +47,9 @@ public class SignatureUI {
             String displayName = AreaDataConverter.getDisplayName(area);
             MutableText areaButton = Text.literal("§6[" + displayName + "]")
                 .setStyle(Style.EMPTY
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    .withClickEvent(TextEventCompat.runCommand(
                         "/areahint " + commandPrefix + " select " + quoteCommandArgument(area.getName())))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, createAreaHoverText(area)))
+                    .withHoverEvent(TextEventCompat.showText(createAreaHoverText(area)))
                     .withColor(Formatting.GOLD));
             client.player.sendMessage(areaButton, false);
         }
@@ -103,9 +103,9 @@ public class SignatureUI {
         String hover = operation == SignatureManager.Operation.DELETE ? I18nManager.translate("signature.ui.hover.delete.confirm") : I18nManager.translate("signature.ui.hover.add.confirm");
         MutableText confirmButton = Text.literal(I18nManager.translate("signature.ui.button.confirm"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint " + commandPrefix + " confirm"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(hover)))
+                .withHoverEvent(TextEventCompat.showText(Text.literal(hover)))
                 .withColor(Formatting.GREEN));
 
         client.player.sendMessage(Text.empty()
@@ -128,9 +128,9 @@ public class SignatureUI {
 
         MutableText finalConfirmButton = Text.literal(I18nManager.translate("signature.ui.button.delete.final"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint deletesignature confirm2"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withHoverEvent(TextEventCompat.showText(
                     Text.literal(I18nManager.translate("signature.ui.hover.delete.final"))))
                 .withColor(Formatting.RED));
 
@@ -143,9 +143,9 @@ public class SignatureUI {
     private static MutableText createCancelButton(String commandPrefix) {
         return Text.literal(I18nManager.translate("signature.ui.button.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                .withClickEvent(TextEventCompat.runCommand(
                     "/areahint " + commandPrefix + " cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withHoverEvent(TextEventCompat.showText(
                     Text.literal(I18nManager.translate("signature.ui.hover.cancel"))))
                 .withColor(Formatting.RED));
     }

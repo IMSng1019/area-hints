@@ -1,9 +1,9 @@
 package areahint.replacebutton;
 
+import areahint.util.TextEventCompat;
+
 import areahint.i18n.I18nManager;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -30,8 +30,8 @@ public class ReplaceButtonUI {
         // 显示取消按钮
         MutableText cancelButton = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint replacebutton cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("gui.message.cancel.key"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint replacebutton cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("gui.message.cancel.key"))))
                 .withColor(Formatting.RED));
 
         client.player.sendMessage(cancelButton, false);
@@ -51,14 +51,14 @@ public class ReplaceButtonUI {
         // 显示确认和取消按钮
         MutableText confirmButton = Text.literal(I18nManager.translate("gui.button.confirm"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint replacebutton confirm"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("gui.message.confirm.key"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint replacebutton confirm"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("gui.message.confirm.key"))))
                 .withColor(Formatting.GREEN));
 
         MutableText cancelButton = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint replacebutton cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("gui.message.cancel.key"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint replacebutton cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("gui.message.cancel.key"))))
                 .withColor(Formatting.RED));
 
         MutableText buttonRow = Text.empty()

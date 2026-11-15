@@ -1,11 +1,11 @@
 package areahint.easyadd;
 
+import areahint.util.TextEventCompat;
+
 import areahint.data.AreaData;
 import areahint.i18n.I18nManager;
 import areahint.util.ClientAreaText;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -34,8 +34,8 @@ public class EasyAddUI {
         // 显示取消按钮
         MutableText cancelButton = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
                 .withColor(Formatting.RED));
 
         client.player.sendMessage(cancelButton, false);
@@ -57,8 +57,8 @@ public class EasyAddUI {
         // 显示取消按钮
         MutableText cancelButton = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
                 .withColor(Formatting.RED));
 
         client.player.sendMessage(cancelButton, false);
@@ -76,26 +76,26 @@ public class EasyAddUI {
         // 创建等级选择按钮
         MutableText level1Button = Text.literal(I18nManager.translate("dividearea.button.area"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd level 1"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("dividearea.prompt.area_2"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd level 1"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("dividearea.prompt.area_2"))))
                 .withColor(Formatting.AQUA));
 
         MutableText level2Button = Text.literal(I18nManager.translate("dividearea.button.area_3"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd level 2"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("dividearea.prompt.area_3"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd level 2"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("dividearea.prompt.area_3"))))
                 .withColor(Formatting.YELLOW));
 
         MutableText level3Button = Text.literal(I18nManager.translate("dividearea.button.area_2"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd level 3"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("dividearea.prompt.area_4"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd level 3"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("dividearea.prompt.area_4"))))
                 .withColor(Formatting.LIGHT_PURPLE));
 
         MutableText cancelButton = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
                 .withColor(Formatting.RED));
         
         // 组合按钮显示
@@ -125,9 +125,9 @@ public class EasyAddUI {
             String displayName = areahint.util.AreaDataConverter.getDisplayName(area);
             MutableText areaButton = Text.literal("§6[" + displayName + "]")
                 .setStyle(Style.EMPTY
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    .withClickEvent(TextEventCompat.runCommand(
                         "/areahint easyadd base \"" + area.getName() + "\""))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    .withHoverEvent(TextEventCompat.showText(
                         Text.of(I18nManager.translate("addhint.prompt.general") + displayName + I18nManager.translate("easyadd.message.area.parent"))))
                     .withColor(Formatting.GOLD));
             
@@ -137,8 +137,8 @@ public class EasyAddUI {
         // 显示取消按钮
         MutableText cancelButton = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
                 .withColor(Formatting.RED));
 
         client.player.sendMessage(cancelButton, false);
@@ -156,20 +156,20 @@ public class EasyAddUI {
         // 显示操作选项
         MutableText continueButton = Text.literal(I18nManager.translate("addhint.button.record.continue"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd continue"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("dividearea.message.coordinate.record.continue"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd continue"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("dividearea.message.coordinate.record.continue"))))
                 .withColor(Formatting.GREEN));
 
         MutableText finishButton = Text.literal(I18nManager.translate("easyadd.button.record.finish"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd finish"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("easyadd.message.coordinate.record.confirm"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd finish"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("easyadd.message.coordinate.record.confirm"))))
                 .withColor(Formatting.AQUA));
 
         MutableText cancelButton = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
                 .withColor(Formatting.RED));
         
         if (recordedPoints.size() >= 3) {
@@ -231,14 +231,14 @@ public class EasyAddUI {
         // 显示确认和取消按钮
         MutableText saveButton = Text.literal(I18nManager.translate("easyadd.button.area.save"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd save"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("easyadd.message.area.save.confirm"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd save"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("easyadd.message.area.save.confirm"))))
                 .withColor(Formatting.GREEN));
 
         MutableText cancelButton = Text.literal(I18nManager.translate("addhint.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
                 .withColor(Formatting.RED));
         
         MutableText buttonRow = Text.empty()
@@ -270,32 +270,32 @@ public class EasyAddUI {
         // 自动计算按钮
         MutableText autoButton = Text.literal(I18nManager.translate("easyadd.button.altitude"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd altitude auto"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd altitude auto"))
+                .withHoverEvent(TextEventCompat.showText(
                     Text.of(I18nManager.translate("easyadd.message.altitude.record.expand_2"))))
                 .withColor(Formatting.AQUA));
         
         // 自定义按钮
         MutableText customButton = Text.literal(I18nManager.translate("command.button.altitude"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd altitude custom"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd altitude custom"))
+                .withHoverEvent(TextEventCompat.showText(
                     Text.of(I18nManager.translate("easyadd.prompt.altitude_7"))))
                 .withColor(Formatting.LIGHT_PURPLE));
         
         // 不限制高度按钮
         MutableText unlimitedButton = Text.literal(I18nManager.translate("command.button.altitude_2"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd altitude unlimited"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd altitude unlimited"))
+                .withHoverEvent(TextEventCompat.showText(
                     Text.of(I18nManager.translate("command.message.area.altitude.coordinate"))))
                 .withColor(Formatting.YELLOW));
         
         // 取消按钮
         MutableText cancelButton = Text.literal(I18nManager.translate("command.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
                 .withColor(Formatting.RED));
         MutableText buttonRow = Text.empty()
             .append(autoButton)
@@ -375,8 +375,8 @@ public class EasyAddUI {
         // 取消按钮
         MutableText cancelButton = Text.literal(I18nManager.translate("command.error.cancel"))
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/areahint easyadd cancel"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
+                .withClickEvent(TextEventCompat.runCommand("/areahint easyadd cancel"))
+                .withHoverEvent(TextEventCompat.showText(Text.of(I18nManager.translate("easyadd.message.cancel_2"))))
                 .withColor(Formatting.RED));
 
         client.player.sendMessage(row1, false);
@@ -400,8 +400,8 @@ public class EasyAddUI {
         
         return Text.literal(minecraftColor + "[" + colorName + "]")
             .setStyle(Style.EMPTY
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                .withClickEvent(TextEventCompat.runCommand(command))
+                .withHoverEvent(TextEventCompat.showText(
                     Text.of(I18nManager.translate("addhint.prompt.general") + colorName + I18nManager.translate("dividearea.message.area.color")))));
     }
     

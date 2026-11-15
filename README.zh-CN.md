@@ -11,10 +11,10 @@
 <h1 align="center">Areas Hint 域名模组</h1>
 
 <p align="center">
-  <img alt="Minecraft 构建目标" src="https://img.shields.io/badge/Minecraft-1.20.1%20%7C%201.20.4%20%7C%201.20.6%20%7C%201.21.1%20%7C%201.21.4-3C8527?style=flat-square">
+  <img alt="Minecraft 构建目标" src="https://img.shields.io/badge/Minecraft-1.20.1%20%7C%201.20.4%20%7C%201.20.6%20%7C%201.21.1%20%7C%201.21.4%20%7C%201.21.5-3C8527?style=flat-square">
   <img alt="Fabric" src="https://img.shields.io/badge/Loader-Fabric-DBD0B4?style=flat-square">
   <img alt="Java" src="https://img.shields.io/badge/Java-17%20%2F%2021-ED8B00?style=flat-square&logo=openjdk&logoColor=white">
-  <img alt="源码版本" src="https://img.shields.io/badge/Mod-4.6.0-8A2BE2?style=flat-square">
+  <img alt="源码版本" src="https://img.shields.io/badge/Mod-4.8.0-8A2BE2?style=flat-square">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-blue?style=flat-square">
 </p>
 
@@ -59,7 +59,7 @@
 
 ## 概述
 
-Areas Hint 是一个适用于 **Minecraft Fabric** 的区域提示模组，当前源码版本为 **4.6.0**。各 Minecraft 构建目标和依赖见下方版本表。
+Areas Hint 是一个适用于 **Minecraft Fabric** 的区域提示模组，当前源码版本为 **4.8.0**。各 Minecraft 构建目标和依赖见下方版本表。
 它允许玩家使用多边形定义区域（项目内通常称为“域名”），并在进入区域时显示自定义名称。
 
 模组支持：
@@ -152,7 +152,7 @@ Areas Hint 是一个适用于 **Minecraft Fabric** 的区域提示模组，当�
 
 ### 基础环境
 
-当前源码版本为 `4.6.0`。下表来自 `settings.gradle` 中实际启用的构建目标和 `gradle.properties` 中的依赖参数；它表示当前源码的构建配置，不代表所有版本都已发布或完成游戏内验证。下载时请以 Modrinth 对应文件标注的 Minecraft 版本为准。
+当前源码版本为 `4.8.0`。下表来自 `settings.gradle` 中实际启用的构建目标和 `gradle.properties` 中的依赖参数；它表示当前源码的构建配置，不代表所有版本都已发布或完成游戏内验证。下载时请以 Modrinth 对应文件标注的 Minecraft 版本为准。
 
 | Minecraft 构建目标 | Java 最低版本 | Fabric Loader 最低版本 | 构建使用的 Fabric API |
 |---|---|---|---|
@@ -161,8 +161,9 @@ Areas Hint 是一个适用于 **Minecraft Fabric** 的区域提示模组，当�
 | `1.20.6` | `21` | `0.16.14` | `0.100.8+1.20.6` |
 | `1.21.1` | `21` | `0.16.14` | `0.116.17+1.21.1` |
 | `1.21.4` | `21` | `0.19.5` | `0.119.4+1.21.4` |
+| `1.21.5` | `21` | `0.19.5` | `0.128.2+1.21.5` |
 
-每个 JAR 对应一个 Minecraft 构建目标，请安装匹配的文件与 Fabric API。`1.21.5`、`1.21.8`、`1.21.11` 的依赖虽已声明，但尚未加入当前构建列表；`26.x` 仍属于实验性规划。
+每个 JAR 对应一个 Minecraft 构建目标，请安装匹配的文件与 Fabric API。`1.21.8`、`1.21.11` 的依赖虽已声明，但尚未加入当前构建列表；`26.x` 仍属于实验性规划。`1.21.5` 使用独立的 GPU 绘制实现，游戏内画面与联机效果仍待验证。
 
 ### 可选兼容 / 集成
 
@@ -1220,6 +1221,7 @@ Xaero 联动按精确版本检查；未安装或版本不匹配时，对应覆�
 | `1.20.6` | `25.2.10` | `1.39.12` |
 | `1.21.1` | `25.3.2` | `1.39.2` |
 | `1.21.4` | `25.3.2` | `1.39.2` |
+| `1.21.5` | `25.3.2` | `1.39.5` |
 
 Sodium 在模组元数据中列为建议项。其他渲染、性能或地图模组的共存情况取决于 Minecraft 版本和整合包组合；这些可选模组不随 Areas Hint 一起打包。
 
@@ -1261,8 +1263,8 @@ Windows PowerShell 中将 `./gradlew` 换成 `.\gradlew.bat`，例如：
 当前 Stonecutter 构建产物位于 `versions/<Minecraft版本>/build/libs/`，文件名遵循「模组名-平台-MC版本-模组版本」格式：
 
 ```text
-versions/1.20.4/build/libs/areas-hint-fabric-1.20.4-4.6.0.jar
-versions/1.21.4/build/libs/areas-hint-fabric-1.21.4-4.6.0.jar
+versions/1.20.4/build/libs/areas-hint-fabric-1.20.4-4.8.0.jar
+versions/1.21.4/build/libs/areas-hint-fabric-1.21.4-4.8.0.jar
 ```
 
 安装普通 `.jar`，不要安装 `-sources.jar` 或 `-dev.jar`。`mod_loader` 只参与产物命名，修改它不会把 Fabric 模组转换为 Forge / NeoForge 模组。

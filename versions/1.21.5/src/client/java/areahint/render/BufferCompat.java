@@ -15,6 +15,19 @@ public final class BufferCompat {
     private BufferCompat() {
     }
 
+    public static void beginWorld() {
+        // 本版本的混合、深度和剔除随每次 GPU 管线提交设置，开始绘制时无需修改全局状态。
+    }
+
+    public static void endWorld() {
+        // 每次提交自行关闭 RenderPass，后续绘制重新应用自己的管线，无需恢复旧式全局状态。
+    }
+
+    // 新版后端持有并释放 BuiltBuffer，管线读取现有深度但不写入，保持世界边界的遮挡和透明效果。
+    public static void drawWorld(BufferBuilder buffer) {
+        GeometryRenderer1215.draw(buffer.end(), true);
+    }
+
     /** 取一个已 begin 的缓冲区 */
     public static BufferBuilder begin(VertexFormat.DrawMode mode, VertexFormat format) {
         return Tessellator.getInstance().begin(mode, format);

@@ -1,5 +1,4 @@
-// 阶段 6 第三方隔离：与 1.21.1 同代际（Xaero 25.3.2 / 世界地图 1.39.x，BlueMap 2.7.8），逐字复制。
-// 复制理由：机制 ② 要求每个活跃节点各挂一份实现；本文件与 1.21.1 版本目录的对应文件保持一致。
+// 1.21.5 世界地图覆盖层沿用既有域名几何与比例计算，由新版 GPU 适配层提交实际绘制。
 
 package areahint.xaero.worldmap;
 
@@ -38,9 +37,9 @@ final class AreaWorldMapRenderer extends MapElementRenderer<OverlayArea, AreaWor
                              TextRenderer textRenderer, VertexConsumerProvider.Immediate immediate,
                              MultiTextureRenderTypeRendererProvider multiTextureProvider, boolean hoveredPass) {
         immediate.draw();
+        drawContext.draw();
         context.mapScale = mapScale > 0.0D ? mapScale : 1.0D;
         context.coordinateScale = XaeroWorldMapBridge.getCurrentCoordinateScale();
-        OverlayRenderHelper.beginOverlay();
     }
 
     @Override
@@ -49,7 +48,8 @@ final class AreaWorldMapRenderer extends MapElementRenderer<OverlayArea, AreaWor
                             double mapScale, double optionalScale, TextureManager textureManager,
                             TextRenderer textRenderer, VertexConsumerProvider.Immediate immediate,
                             MultiTextureRenderTypeRendererProvider multiTextureProvider, boolean hoveredPass) {
-        OverlayRenderHelper.endOverlay();
+        // 目标作用域已在各元素内部结束；此处统一提交文字，保持标签覆盖整批几何并避免批次跨越 Xaero 的目标切换。
+        drawContext.draw();
     }
 
     @Override
@@ -73,52 +73,57 @@ final class AreaWorldMapRenderer extends MapElementRenderer<OverlayArea, AreaWor
                                  int elementIndex, double depth, float boxScale, double partialX, double partialZ,
                                  boolean hoveredPass, float frameDelta) {
         MatrixStack matrices = drawContext.getMatrices();
+        OverlayRenderHelper.beginOverlay();
         matrices.push();
-        matrices.translate(partialX, partialZ, depth);
-        // Xaero 只为元素中心应用地图缩放，相对顶点需要在元素局部矩阵中使用同一比例。
-        float worldMapScale = (float) Math.max(0.0001D, context.mapScale);
-        matrices.scale(worldMapScale, worldMapScale, 1.0F);
-        Matrix4f matrix = matrices.peek().getPositionMatrix();
-        double coordinateScale = context.coordinateScale <= 0.0D ? 1.0D : context.coordinateScale;
+        try {
+            matrices.translate(partialX, partialZ, depth);
+            // Xaero 只为元素中心应用地图缩放，相对顶点需要在元素局部矩阵中使用同一比例。
+            float worldMapScale = (float) Math.max(0.0001D, context.mapScale);
+            matrices.scale(worldMapScale, worldMapScale, 1.0F);
+            Matrix4f matrix = matrices.peek().getPositionMatrix();
+            double coordinateScale = context.coordinateScale <= 0.0D ? 1.0D : context.coordinateScale;
 
-        // 域名中心与坐标比例在循环外只读一次，坐标数组由上下文缓冲复用
-        context.resetScratch();
-        List<float[]> triangles = context.triangles;
-        double centerX = area.centerX();
-        double centerZ = area.centerZ();
-        for (FillTriangle triangle : context.fillPlan.trianglesFor(area)) {
-            Point first = triangle.first();
-            Point second = triangle.second();
-            Point third = triangle.third();
-            float[] slot = context.nextTriangle();
-            slot[0] = relativeX(first.x(), centerX, coordinateScale);
-            slot[1] = relativeZ(first.z(), centerZ, coordinateScale);
-            slot[2] = relativeX(second.x(), centerX, coordinateScale);
-            slot[3] = relativeZ(second.z(), centerZ, coordinateScale);
-            slot[4] = relativeX(third.x(), centerX, coordinateScale);
-            slot[5] = relativeZ(third.z(), centerZ, coordinateScale);
-            triangles.add(slot);
+            // 域名中心与坐标比例在循环外只读一次，坐标数组由上下文缓冲复用
+            context.resetScratch();
+            List<float[]> triangles = context.triangles;
+            double centerX = area.centerX();
+            double centerZ = area.centerZ();
+            for (FillTriangle triangle : context.fillPlan.trianglesFor(area)) {
+                Point first = triangle.first();
+                Point second = triangle.second();
+                Point third = triangle.third();
+                float[] slot = context.nextTriangle();
+                slot[0] = relativeX(first.x(), centerX, coordinateScale);
+                slot[1] = relativeZ(first.z(), centerZ, coordinateScale);
+                slot[2] = relativeX(second.x(), centerX, coordinateScale);
+                slot[3] = relativeZ(second.z(), centerZ, coordinateScale);
+                slot[4] = relativeX(third.x(), centerX, coordinateScale);
+                slot[5] = relativeZ(third.z(), centerZ, coordinateScale);
+                triangles.add(slot);
+            }
+
+            List<float[]> lines = context.lines;
+            List<Point> vertices = area.vertices();
+            int vertexCount = vertices.size();
+            for (int i = 0; i < vertexCount; i++) {
+                Point first = vertices.get(i);
+                Point second = vertices.get((i + 1) % vertexCount);
+                float[] slot = context.nextLine();
+                slot[0] = relativeX(first.x(), centerX, coordinateScale);
+                slot[1] = relativeZ(first.z(), centerZ, coordinateScale);
+                slot[2] = relativeX(second.x(), centerX, coordinateScale);
+                slot[3] = relativeZ(second.z(), centerZ, coordinateScale);
+                lines.add(slot);
+            }
+
+            int color = AreaOverlayColorResolver.resolve(area, System.currentTimeMillis());
+            OverlayRenderHelper.drawTriangles(matrix, triangles, color, hovered ? 0.28F : 0.14F, 0.0F);
+            OverlayRenderHelper.drawLines(matrix, lines, color, hovered ? 1.0F : 0.82F, 0.01F);
+            renderName(drawContext, textRenderer, area, coordinateScale, color);
+        } finally {
+            OverlayRenderHelper.endOverlay();
+            matrices.pop();
         }
-
-        List<float[]> lines = context.lines;
-        List<Point> vertices = area.vertices();
-        int vertexCount = vertices.size();
-        for (int i = 0; i < vertexCount; i++) {
-            Point first = vertices.get(i);
-            Point second = vertices.get((i + 1) % vertexCount);
-            float[] slot = context.nextLine();
-            slot[0] = relativeX(first.x(), centerX, coordinateScale);
-            slot[1] = relativeZ(first.z(), centerZ, coordinateScale);
-            slot[2] = relativeX(second.x(), centerX, coordinateScale);
-            slot[3] = relativeZ(second.z(), centerZ, coordinateScale);
-            lines.add(slot);
-        }
-
-        int color = AreaOverlayColorResolver.resolve(area, System.currentTimeMillis());
-        OverlayRenderHelper.drawTriangles(matrix, triangles, color, hovered ? 0.28F : 0.14F, 0.0F);
-        OverlayRenderHelper.drawLines(matrix, lines, color, hovered ? 1.0F : 0.82F, 0.01F);
-        renderName(drawContext, textRenderer, area, coordinateScale, color);
-        matrices.pop();
         return true;
     }
 
@@ -150,11 +155,14 @@ final class AreaWorldMapRenderer extends MapElementRenderer<OverlayArea, AreaWor
 
         MatrixStack matrices = drawContext.getMatrices();
         matrices.push();
-        float nameScale = (float) (OverlayRenderHelper.AREA_NAME_SCALE
-            / Math.max(0.0001D, mapScale));
-        matrices.scale(nameScale, nameScale, 1.0F);
-        drawContext.drawTextWithShadow(textRenderer, Text.literal(name), -textWidth / 2, -4, 0xFF000000 | color);
-        matrices.pop();
+        try {
+            float nameScale = (float) (OverlayRenderHelper.AREA_NAME_SCALE
+                / Math.max(0.0001D, mapScale));
+            matrices.scale(nameScale, nameScale, 1.0F);
+            drawContext.drawTextWithShadow(textRenderer, Text.literal(name), -textWidth / 2, -4, 0xFF000000 | color);
+        } finally {
+            matrices.pop();
+        }
     }
 
     private static float relativeX(double pointX, double centerX, double coordinateScale) {

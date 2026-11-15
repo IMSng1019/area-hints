@@ -155,10 +155,10 @@ public class DescriptionManager {
         if (client.player == null) {
             return false;
         }
-        if (sender.getId() != null && sender.getId().equals(client.player.getUuid())) {
+        if (areahint.util.ProfileCompat.id(sender) != null && areahint.util.ProfileCompat.id(sender).equals(client.player.getUuid())) {
             return true;
         }
-        return sender.getName() != null && sender.getName().equals(client.player.getGameProfile().getName());
+        return areahint.util.ProfileCompat.name(sender) != null && areahint.util.ProfileCompat.name(sender).equals(areahint.util.ProfileCompat.name(client.player.getGameProfile()));
     }
 
     private void handleChatInput(String input) {

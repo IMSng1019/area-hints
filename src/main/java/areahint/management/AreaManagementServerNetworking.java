@@ -32,13 +32,13 @@ public final class AreaManagementServerNetworking {
     }
 
     private static void handleRequest(ServerPlayerEntity player, long requestId, String dimensionId, String areaName) {
-        String playerDimension = player.getWorld().getRegistryKey().getValue().toString();
+        String playerDimension = areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().toString();
         if (!playerDimension.equals(dimensionId)) {
             sendResponse(player, requestId, dimensionId, areaName, false, List.of());
             return;
         }
 
-        String dimensionType = Packets.convertDimensionPathToType(player.getWorld().getRegistryKey().getValue().getPath());
+        String dimensionType = Packets.convertDimensionPathToType(areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().getPath());
         String fileName = Packets.getFileNameForDimension(dimensionType);
         if (fileName == null) {
             sendResponse(player, requestId, dimensionId, areaName, false, List.of());

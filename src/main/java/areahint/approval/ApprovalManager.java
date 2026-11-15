@@ -64,9 +64,9 @@ public final class ApprovalManager {
     }
 
     public static boolean isOperator(ServerPlayerEntity player) {
-        return player != null && player.getServer() != null
+        return player != null && areahint.util.ServerPlayerCompat.server(player) != null
             && player.hasPermissionLevel(2)
-            && player.getServer().getPlayerManager().isOperator(player.getGameProfile());
+            && areahint.util.ServerPlayerCompat.isOperator(player);
     }
 
     public static boolean requiresApproval(ServerPlayerEntity player) {
@@ -109,7 +109,7 @@ public final class ApprovalManager {
         if (removed.isEmpty() && added.isEmpty()) {
             throw new IOException("approval.error.no_changes");
         }
-        ApprovalRequest request = create(player, operation, player.getWorld().getRegistryKey().getValue().toString());
+        ApprovalRequest request = create(player, operation, areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().toString());
         request.changes.add(change("areas", file, removed, added));
         request.previewAreas = toAreas(added.isEmpty() ? removed : added);
         saveNew(request);
@@ -144,7 +144,7 @@ public final class ApprovalManager {
     // 可视化申请使用原始 JSON 差异，模型未识别的扩展字段仍随原域名完整保留。
     public static String submitVizEdit(ServerPlayerEntity player, Path file,
             areahint.vizedit.VizEditChangeService.Prepared prepared) throws IOException {
-        ApprovalRequest request = create(player, "vizedit", player.getWorld().getRegistryKey().getValue().toString());
+        ApprovalRequest request = create(player, "vizedit", areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().toString());
         request.changes.add(change("areas", file, prepared.before(), prepared.after()));
         request.vizEdit = areahint.vizedit.VizEditMetadata.from(prepared);
         request.previewAreas = toAreas(prepared.after().isEmpty() ? prepared.before() : prepared.after());
@@ -197,7 +197,7 @@ public final class ApprovalManager {
         request.worldKey = worldKey;
         request.worldName = WorldFolderManager.getCurrentWorldName();
         request.applicantId = player.getUuidAsString();
-        request.applicantName = player.getGameProfile().getName();
+        request.applicantName = areahint.util.ProfileCompat.name(player.getGameProfile());
         request.operation = operation;
         request.dimensionId = normalizeDimension(dimensionId);
         request.createdAt = request.updatedAt = System.currentTimeMillis();
@@ -292,7 +292,7 @@ public final class ApprovalManager {
         applyDraft(player, request, action.get("areas"));
         ApprovalRequest.Review review = new ApprovalRequest.Review();
         review.reviewerId = player.getUuidAsString();
-        review.reviewerName = player.getGameProfile().getName();
+        review.reviewerName = areahint.util.ProfileCompat.name(player.getGameProfile());
         review.result = result;
         review.comment = comment;
         review.time = System.currentTimeMillis();
@@ -322,7 +322,7 @@ public final class ApprovalManager {
             // 旧审批面板的重新申请按钮也走专用字段和权限路径，不能落入宽泛的通用 rebase。
             applyDraft(player, request, action.get("areas"));
             if (!areahint.vizedit.VizEditServerService.canOpen(player) || request.vizEdit == null) throw error("denied");
-            if (!request.dimensionId.equals(player.getWorld().getRegistryKey().getValue().toString())) throw error("conflict");
+            if (!request.dimensionId.equals(areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().toString())) throw error("conflict");
             JsonArray current = areahint.vizedit.VizEditServerService.readAreas(areahint.vizedit.VizEditServerService.file(request.dimensionId));
             var prepared = areahint.vizedit.VizEditChangeService.prepare(current, current, request.vizEdit.operation,
                 request.vizEdit.targetName, request.vizEdit.fields, request.dimensionId,

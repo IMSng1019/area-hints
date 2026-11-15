@@ -91,8 +91,13 @@ public final class ApprovalListScreen extends CommandUiScreen {
             Entry(ApprovalRequest request) { this.request = request; }
 
             @Override
+            //? if >=1.21.9 {
+            /*public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX(), y = getContentY(), entryWidth = getWidth(), entryHeight = getContentHeight();*/
+            //?} else {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            //?}
                 String name = request.previewAreas == null || request.previewAreas.isEmpty()
                     ? request.dimensionId : request.previewAreas.get(0).getName();
                 String title = request.applicantName + " · " + ApprovalClientManager.operationName(request.operation);
@@ -102,7 +107,12 @@ public final class ApprovalListScreen extends CommandUiScreen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public boolean mouseClicked(net.minecraft.client.gui.Click clickEvent, boolean doubled) {
+                double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+            //?} else {
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            //?}
                 if (button != 0) return false;
                 ApprovalClientManager.openRequest(request.id, ApprovalListScreen.this);
                 return true;

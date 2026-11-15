@@ -1554,6 +1554,7 @@
   "key.areahint.unified.record": "통합 바인딩 키",
   "key.areahint.expandarea.confirm": "도메인 확장 확인",
   "category.areahint.general": "Areas Hint",
+  "key.category.areahint.general": "Areas Hint",
   "description.no_description": "이 도메인에는 아직 설명이 없습니다",
   "description.save.success": "설명을 저장했습니다",
   "description.delete.success": "설명을 삭제했습니다",

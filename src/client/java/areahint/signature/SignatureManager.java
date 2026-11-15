@@ -288,7 +288,7 @@ public class SignatureManager {
             return result;
         }
 
-        String playerName = client.player.getGameProfile().getName();
+        String playerName = areahint.util.ProfileCompat.name(client.player.getGameProfile());
         List<AreaData> allAreas = loadCurrentDimensionAreas();
 
         for (AreaData area : allAreas) {

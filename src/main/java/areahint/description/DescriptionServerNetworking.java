@@ -282,7 +282,7 @@ public final class DescriptionServerNetworking {
             return;
         }
 
-        DimensionalNameCommands.syncServerDimensions(player.getServer());
+        DimensionalNameCommands.syncServerDimensions(areahint.util.ServerPlayerCompat.server(player));
         String normalizedQuery = normalizeQuery(query);
         List<ListEntry> entries = new ArrayList<>();
         for (Map.Entry<String, String> entry : DimensionalNameManager.getAllDimensionalNames().entrySet()) {
@@ -456,7 +456,7 @@ public final class DescriptionServerNetworking {
         data.setSurfaceName(surfaceName);
         data.setDimension(dimension);
         data.setDescription(description);
-        data.setAuthor(player.getGameProfile().getName());
+        data.setAuthor(areahint.util.ProfileCompat.name(player.getGameProfile()));
         data.setUpdatedAt(System.currentTimeMillis());
         return data;
     }
@@ -574,17 +574,17 @@ public final class DescriptionServerNetworking {
     }
 
     private static String getPlayerDimensionType(ServerPlayerEntity player) {
-        if (player == null || player.getWorld() == null) {
+        if (player == null || areahint.util.ServerPlayerCompat.world(player) == null) {
             return null;
         }
-        return Packets.convertDimensionPathToType(player.getWorld().getRegistryKey().getValue().getPath());
+        return Packets.convertDimensionPathToType(areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().getPath());
     }
 
     private static String getPlayerDimensionId(ServerPlayerEntity player) {
-        if (player == null || player.getWorld() == null) {
+        if (player == null || areahint.util.ServerPlayerCompat.world(player) == null) {
             return "";
         }
-        return player.getWorld().getRegistryKey().getValue().toString();
+        return areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().toString();
     }
 
     private static String getSurfaceName(AreaData area) {

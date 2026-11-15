@@ -58,7 +58,7 @@ public final class EasyAddRecordingHud {
         int x = (width - panelWidth) / 2;
         int y = 18;
         context.fill(x, y, x + panelWidth, y + panelHeight, 0x77000000);
-        context.drawBorder(x, y, panelWidth, panelHeight, 0x88FFFFFF);
+        areahint.util.GuiDrawCompat.drawBorder(context, x, y, panelWidth, panelHeight, 0x88FFFFFF);
 
         context.drawCenteredTextWithShadow(client.textRenderer,
             Text.literal(I18nManager.translate("commandui.easyadd.record.title")), width / 2, y + 7, 0xFFFFFFFF);

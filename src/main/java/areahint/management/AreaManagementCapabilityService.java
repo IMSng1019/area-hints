@@ -69,11 +69,11 @@ public final class AreaManagementCapabilityService {
      * 校验客户端提交的维度是否仍为玩家当前维度，兼容完整维度ID和内部维度类型。
      */
     public static boolean isCurrentDimension(ServerPlayerEntity player, String requestedDimension) {
-        if (player == null || player.getWorld() == null) {
+        if (player == null || areahint.util.ServerPlayerCompat.world(player) == null) {
             return false;
         }
         String currentType = Packets.convertDimensionPathToType(
-            player.getWorld().getRegistryKey().getValue().getPath());
+            areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().getPath());
         String requestedType = normalizeDimensionType(requestedDimension);
         return currentType != null && currentType.equals(requestedType);
     }
@@ -87,7 +87,7 @@ public final class AreaManagementCapabilityService {
         if (player == null || operation == null || area == null) {
             return false;
         }
-        String playerName = player.getGameProfile().getName();
+        String playerName = areahint.util.ProfileCompat.name(player.getGameProfile());
 
         return switch (operation) {
             case TCP, UDP -> PermissionService.hasCommandPermission(player, PermissionNodes.TELEPORT, 0);
@@ -157,7 +157,7 @@ public final class AreaManagementCapabilityService {
     private static boolean canModifySignature(ServerPlayerEntity player, AreaData area, String permissionNode) {
         // 扩展签名者与创建者均可管理本域名的扩展签名，保留管理员及现有权限节点覆盖规则。
         return PermissionService.hasNodeOr(player, permissionNode,
-            () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, player.getGameProfile().getName()));
+            () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, areahint.util.ProfileCompat.name(player.getGameProfile())));
     }
 
     /**

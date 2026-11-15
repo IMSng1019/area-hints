@@ -5,6 +5,7 @@ import net.minecraft.client.gui.widget.ElementListWidget;
 
 /**
  * EntryListWidget 跨版本兼容基类，统一构造参数和列表滚动位置的访问接口。
+ * 1.21.9 后条目内容坐标已包含旧版边距；绘制仍取整行宽度，保持现有按钮与说明布局。
  */
 public abstract class CompatEntryListWidget<E extends ElementListWidget.Entry<E>> extends ElementListWidget<E> {
     protected CompatEntryListWidget(MinecraftClient client, int width, int height, int y, int itemHeight) {

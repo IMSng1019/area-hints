@@ -123,7 +123,7 @@ public final class AreaGamemodeManager {
         if (!ServerConfig.isForceUseAreahint()) {
             return;
         }
-        String dimension = player.getWorld().getRegistryKey().getValue().toString();
+        String dimension = areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().toString();
         AreaGamemodeResolver resolver = resolverFor(player);
         GameMode desired = AreaGamemodeResolver.requiredMode(resolver == null ? null
             : resolver.findArea(player.getX(), player.getY(), player.getZ()), ServerConfig.getDefaultGamemode());
@@ -138,7 +138,7 @@ public final class AreaGamemodeManager {
 
     private static AreaGamemodeResolver resolverFor(ServerPlayerEntity player) {
         // 完整维度标识必须匹配，避免自定义命名空间下同名维度误读主世界或下界的文件。
-        String type = switch (player.getWorld().getRegistryKey().getValue().toString()) {
+        String type = switch (areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().toString()) {
             case "minecraft:overworld" -> Packets.DIMENSION_OVERWORLD;
             case "minecraft:the_nether" -> Packets.DIMENSION_NETHER;
             case "minecraft:the_end" -> Packets.DIMENSION_END;

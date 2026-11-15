@@ -1554,6 +1554,7 @@
   "key.areahint.unified.record": "Unified Bound Key",
   "key.areahint.expandarea.confirm": "Confirm Domain Expansion",
   "category.areahint.general": "Areas Hint",
+  "key.category.areahint.general": "Areas Hint",
   "description.no_description": "No description for this domain yet",
   "description.save.success": "Description saved",
   "description.delete.success": "Description deleted",

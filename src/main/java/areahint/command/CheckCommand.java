@@ -71,7 +71,7 @@ public class CheckCommand {
         
         try {
             ServerPlayerEntity player = source.getPlayerOrThrow();
-            RegistryKey<World> dimensionType = player.getWorld().getRegistryKey();
+            RegistryKey<World> dimensionType = areahint.util.ServerPlayerCompat.world(player).getRegistryKey();
             String dimensionId = dimensionType.getValue().toString();
             
             // 获取当前维度的域名文件
@@ -164,7 +164,7 @@ public class CheckCommand {
         
         try {
             ServerPlayerEntity player = source.getPlayerOrThrow();
-            RegistryKey<World> dimensionType = player.getWorld().getRegistryKey();
+            RegistryKey<World> dimensionType = areahint.util.ServerPlayerCompat.world(player).getRegistryKey();
             String dimensionId = dimensionType.getValue().toString();
             
             // 获取当前维度的域名文件
@@ -288,7 +288,7 @@ public class CheckCommand {
         return (context, builder) -> {
             try {
                 ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
-                RegistryKey<World> dimensionType = player.getWorld().getRegistryKey();
+                RegistryKey<World> dimensionType = areahint.util.ServerPlayerCompat.world(player).getRegistryKey();
                 String dimensionId = dimensionType.getValue().toString();
                 
                 // 获取当前维度的域名文件

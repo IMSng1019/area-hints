@@ -19,11 +19,10 @@ public class ExpandAreaKeyHandler {
      */
     public static void register() {
         // 注册确认按键 (Enter)
-        confirmKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        confirmKey = KeyBindingHelper.registerKeyBinding(areahint.keyhandler.KeyBindingCompat.create(
             "key.areahint.expandarea.confirm",
             InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_ENTER,
-            "category.areahint.general"
+            GLFW.GLFW_KEY_ENTER
         ));
         
         // 注册客户端tick事件

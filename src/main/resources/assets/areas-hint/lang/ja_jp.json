@@ -1554,6 +1554,7 @@
   "key.areahint.unified.record": "統一バインドキー",
   "key.areahint.expandarea.confirm": "ドメイン拡張を確定",
   "category.areahint.general": "Areas Hint",
+  "key.category.areahint.general": "Areas Hint",
   "description.no_description": "このドメインにはまだ説明がありません",
   "description.save.success": "説明を保存しました",
   "description.delete.success": "説明を削除しました",

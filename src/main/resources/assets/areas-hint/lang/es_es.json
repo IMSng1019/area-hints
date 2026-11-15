@@ -1554,6 +1554,7 @@
   "key.areahint.unified.record": "Tecla vinculada unificada",
   "key.areahint.expandarea.confirm": "Confirmar expansión de dominio",
   "category.areahint.general": "Areas Hint",
+  "key.category.areahint.general": "Areas Hint",
   "description.no_description": "Este dominio aún no tiene descripción",
   "description.save.success": "Descripción guardada",
   "description.delete.success": "Descripción eliminada",

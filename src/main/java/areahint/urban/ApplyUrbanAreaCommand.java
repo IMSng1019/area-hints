@@ -79,10 +79,10 @@ public final class ApplyUrbanAreaCommand {
                     source.sendMessage(message(source, "urban.error.no_rural_areas"));
                 } else {
                     source.sendMessage(message(source, "urban.error.no_eligible_areas",
-                        source.getPlayer().getGameProfile().getName()));
+                        areahint.util.ProfileCompat.name(source.getPlayer().getGameProfile())));
                 }
                 Areashint.LOGGER.info("城市化无可用域名：玩家={}，维度={}，文件={}，总数={}，农村域名={}，管理员={}",
-                    source.getPlayer().getGameProfile().getName(), dimension, areaFile(dimension),
+                    areahint.util.ProfileCompat.name(source.getPlayer().getGameProfile()), dimension, areaFile(dimension),
                     areas.size(), ruralCount, ApprovalManager.isOperator(source.getPlayer()));
                 return 0;
             }

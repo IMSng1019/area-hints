@@ -28,7 +28,7 @@ public final class AreaDataChunkNetworking {
                     if (READY.add(player.getUuid())) ServerNetworking.sendAllAreaDataToClient(player);
                 });
             } catch (RuntimeException exception) {
-                Areashint.LOGGER.warn("忽略无效域名分片握手: {}", player.getGameProfile().getName());
+                Areashint.LOGGER.warn("忽略无效域名分片握手: {}", areahint.util.ProfileCompat.name(player.getGameProfile()));
             }
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> READY.remove(handler.player.getUuid()));
@@ -37,7 +37,7 @@ public final class AreaDataChunkNetworking {
 
     public static void send(ServerPlayerEntity player, String dimension, String document) {
         if (!READY.contains(player.getUuid())) {
-            Areashint.LOGGER.warn("客户端尚不支持大型域名分片同步，跳过 {} 的 {} 数据", player.getGameProfile().getName(), dimension);
+            Areashint.LOGGER.warn("客户端尚不支持大型域名分片同步，跳过 {} 的 {} 数据", areahint.util.ProfileCompat.name(player.getGameProfile()), dimension);
             return;
         }
         if (document.length() > MAX_LENGTH) {

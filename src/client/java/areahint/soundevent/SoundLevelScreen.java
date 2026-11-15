@@ -260,9 +260,18 @@ public final class SoundLevelScreen extends CommandUiScreen {
         }
 
         @Override
+        //? if >=1.21.9 {
+        /*public boolean keyPressed(net.minecraft.client.input.KeyInput inputEvent) {
+            int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();*/
+        //?} else {
         public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        //?}
             float previousSoundLevel = getSoundLevel();
+            //? if >=1.21.9 {
+            /*boolean handled = super.keyPressed(inputEvent);*/
+            //?} else {
             boolean handled = super.keyPressed(keyCode, scanCode, modifiers);
+            //?}
             if (handled && (keyCode == GLFW.GLFW_KEY_LEFT || keyCode == GLFW.GLFW_KEY_RIGHT)) {
                 // 原版滑条按像素计算键盘步长，宽控件会被 0.01 量化舍回原值，因此显式推进一个音量档。
                 float direction = keyCode == GLFW.GLFW_KEY_LEFT ? -1.0f : 1.0f;

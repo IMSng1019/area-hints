@@ -1554,6 +1554,7 @@
   "key.areahint.unified.record": "bound key",
   "key.areahint.expandarea.confirm": "confirm area expand",
   "category.areahint.general": "Areas Hint",
+  "key.category.areahint.general": "Areas Hint",
   "description.no_description": "dis area naem haz no descripshun yet",
   "description.save.success": "descripshun savd",
   "description.delete.success": "descripshun deletd",

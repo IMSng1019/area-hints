@@ -33,11 +33,10 @@ public final class DescriptionKeyHandler {
     }
 
     public static void register() {
-        queryKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        queryKeyBinding = KeyBindingHelper.registerKeyBinding(areahint.keyhandler.KeyBindingCompat.create(
             "key.areahint.description.query",
             InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_UNKNOWN,
-            "category.areahint.general"
+            GLFW.GLFW_KEY_UNKNOWN
         ));
 
         if (!registered) {
@@ -203,10 +202,10 @@ public final class DescriptionKeyHandler {
         return shouldCloseOnAnyBoundInput(
             queryKeyBinding != null,
             queryKeyBinding == null || queryKeyBinding.isUnbound(),
-            queryKeyBinding != null && queryKeyBinding.matchesKey(keyCode, scanCode),
+            queryKeyBinding != null && areahint.keyhandler.KeyBindingCompat.matchesKey(queryKeyBinding, keyCode, scanCode),
             recordKeyBinding != null,
             recordKeyBinding == null || recordKeyBinding.isUnbound(),
-            recordKeyBinding != null && recordKeyBinding.matchesKey(keyCode, scanCode)
+            recordKeyBinding != null && areahint.keyhandler.KeyBindingCompat.matchesKey(recordKeyBinding, keyCode, scanCode)
         );
     }
 
@@ -214,7 +213,7 @@ public final class DescriptionKeyHandler {
         return shouldCloseOnBoundInput(
             queryKeyBinding != null,
             queryKeyBinding == null || queryKeyBinding.isUnbound(),
-            queryKeyBinding != null && queryKeyBinding.matchesKey(keyCode, scanCode)
+            queryKeyBinding != null && areahint.keyhandler.KeyBindingCompat.matchesKey(queryKeyBinding, keyCode, scanCode)
         );
     }
 
@@ -223,7 +222,7 @@ public final class DescriptionKeyHandler {
         return shouldCloseOnBoundInput(
             recordKeyBinding != null,
             recordKeyBinding == null || recordKeyBinding.isUnbound(),
-            recordKeyBinding != null && recordKeyBinding.matchesKey(keyCode, scanCode)
+            recordKeyBinding != null && areahint.keyhandler.KeyBindingCompat.matchesKey(recordKeyBinding, keyCode, scanCode)
         );
     }
 
@@ -231,7 +230,7 @@ public final class DescriptionKeyHandler {
         return shouldCloseOnBoundInput(
             queryKeyBinding != null,
             queryKeyBinding == null || queryKeyBinding.isUnbound(),
-            queryKeyBinding != null && queryKeyBinding.matchesMouse(button)
+            queryKeyBinding != null && areahint.keyhandler.KeyBindingCompat.matchesMouse(queryKeyBinding, button)
         );
     }
 
@@ -240,7 +239,7 @@ public final class DescriptionKeyHandler {
         return shouldCloseOnBoundInput(
             recordKeyBinding != null,
             recordKeyBinding == null || recordKeyBinding.isUnbound(),
-            recordKeyBinding != null && recordKeyBinding.matchesMouse(button)
+            recordKeyBinding != null && areahint.keyhandler.KeyBindingCompat.matchesMouse(recordKeyBinding, button)
         );
     }
 
@@ -249,10 +248,10 @@ public final class DescriptionKeyHandler {
         return shouldCloseOnAnyBoundInput(
             queryKeyBinding != null,
             queryKeyBinding == null || queryKeyBinding.isUnbound(),
-            queryKeyBinding != null && queryKeyBinding.matchesMouse(button),
+            queryKeyBinding != null && areahint.keyhandler.KeyBindingCompat.matchesMouse(queryKeyBinding, button),
             recordKeyBinding != null,
             recordKeyBinding == null || recordKeyBinding.isUnbound(),
-            recordKeyBinding != null && recordKeyBinding.matchesMouse(button)
+            recordKeyBinding != null && areahint.keyhandler.KeyBindingCompat.matchesMouse(recordKeyBinding, button)
         );
     }
 

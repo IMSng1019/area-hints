@@ -1553,6 +1553,7 @@
   "key.areahint.unified.record": "Touche de liaison unifiée",
   "key.areahint.expandarea.confirm": "Confirmer l'extension du domaine",
   "category.areahint.general": "Areas Hint",
+  "key.category.areahint.general": "Areas Hint",
   "description.no_description": "Ce domaine n'a pas encore de description",
   "description.save.success": "Description enregistrée",
   "description.delete.success": "Description supprimée",

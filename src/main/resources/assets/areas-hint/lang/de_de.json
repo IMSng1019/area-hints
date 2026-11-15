@@ -1554,6 +1554,7 @@
   "key.areahint.unified.record": "Einheitliche Bindungstaste",
   "key.areahint.expandarea.confirm": "Gebietsname-Erweiterung bestätigen",
   "category.areahint.general": "Areas Hint",
+  "key.category.areahint.general": "Areas Hint",
   "description.no_description": "Für diesen Gebietsnamen gibt es noch keine Beschreibung",
   "description.save.success": "Beschreibung gespeichert",
   "description.delete.success": "Beschreibung gelöscht",

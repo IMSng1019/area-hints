@@ -121,8 +121,13 @@ public class DeleteHintVertexScreen extends CommandWizardScreen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX(), y = getContentY(), entryWidth = getWidth(), entryHeight = getContentHeight();*/
+            //?} else {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            //?}
                 Set<Integer> marked = DeleteHintVertexScreen.this.manager.getMarkedIndices();
                 boolean selected = marked.contains(this.index);
                 int titleColor = selected ? 0xFF5555 : hovered ? BRIGHT_YELLOW : 0xFFFFFF;
@@ -136,7 +141,12 @@ public class DeleteHintVertexScreen extends CommandWizardScreen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public boolean mouseClicked(net.minecraft.client.gui.Click clickEvent, boolean doubled) {
+                double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+            //?} else {
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            //?}
                 if (button == 0) {
                     DeleteHintVertexScreen.this.manager.toggleVertex(this.index);
                     DeleteHintVertexScreen.this.rebuildList();

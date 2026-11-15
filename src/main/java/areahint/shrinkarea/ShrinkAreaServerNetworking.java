@@ -116,13 +116,13 @@ public class ShrinkAreaServerNetworking {
             }
 
             // 重新分发给所有玩家
-            redistributeAreasToAllPlayers(player.getServer());
+            redistributeAreasToAllPlayers(areahint.util.ServerPlayerCompat.server(player));
 
             // 发送成功响应
             sendResponse(player, true, key("shrinkarea.success.area.shrink_2"), lit(shrunkArea.getName()));
 
             // 服务端日志
-            System.out.println("玩家 " + player.getGameProfile().getName() +
+            System.out.println("玩家 " + areahint.util.ProfileCompat.name(player.getGameProfile()) +
                 " 成功收缩域名: " + shrunkArea.getName() + " (维度: " + dimension + ")");
 
         } catch (Exception e) {

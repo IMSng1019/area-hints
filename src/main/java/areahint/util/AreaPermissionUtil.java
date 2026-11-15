@@ -18,7 +18,7 @@ public final class AreaPermissionUtil {
     public static boolean canModifyArea(ServerPlayerEntity player, AreaData area, List<AreaData> allAreas) {
         if (player == null || area == null) return false;
         if (player.hasPermissionLevel(2)) return true;
-        String playerName = player.getGameProfile().getName();
+        String playerName = areahint.util.ProfileCompat.name(player.getGameProfile());
         if (isSignedBy(area, playerName)) return true;
         return isBaseSignedByPlayer(area.getBaseName(), allAreas, playerName);
     }

@@ -144,8 +144,13 @@ public class WizardSelectionListScreen<T> extends CommandWizardScreen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX(), y = getContentY(), entryWidth = getWidth(), entryHeight = getContentHeight();*/
+            //?} else {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            //?}
                 int titleColor = hovered ? BRIGHT_YELLOW : 0xFFFFFF;
                 WizardSelectionListScreen.this.drawTrimmed(context, Text.literal(this.item.title()),
                     x + 4, y + 5, entryWidth - 8, titleColor);
@@ -154,7 +159,12 @@ public class WizardSelectionListScreen<T> extends CommandWizardScreen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public boolean mouseClicked(net.minecraft.client.gui.Click clickEvent, boolean doubled) {
+                double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+            //?} else {
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            //?}
                 if (button == 0) {
                     WizardSelectionListScreen.this.markFlowHandled();
                     CommandVisualLaunchContext.consume();

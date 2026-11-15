@@ -135,7 +135,7 @@ public class RenameAreaCommand {
     private static void sendRenameableAreaList(ServerPlayerEntity player) {
         try {
             String playerName = player.getName().getString();
-            RegistryKey<World> dimensionType = player.getWorld().getRegistryKey();
+            RegistryKey<World> dimensionType = areahint.util.ServerPlayerCompat.world(player).getRegistryKey();
             String dimensionId = dimensionType.getValue().toString();
 
             // 获取维度文件名

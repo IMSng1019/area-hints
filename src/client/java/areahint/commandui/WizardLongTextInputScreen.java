@@ -4,6 +4,7 @@ import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import areahint.util.GuiInputCompat;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.util.SelectionManager;
 import net.minecraft.text.Text;
@@ -55,25 +56,30 @@ public class WizardLongTextInputScreen extends CommandWizardScreen {
     }
 
     @Override
+    //? if >=1.21.9 {
+    /*public boolean keyPressed(net.minecraft.client.input.KeyInput inputEvent) {
+        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (Screen.isSelectAll(keyCode)) {
+    //?}
+        if (GuiInputCompat.isSelectAll(keyCode, scanCode, modifiers)) {
             this.selectionManager.selectAll();
             return true;
         }
-        if (Screen.isCopy(keyCode)) {
+        if (GuiInputCompat.isCopy(keyCode, scanCode, modifiers)) {
             this.selectionManager.copy();
             return true;
         }
-        if (Screen.isPaste(keyCode)) {
+        if (GuiInputCompat.isPaste(keyCode, scanCode, modifiers)) {
             this.selectionManager.paste();
             return true;
         }
-        if (Screen.isCut(keyCode)) {
+        if (GuiInputCompat.isCut(keyCode, scanCode, modifiers)) {
             this.selectionManager.cut();
             return true;
         }
         if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
-            if (Screen.hasShiftDown()) {
+            if (GuiInputCompat.hasShift(modifiers)) {
                 this.selectionManager.insert("\n");
             } else {
                 submit();
@@ -83,29 +89,37 @@ public class WizardLongTextInputScreen extends CommandWizardScreen {
         switch (keyCode) {
             case GLFW.GLFW_KEY_BACKSPACE -> this.selectionManager.delete(-1);
             case GLFW.GLFW_KEY_DELETE -> this.selectionManager.delete(1);
-            case GLFW.GLFW_KEY_RIGHT -> this.selectionManager.moveCursor(1, Screen.hasShiftDown());
-            case GLFW.GLFW_KEY_LEFT -> this.selectionManager.moveCursor(-1, Screen.hasShiftDown());
-            case GLFW.GLFW_KEY_HOME -> this.selectionManager.moveCursorToStart(Screen.hasShiftDown());
-            case GLFW.GLFW_KEY_END -> this.selectionManager.moveCursorToEnd(Screen.hasShiftDown());
+            case GLFW.GLFW_KEY_RIGHT -> this.selectionManager.moveCursor(1, GuiInputCompat.hasShift(modifiers));
+            case GLFW.GLFW_KEY_LEFT -> this.selectionManager.moveCursor(-1, GuiInputCompat.hasShift(modifiers));
+            case GLFW.GLFW_KEY_HOME -> this.selectionManager.moveCursorToStart(GuiInputCompat.hasShift(modifiers));
+            case GLFW.GLFW_KEY_END -> this.selectionManager.moveCursorToEnd(GuiInputCompat.hasShift(modifiers));
             default -> {
+                //? if >=1.21.9 {
+                /*return super.keyPressed(inputEvent);*/
+                //?} else {
                 return super.keyPressed(keyCode, scanCode, modifiers);
+                //?}
             }
         }
         return true;
     }
 
     @Override
+    //? if >=1.21.9 {
+    /*public boolean charTyped(net.minecraft.client.input.CharInput inputEvent) {
+        int chr = inputEvent.codepoint(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     public boolean charTyped(char chr, int modifiers) {
-        // 1.20.5 起 SharedConstants.isValidChar 搬到 StringHelper.isValidChar，故按版本分支
-        //? if >=1.20.5 {
-        /*if (net.minecraft.util.StringHelper.isValidChar(chr)) {*/
-        //?} else {
-        if (SharedConstants.isValidChar(chr)) {
-        //?}
+    //?}
+        if (GuiInputCompat.isValidChar(chr, modifiers)) {
             this.selectionManager.insert(Character.toString(chr));
             return true;
         }
+        //? if >=1.21.9 {
+        /*return super.charTyped(inputEvent);*/
+        //?} else {
         return super.charTyped(chr, modifiers);
+        //?}
     }
 
     @Override
@@ -129,7 +143,7 @@ public class WizardLongTextInputScreen extends CommandWizardScreen {
         int boxY = 76;
         int boxHeight = Math.max(70, this.height - 118);
         context.fill(x - 2, boxY - 2, x + contentWidth + 2, boxY + boxHeight + 2, 0x99202020);
-        context.drawBorder(x - 2, boxY - 2, contentWidth + 4, boxHeight + 4, 0xCCAAAAAA);
+        areahint.util.GuiDrawCompat.drawBorder(context, x - 2, boxY - 2, contentWidth + 4, boxHeight + 4, 0xCCAAAAAA);
         // 1.21.2 起 drawTextWrapped 改名为 drawWrappedText 并新增阴影参数（原方法无阴影，传 false）
         //? if <=1.21.1 {
         context.drawTextWrapped(this.textRenderer, Text.literal(this.text), x + 4, boxY + 4, contentWidth - 8, 0xFFFFFFFF);

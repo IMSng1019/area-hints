@@ -1554,6 +1554,7 @@
   "key.areahint.unified.record": "统一绑定键",
   "key.areahint.expandarea.confirm": "确认扩展域名",
   "category.areahint.general": "Areas Hint",
+  "key.category.areahint.general": "Areas Hint",
   "description.no_description": "对应域名暂无描述",
   "description.save.success": "描述已保存",
   "description.delete.success": "描述已删除",

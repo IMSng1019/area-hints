@@ -140,7 +140,7 @@ public class Areashint implements ModInitializer {
 				&& !areahint.dimensional.DimensionalNameManager.hasDimensionalName(dimId)) {
 				// 自动注册该维度（使用维度ID作为默认名称）
 				areahint.dimensional.DimensionalNameManager.setDimensionalName(
-					dimId, dimId, player.getGameProfile().getName());
+					dimId, dimId, areahint.util.ProfileCompat.name(player.getGameProfile()));
 				areahint.dimensional.DimensionalNameManager.saveDimensionalNames();
 				// 提示OP玩家命名
 				MutableText msg = Text.translatable("message.message.dimension_3").append(Text.literal(dimId));

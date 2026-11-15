@@ -107,8 +107,13 @@ public class HelpCommandScreen extends CommandUiScreen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX(), y = getContentY(), entryWidth = getWidth(), entryHeight = getContentHeight();*/
+            //?} else {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            //?}
                 HelpCommandScreen.this.drawTrimmed(context, handler.displayName(), x + 4, y + 5, entryWidth - 8, 0xFFFFFF);
                 HelpCommandScreen.this.drawTrimmed(context, Text.literal(displayCommand()), x + 4, y + 18,
                     entryWidth - 8, hovered ? BRIGHT_YELLOW : 0xAAAAAA);
@@ -118,7 +123,12 @@ public class HelpCommandScreen extends CommandUiScreen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public boolean mouseClicked(net.minecraft.client.gui.Click clickEvent, boolean doubled) {
+                double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+            //?} else {
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            //?}
                 if (button == 0) {
                     handler.open(HelpCommandScreen.this);
                     return true;

@@ -100,7 +100,7 @@ public final class VizEditServerService {
         String target = VizEditChangeService.text(action, "target", true);
         JsonElement incoming = action.get("fields");
         if (incoming == null || !incoming.isJsonObject()) throw VizEditChangeService.error("invalid");
-        String author = player.getGameProfile().getName();
+        String author = areahint.util.ProfileCompat.name(player.getGameProfile());
         if (session.approvalId != null) {
             ApprovalRequest request = ApprovalManager.editableVizEdit(player, session.approvalId);
             if (request.revision != session.approvalRevision) throw VizEditChangeService.error("conflict");
@@ -200,7 +200,7 @@ public final class VizEditServerService {
     }
 
     private static String dimension(ServerPlayerEntity player) {
-        return player.getWorld().getRegistryKey().getValue().toString();
+        return areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().toString();
     }
 
     private static String world() {

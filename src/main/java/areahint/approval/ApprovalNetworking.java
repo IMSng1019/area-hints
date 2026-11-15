@@ -59,7 +59,7 @@ public final class ApprovalNetworking {
     }
 
     private static void handleAction(ServerPlayerEntity player, String json) {
-        if (player.getServer() == null || player.getServer().getPlayerManager().getPlayer(player.getUuid()) != player) {
+        if (areahint.util.ServerPlayerCompat.server(player) == null || areahint.util.ServerPlayerCompat.server(player).getPlayerManager().getPlayer(player.getUuid()) != player) {
             return;
         }
         String operation = "";
@@ -88,7 +88,7 @@ public final class ApprovalNetworking {
             Areashint.LOGGER.error("保存审批操作失败", e);
             sendResult(player, false, "approval.error.storage", operation, requestId);
         } catch (RuntimeException e) {
-            Areashint.LOGGER.warn("拒绝无效审批消息: {}", player.getGameProfile().getName(), e);
+            Areashint.LOGGER.warn("拒绝无效审批消息: {}", areahint.util.ProfileCompat.name(player.getGameProfile()), e);
             sendResult(player, false, "approval.error.invalid", operation, requestId);
         }
     }
@@ -99,7 +99,7 @@ public final class ApprovalNetworking {
             INCOMING.remove(player.getUuid());
             return;
         }
-        if (player.getServer() == null || player.getServer().getPlayerManager().getPlayer(player.getUuid()) != player) {
+        if (areahint.util.ServerPlayerCompat.server(player) == null || areahint.util.ServerPlayerCompat.server(player).getPlayerManager().getPlayer(player.getUuid()) != player) {
             INCOMING.remove(player.getUuid());
             return;
         }
@@ -197,7 +197,7 @@ public final class ApprovalNetworking {
                     sendSnapshot(online);
                 } catch (RuntimeException e) {
                     // 通知失败不回滚已持久化的申请或结果，玩家下次上线仍可主动取得完整记录。
-                    Areashint.LOGGER.warn("发送审批同步失败: {}", online.getGameProfile().getName(), e);
+                    Areashint.LOGGER.warn("发送审批同步失败: {}", areahint.util.ProfileCompat.name(online.getGameProfile()), e);
                 }
             }
             if (applicant && notifyApplicant) {

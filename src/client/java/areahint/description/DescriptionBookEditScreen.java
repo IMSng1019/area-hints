@@ -4,6 +4,7 @@ import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import areahint.util.GuiInputCompat;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.PageTurnWidget;
 import net.minecraft.client.util.SelectionManager;
@@ -100,35 +101,44 @@ public final class DescriptionBookEditScreen extends Screen {
     }
 
     @Override
+    //? if >=1.21.9 {
+    /*public boolean keyPressed(net.minecraft.client.input.KeyInput inputEvent) {
+        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    //?}
         // 描述指令中的书本是编辑界面，不是“查看描述”的只读界面。
         // 绑定键在这里应继续作为普通按键输入处理，不能触发关闭界面。
+        //? if >=1.21.9 {
+        /*if (super.keyPressed(inputEvent)) {*/
+        //?} else {
         if (super.keyPressed(keyCode, scanCode, modifiers)) {
+        //?}
             return true;
         }
-        if (Screen.isSelectAll(keyCode)) {
+        if (GuiInputCompat.isSelectAll(keyCode, scanCode, modifiers)) {
             selectionManager.selectAll();
             return true;
         }
-        if (Screen.isCopy(keyCode)) {
+        if (GuiInputCompat.isCopy(keyCode, scanCode, modifiers)) {
             selectionManager.copy();
             return true;
         }
-        if (Screen.isPaste(keyCode)) {
+        if (GuiInputCompat.isPaste(keyCode, scanCode, modifiers)) {
             selectionManager.paste();
             return true;
         }
-        if (Screen.isCut(keyCode)) {
+        if (GuiInputCompat.isCut(keyCode, scanCode, modifiers)) {
             selectionManager.cut();
             return true;
         }
         switch (keyCode) {
             case GLFW.GLFW_KEY_BACKSPACE -> selectionManager.delete(-1);
             case GLFW.GLFW_KEY_DELETE -> selectionManager.delete(1);
-            case GLFW.GLFW_KEY_RIGHT -> selectionManager.moveCursor(1, Screen.hasShiftDown());
-            case GLFW.GLFW_KEY_LEFT -> selectionManager.moveCursor(-1, Screen.hasShiftDown());
-            case GLFW.GLFW_KEY_HOME -> selectionManager.moveCursorToStart(Screen.hasShiftDown());
-            case GLFW.GLFW_KEY_END -> selectionManager.moveCursorToEnd(Screen.hasShiftDown());
+            case GLFW.GLFW_KEY_RIGHT -> selectionManager.moveCursor(1, GuiInputCompat.hasShift(modifiers));
+            case GLFW.GLFW_KEY_LEFT -> selectionManager.moveCursor(-1, GuiInputCompat.hasShift(modifiers));
+            case GLFW.GLFW_KEY_HOME -> selectionManager.moveCursorToStart(GuiInputCompat.hasShift(modifiers));
+            case GLFW.GLFW_KEY_END -> selectionManager.moveCursorToEnd(GuiInputCompat.hasShift(modifiers));
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> selectionManager.insert("\n");
             default -> {
                 return false;
@@ -138,16 +148,20 @@ public final class DescriptionBookEditScreen extends Screen {
     }
 
     @Override
+    //? if >=1.21.9 {
+    /*public boolean charTyped(net.minecraft.client.input.CharInput inputEvent) {
+        int chr = inputEvent.codepoint(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     public boolean charTyped(char chr, int modifiers) {
+    //?}
+        //? if >=1.21.9 {
+        /*if (super.charTyped(inputEvent)) {*/
+        //?} else {
         if (super.charTyped(chr, modifiers)) {
+        //?}
             return true;
         }
-        // 1.20.5 起 SharedConstants.isValidChar 搬到 StringHelper.isValidChar，故按版本分支
-        //? if >=1.20.5 {
-        /*if (net.minecraft.util.StringHelper.isValidChar(chr)) {*/
-        //?} else {
-        if (SharedConstants.isValidChar(chr)) {
-        //?}
+        if (GuiInputCompat.isValidChar(chr, modifiers)) {
             selectionManager.insert(Character.toString(chr));
             return true;
         }
@@ -155,9 +169,18 @@ public final class DescriptionBookEditScreen extends Screen {
     }
 
     @Override
+    //? if >=1.21.9 {
+    /*public boolean mouseClicked(net.minecraft.client.gui.Click clickEvent, boolean doubled) {
+        double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+    //?} else {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    //?}
         // 鼠标绑定键同样不能关闭描述编辑界面，避免 adddescription 流程被误取消。
+        //? if >=1.21.9 {
+        /*return super.mouseClicked(clickEvent, doubled);*/
+        //?} else {
         return super.mouseClicked(mouseX, mouseY, button);
+        //?}
     }
 
     @Override

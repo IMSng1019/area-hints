@@ -64,14 +64,17 @@ public class BoundVizRenderer {
 
     // 1.21.6 起全局投影只剩 GPU 缓冲，CPU 剔除改用 Fabric 上下文传入的同帧投影。
     public static void render(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f projectionMatrix) {
+        render(matrices, viewMatrix, projectionMatrix, MinecraftClient.getInstance().gameRenderer.getCamera().getPos());
+    }
+
+    // 1.21.9 起提取阶段传入该帧相机位置，避免绘制阶段重新查询发生变化的世界状态。
+    public static void render(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f projectionMatrix, Vec3d cameraPos) {
         BoundVizManager manager = BoundVizManager.getInstance();
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null || client.world == null) return;
 
         boolean hasTempVertices = manager.shouldShowTemporaryVertices();
         if (!manager.isEnabled() && !hasTempVertices) return;
-
-        Vec3d cameraPos = client.gameRenderer.getCamera().getPos();
 
         // 提取视锥平面（每帧动态更新，跟随玩家视角）
         extractFrustumPlanes(viewMatrix, projectionMatrix);
@@ -418,7 +421,8 @@ public class BoundVizRenderer {
         World world = client.world;
         if (world == null) return null;
 
-        Vec3d playerPos = client.player.getPos();
+        // 独立坐标访问器跨版本保持一致，避免 1.21.9 起实体位置方法改名影响方块交接线范围。
+        Vec3d playerPos = new Vec3d(client.player.getX(), client.player.getY(), client.player.getZ());
         int renderDist = 64;
         int renderDistSq = renderDist * renderDist;
         int yMin = Math.max((int) Math.floor(ca.minY), (int) playerPos.y - renderDist);

@@ -73,27 +73,53 @@ public class WizardTextInputScreen extends CommandWizardScreen {
     }
 
     @Override
+    //? if >=1.21.9 {
+    /*public boolean keyPressed(net.minecraft.client.input.KeyInput inputEvent) {
+        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    //?}
         if (keyCode == 257 || keyCode == 335) {
             submit();
             return true;
         }
         for (TextFieldWidget field : this.fields) {
+            //? if >=1.21.9 {
+            /*if (field.keyPressed(inputEvent)) {*/
+            //?} else {
             if (field.keyPressed(keyCode, scanCode, modifiers)) {
+            //?}
                 return true;
             }
         }
+        //? if >=1.21.9 {
+        /*return super.keyPressed(inputEvent);*/
+        //?} else {
         return super.keyPressed(keyCode, scanCode, modifiers);
+        //?}
     }
 
     @Override
+    //? if >=1.21.9 {
+    /*public boolean charTyped(net.minecraft.client.input.CharInput inputEvent) {
+        int chr = inputEvent.codepoint(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     public boolean charTyped(char chr, int modifiers) {
+    //?}
         for (TextFieldWidget field : this.fields) {
+            //? if >=1.21.9 {
+            /*if (field.charTyped(inputEvent)) {*/
+            //?} else {
             if (field.charTyped(chr, modifiers)) {
+            //?}
                 return true;
             }
         }
+        //? if >=1.21.9 {
+        /*return super.charTyped(inputEvent);*/
+        //?} else {
         return super.charTyped(chr, modifiers);
+        //?}
     }
 
     @Override

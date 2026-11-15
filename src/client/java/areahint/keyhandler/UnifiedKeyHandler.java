@@ -46,11 +46,10 @@ public class UnifiedKeyHandler {
         int keyCode = ClientConfig.getRecordKey();
 
         // 注册记录键绑定
-        recordKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        recordKeyBinding = KeyBindingHelper.registerKeyBinding(areahint.keyhandler.KeyBindingCompat.create(
             "key.areahint.unified.record", // 翻译键
             InputUtil.Type.KEYSYM,
-            keyCode, // 使用配置的按键
-            "category.areahint.general" // 通用类别
+            keyCode // 使用配置的按键
         ));
 
         // 只注册一次tick事件
@@ -412,7 +411,7 @@ public class UnifiedKeyHandler {
     public static boolean matchesRecordKey(int keyCode, int scanCode) {
         return recordKeyBinding != null
             && !recordKeyBinding.isUnbound()
-            && recordKeyBinding.matchesKey(keyCode, scanCode);
+            && areahint.keyhandler.KeyBindingCompat.matchesKey(recordKeyBinding, keyCode, scanCode);
     }
 
     /**

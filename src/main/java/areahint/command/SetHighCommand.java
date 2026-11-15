@@ -49,7 +49,7 @@ public class SetHighCommand {
         String playerName = player.getName().getString();
 
         // 获取玩家当前维度
-        String dimension = player.getWorld().getRegistryKey().getValue().toString();
+        String dimension = areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().toString();
         String dimensionType = convertDimensionIdToType(dimension);
         String fileName = Packets.getFileNameForDimension(dimensionType);
 
@@ -85,7 +85,7 @@ public class SetHighCommand {
                     .toList();
             
             // 获取维度类型
-            String dimension = source.getPlayer().getWorld().getRegistryKey().getValue().toString();
+            String dimension = areahint.util.ServerPlayerCompat.world(source.getPlayer()).getRegistryKey().getValue().toString();
             String dimensionType = convertDimensionIdToType(dimension);
             
             // 发送数据包到客户端，格式与客户端期望的一致
@@ -141,7 +141,7 @@ public class SetHighCommand {
         String playerName = player.getName().getString();
 
         // 获取玩家当前维度
-        String dimension = player.getWorld().getRegistryKey().getValue().toString();
+        String dimension = areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().toString();
         String dimensionType = convertDimensionIdToType(dimension);
         String fileName = Packets.getFileNameForDimension(dimensionType);
 
@@ -333,7 +333,7 @@ public class SetHighCommand {
             String playerName = player.getName().getString();
                 
             // 获取玩家当前维度
-            String dimension = player.getWorld().getRegistryKey().getValue().toString();
+            String dimension = areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().toString();
             String dimensionType = convertDimensionIdToType(dimension);
             String fileName = Packets.getFileNameForDimension(dimensionType);
             

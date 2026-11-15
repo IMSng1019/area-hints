@@ -92,7 +92,7 @@ public class SubtitleCommand {
         }
 
         ServerPlayerEntity player = source.getPlayer();
-        String dimensionType = convertDimensionIdToType(player.getWorld().getRegistryKey().getValue().toString());
+        String dimensionType = convertDimensionIdToType(areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().toString());
         String fileName = Packets.getFileNameForDimension(dimensionType);
         if (fileName == null) {
             source.sendMessage(Text.literal(translate(player, "subtitle.server.error.unknown_current_dimension")));

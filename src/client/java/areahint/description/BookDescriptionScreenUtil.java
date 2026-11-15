@@ -44,23 +44,41 @@ public final class BookDescriptionScreenUtil {
         }
 
         @Override
+        //? if >=1.21.9 {
+        /*public boolean keyPressed(net.minecraft.client.input.KeyInput inputEvent) {
+            int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();*/
+        //?} else {
         public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        //?}
             if (DescriptionKeyHandler.shouldCloseOnBoundKey(keyCode, scanCode)) {
                 DescriptionKeyHandler.consumeCloseDescriptionBookKey(keyCode, scanCode);
                 close();
                 return true;
             }
+            //? if >=1.21.9 {
+            /*return super.keyPressed(inputEvent);*/
+            //?} else {
             return super.keyPressed(keyCode, scanCode, modifiers);
+            //?}
         }
 
         @Override
+        //? if >=1.21.9 {
+        /*public boolean mouseClicked(net.minecraft.client.gui.Click clickEvent, boolean doubled) {
+            double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+        //?} else {
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        //?}
             if (DescriptionKeyHandler.shouldCloseOnBoundMouse(button)) {
                 DescriptionKeyHandler.consumeCloseDescriptionBookMouse(button);
                 close();
                 return true;
             }
+            //? if >=1.21.9 {
+            /*return super.mouseClicked(clickEvent, doubled);*/
+            //?} else {
             return super.mouseClicked(mouseX, mouseY, button);
+            //?}
         }
     }
 

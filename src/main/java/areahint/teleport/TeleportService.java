@@ -85,7 +85,7 @@ public final class TeleportService {
         }
 
         // 服务端玩家的世界始终是 ServerWorld，统一入口兼容 1.21.6 移除 getServerWorld 的变更。
-        ServerWorld world = (ServerWorld) player.getWorld();
+        ServerWorld world = areahint.util.ServerPlayerCompat.world(player);
         Optional<Vec3d> landing = "tcp".equals(normalizedMode)
                 ? SAFE_LANDING_FINDER.findCenterLanding(world, area)
                 : SAFE_LANDING_FINDER.findRandomLanding(world, area);
@@ -105,7 +105,7 @@ public final class TeleportService {
     }
 
     private static boolean executeTeleport(ServerPlayerEntity player, Vec3d position) {
-        return executeTeleport(player, (ServerWorld) player.getWorld(), position);
+        return executeTeleport(player, areahint.util.ServerPlayerCompat.world(player), position);
     }
 
     // 审批预览仍使用 TCP 的中心安全落点算法，只把查找目标换成服务端保存的临时域名。
@@ -117,7 +117,7 @@ public final class TeleportService {
         var request = areahint.approval.ApprovalManager.findVisible(player, id);
         AreaData area = areahint.approval.ApprovalManager.previewArea(player, id, index, false);
         Identifier dimension = Identifier.tryParse(request.dimensionId);
-        ServerWorld world = dimension == null ? null : player.getServer().getWorld(
+        ServerWorld world = dimension == null ? null : areahint.util.ServerPlayerCompat.server(player).getWorld(
             net.minecraft.registry.RegistryKey.of(net.minecraft.registry.RegistryKeys.WORLD, dimension));
         if (world == null) {
             throw new areahint.approval.ApprovalManager.ApprovalException("approval.error.preview_unavailable");
@@ -144,7 +144,7 @@ public final class TeleportService {
             //?} else {
             /*player.teleport(world, position.x, position.y, position.z, java.util.Set.of(), player.getYaw(), player.getPitch(), false);*/
             //?}
-            return player.getWorld() == world && player.squaredDistanceTo(position) < 1.0D;
+            return areahint.util.ServerPlayerCompat.world(player) == world && player.squaredDistanceTo(position) < 1.0D;
         } catch (Exception e) {
             Areashint.LOGGER.error("执行域名传送时发生错误", e);
             return false;
@@ -175,7 +175,7 @@ public final class TeleportService {
     }
 
     private static String getPlayerDimensionType(ServerPlayerEntity player) {
-        Identifier dimension = player.getWorld().getRegistryKey().getValue();
+        Identifier dimension = areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue();
         return Packets.convertDimensionPathToType(dimension.getPath());
     }
 

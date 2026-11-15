@@ -130,12 +130,25 @@ public final class ApprovalDetailScreen extends CommandUiScreen {
     }
 
     @Override
+    //? if >=1.21.9 {
+    /*public boolean keyPressed(net.minecraft.client.input.KeyInput inputEvent) {
+        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    //?}
         // 输入意见时绑定键也可能是普通字母，交给随后到达的字符事件，不能关闭审批页面。
         if (comment != null && comment.isFocused()
                 && areahint.keyhandler.UnifiedKeyHandler.matchesRecordKey(keyCode, scanCode)) return true;
+        //? if >=1.21.9 {
+        /*if (comment != null && comment.isFocused() && comment.keyPressed(inputEvent)) return true;*/
+        //?} else {
         if (comment != null && comment.isFocused() && comment.keyPressed(keyCode, scanCode, modifiers)) return true;
+        //?}
+        //? if >=1.21.9 {
+        /*return super.keyPressed(inputEvent);*/
+        //?} else {
         return super.keyPressed(keyCode, scanCode, modifiers);
+        //?}
     }
 
     @Override

@@ -134,8 +134,13 @@ public class WizardOptionScreen extends CommandWizardScreen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX(), y = getContentY(), entryWidth = getWidth(), entryHeight = getContentHeight();*/
+            //?} else {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            //?}
                 int rowWidth = this.rowOptions.size() * BUTTON_WIDTH + (this.rowOptions.size() - 1) * BUTTON_GAP;
                 int buttonX = x + Math.max(0, (entryWidth - rowWidth) / 2);
                 for (int i = 0; i < this.buttons.size(); i++) {
@@ -148,12 +153,21 @@ public class WizardOptionScreen extends CommandWizardScreen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public boolean mouseClicked(net.minecraft.client.gui.Click clickEvent, boolean doubled) {
+                double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+            //?} else {
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            //?}
                 if (button != 0) {
                     return false;
                 }
                 for (ButtonWidget optionButton : this.buttons) {
+                    //? if >=1.21.9 {
+                    /*if (optionButton.mouseClicked(clickEvent, doubled)) {*/
+                    //?} else {
                     if (optionButton.mouseClicked(mouseX, mouseY, button)) {
+                    //?}
                         return true;
                     }
                 }
@@ -177,7 +191,7 @@ public class WizardOptionScreen extends CommandWizardScreen {
                 int swatchX = button.getX() + 6;
                 int swatchY = button.getY() + (button.getHeight() - SWATCH_SIZE) / 2;
                 context.fill(swatchX, swatchY, swatchX + SWATCH_SIZE, swatchY + SWATCH_SIZE, 0xFF000000 | option.swatchColor());
-                context.drawBorder(swatchX, swatchY, SWATCH_SIZE, SWATCH_SIZE, 0xFFFFFFFF);
+                areahint.util.GuiDrawCompat.drawBorder(context, swatchX, swatchY, SWATCH_SIZE, SWATCH_SIZE, 0xFFFFFFFF);
             }
         }
     }

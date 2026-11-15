@@ -114,7 +114,7 @@ public class ServerNetworking {
             Areashint.LOGGER.error(ServerI18nManager.translate("message.message.general_70") + e.getMessage());
         } catch (RuntimeException e) {
             // 单个玩家断线或发包异常不能中断给其他玩家的同步，也不能把已落盘事务报告为失败。
-            Areashint.LOGGER.warn("发送域名数据失败: {} / {}", player.getGameProfile().getName(), dimensionName, e);
+            Areashint.LOGGER.warn("发送域名数据失败: {} / {}", areahint.util.ProfileCompat.name(player.getGameProfile()), dimensionName, e);
         }
     }
     
@@ -217,7 +217,7 @@ public class ServerNetworking {
             
             for (ServerPlayerEntity player : players) {
                 // 检查玩家是否在指定维度中
-                String playerDimension = player.getWorld().getRegistryKey().getValue().toString();
+                String playerDimension = areahint.util.ServerPlayerCompat.world(player).getRegistryKey().getValue().toString();
                 String playerDimensionType = Packets.convertDimensionPathToType(playerDimension);
                 
                 if (playerDimensionType != null && playerDimensionType.equals(dimensionType)) {

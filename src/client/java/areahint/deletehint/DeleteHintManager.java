@@ -382,7 +382,7 @@ public class DeleteHintManager {
         List<AreaData> result = new ArrayList<>();
         if (client.player == null || client.world == null) return result;
 
-        String playerName = client.player.getGameProfile().getName();
+        String playerName = areahint.util.ProfileCompat.name(client.player.getGameProfile());
         boolean isAdmin = client.player.hasPermissionLevel(2);
 
         List<AreaData> allAreas = loadAllAreas();

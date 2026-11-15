@@ -110,13 +110,13 @@ public class ExpandAreaServerNetworking {
             }
 
             // 重新分发给所有玩家
-            redistributeAreasToAllPlayers(player.getServer());
+            redistributeAreasToAllPlayers(areahint.util.ServerPlayerCompat.server(player));
 
             // 发送成功响应
             sendResponse(player, true, key("addhint.message.area_2"), lit(expandedArea.getName()), key("expandarea.success.expand"));
 
             // 服务端日志
-            System.out.println("玩家 " + player.getGameProfile().getName() +
+            System.out.println("玩家 " + areahint.util.ProfileCompat.name(player.getGameProfile()) +
                 " 成功扩展域名: " + expandedArea.getName());
 
         } catch (Exception e) {

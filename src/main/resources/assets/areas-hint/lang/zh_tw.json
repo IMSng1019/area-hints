@@ -1554,6 +1554,7 @@
   "key.areahint.unified.record": "統一綁定鍵",
   "key.areahint.expandarea.confirm": "確認擴展域名",
   "category.areahint.general": "Areas Hint",
+  "key.category.areahint.general": "Areas Hint",
   "description.no_description": "對應域名暫無描述",
   "description.save.success": "描述已儲存",
   "description.delete.success": "描述已刪除",

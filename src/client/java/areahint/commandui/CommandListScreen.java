@@ -84,20 +84,46 @@ public class CommandListScreen extends CommandUiScreen {
     }
 
     @Override
+    //? if >=1.21.9 {
+    /*public boolean keyPressed(net.minecraft.client.input.KeyInput inputEvent) {
+        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    //?}
         if (this.searchField != null && this.searchField.isFocused()
+                //? if >=1.21.9 {
+                /*&& this.searchField.keyPressed(inputEvent)) {*/
+                //?} else {
                 && this.searchField.keyPressed(keyCode, scanCode, modifiers)) {
+                //?}
             return true;
         }
+        //? if >=1.21.9 {
+        /*return super.keyPressed(inputEvent);*/
+        //?} else {
         return super.keyPressed(keyCode, scanCode, modifiers);
+        //?}
     }
 
     @Override
+    //? if >=1.21.9 {
+    /*public boolean charTyped(net.minecraft.client.input.CharInput inputEvent) {
+        int chr = inputEvent.codepoint(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     public boolean charTyped(char chr, int modifiers) {
+    //?}
+        //? if >=1.21.9 {
+        /*if (this.searchField != null && this.searchField.isFocused() && this.searchField.charTyped(inputEvent)) {*/
+        //?} else {
         if (this.searchField != null && this.searchField.isFocused() && this.searchField.charTyped(chr, modifiers)) {
+        //?}
             return true;
         }
+        //? if >=1.21.9 {
+        /*return super.charTyped(inputEvent);*/
+        //?} else {
         return super.charTyped(chr, modifiers);
+        //?}
     }
 
     @Override
@@ -269,8 +295,13 @@ public class CommandListScreen extends CommandUiScreen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX(), y = getContentY(), entryWidth = getWidth(), entryHeight = getContentHeight();*/
+            //?} else {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            //?}
                 int lineY = y + 17;
                 context.fill(x + 4, lineY, x + entryWidth - 4, lineY + 1, 0x66AAAAAA);
                 String title = t(this.categoryKey);
@@ -302,8 +333,13 @@ public class CommandListScreen extends CommandUiScreen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX(), y = getContentY(), entryWidth = getWidth(), entryHeight = getContentHeight();*/
+            //?} else {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            //?}
                 if (hovered) {
                     context.fill(x + 2, y + 2, x + entryWidth - 2, y + entryHeight - 2, 0x33222222);
                 }
@@ -322,13 +358,31 @@ public class CommandListScreen extends CommandUiScreen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public boolean mouseClicked(net.minecraft.client.gui.Click clickEvent, boolean doubled) {
+                double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+            //?} else {
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            //?}
+                //? if >=1.21.9 {
+                /*return this.commandButton.mouseClicked(clickEvent, doubled);*/
+                //?} else {
                 return this.commandButton.mouseClicked(mouseX, mouseY, button);
+                //?}
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public boolean mouseReleased(net.minecraft.client.gui.Click clickEvent) {
+                double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+            //?} else {
             public boolean mouseReleased(double mouseX, double mouseY, int button) {
+            //?}
+                //? if >=1.21.9 {
+                /*return this.commandButton.mouseReleased(clickEvent);*/
+                //?} else {
                 return this.commandButton.mouseReleased(mouseX, mouseY, button);
+                //?}
             }
 
             @Override
@@ -349,8 +403,13 @@ public class CommandListScreen extends CommandUiScreen {
 
         private class EmptyEntry extends Entry {
             @Override
+            //? if >=1.21.9 {
+            /*public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX(), y = getContentY(), entryWidth = getWidth(), entryHeight = getContentHeight();*/
+            //?} else {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            //?}
                 String text = t("commandui.search.empty");
                 int textX = x + (entryWidth - CommandListScreen.this.textRenderer.getWidth(text)) / 2;
                 context.drawTextWithShadow(CommandListScreen.this.textRenderer, Text.literal(text), textX, y + 12, 0xFFAAAAAA);

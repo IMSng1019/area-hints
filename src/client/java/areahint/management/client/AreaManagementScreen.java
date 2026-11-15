@@ -153,8 +153,13 @@ final class AreaManagementScreen extends Screen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX(), y = getContentY(), entryWidth = getWidth(), entryHeight = getContentHeight();*/
+            //?} else {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            //?}
                 context.drawTextWithShadow(AreaManagementScreen.this.textRenderer,
                     Text.literal(I18nManager.translate(key)), x + 6, y + 8, 0xFFFFFF55);
             }
@@ -174,8 +179,13 @@ final class AreaManagementScreen extends Screen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX(), y = getContentY(), entryWidth = getWidth(), entryHeight = getContentHeight();*/
+            //?} else {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            //?}
                 this.button.setPosition(x + 6, y + 3);
                 this.button.render(context, mouseX, mouseY, tickDelta);
                 CommandVisualHandler handler = CommandVisualRegistry.getById(operation);
@@ -187,8 +197,30 @@ final class AreaManagementScreen extends Screen {
                 }
             }
 
-            @Override public boolean mouseClicked(double mouseX, double mouseY, int button) { return this.button.mouseClicked(mouseX, mouseY, button); }
-            @Override public boolean mouseReleased(double mouseX, double mouseY, int button) { return this.button.mouseReleased(mouseX, mouseY, button); }
+            //? if >=1.21.9 {
+            /*@Override public boolean mouseClicked(net.minecraft.client.gui.Click clickEvent, boolean doubled) {
+                double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+            //?} else {
+            @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            //?}
+                //? if >=1.21.9 {
+                /*return this.button.mouseClicked(clickEvent, doubled);*/
+                //?} else {
+                return this.button.mouseClicked(mouseX, mouseY, button);
+                //?}
+            }
+            //? if >=1.21.9 {
+            /*@Override public boolean mouseReleased(net.minecraft.client.gui.Click clickEvent) {
+                double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+            //?} else {
+            @Override public boolean mouseReleased(double mouseX, double mouseY, int button) {
+            //?}
+                //? if >=1.21.9 {
+                /*return this.button.mouseReleased(clickEvent);*/
+                //?} else {
+                return this.button.mouseReleased(mouseX, mouseY, button);
+                //?}
+            }
             @Override public List<? extends Element> children() { return List.of(this.button); }
             @Override public List<? extends Selectable> selectableChildren() { return List.of(this.button); }
         }

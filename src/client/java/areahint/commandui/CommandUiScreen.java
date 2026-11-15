@@ -57,7 +57,12 @@ public abstract class CommandUiScreen extends Screen {
     }
 
     @Override
+    //? if >=1.21.9 {
+    /*public boolean keyPressed(net.minecraft.client.input.KeyInput inputEvent) {
+        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    //?}
         if (UnifiedKeyHandler.matchesRecordKey(keyCode, scanCode)) {
             if (UnifiedKeyHandler.isRecordKeySuppressedUntilRelease()) {
                 return true;
@@ -65,15 +70,28 @@ public abstract class CommandUiScreen extends Screen {
             closeToGameFromBoundKey();
             return true;
         }
+        //? if >=1.21.9 {
+        /*return super.keyPressed(inputEvent);*/
+        //?} else {
         return super.keyPressed(keyCode, scanCode, modifiers);
+        //?}
     }
 
     @Override
+    //? if >=1.21.9 {
+    /*public boolean keyReleased(net.minecraft.client.input.KeyInput inputEvent) {
+        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+    //?}
         if (UnifiedKeyHandler.releaseSuppressedRecordKeyIfMatches(keyCode, scanCode)) {
             return true;
         }
+        //? if >=1.21.9 {
+        /*return super.keyReleased(inputEvent);*/
+        //?} else {
         return super.keyReleased(keyCode, scanCode, modifiers);
+        //?}
     }
 
     @Override

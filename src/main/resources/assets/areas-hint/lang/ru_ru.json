@@ -1554,6 +1554,7 @@
   "key.areahint.unified.record": "Единая клавиша привязки",
   "key.areahint.expandarea.confirm": "Подтвердить расширение домена",
   "category.areahint.general": "Areas Hint",
+  "key.category.areahint.general": "Areas Hint",
   "description.no_description": "У этого домена пока нет описания",
   "description.save.success": "Описание сохранено",
   "description.delete.success": "Описание удалено",

@@ -119,7 +119,12 @@ public final class ReplaceButtonVisualController {
         }
 
         @Override
+        //? if >=1.21.9 {
+        /*public boolean keyPressed(net.minecraft.client.input.KeyInput inputEvent) {
+            int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();*/
+        //?} else {
         public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        //?}
             if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
                 cancelAndCloseToGame();
                 return true;

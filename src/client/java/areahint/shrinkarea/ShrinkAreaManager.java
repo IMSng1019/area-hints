@@ -105,7 +105,7 @@ public class ShrinkAreaManager {
             return;
         }
         
-        playerName = player.getGameProfile().getName();
+        playerName = areahint.util.ProfileCompat.name(player.getGameProfile());
         
         // 检查玩家权限（简单检查是否为OP，真实权限由服务端验证）
         isAdmin = client.player.hasPermissionLevel(2);
@@ -139,7 +139,7 @@ public class ShrinkAreaManager {
             return List.of();
         }
 
-        playerName = player.getGameProfile().getName();
+        playerName = areahint.util.ProfileCompat.name(player.getGameProfile());
         isAdmin = client.player.hasPermissionLevel(2);
         isActive = true;
         currentState = ShrinkState.SELECTING_AREA;

@@ -200,7 +200,12 @@ public class AreasHintConfigScreen extends Screen {
     }
 
     @Override
+    //? if >=1.21.9 {
+    /*public boolean keyPressed(net.minecraft.client.input.KeyInput inputEvent) {
+        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    //?}
         if (listeningForKey) {
             if (keyCode != GLFW.GLFW_KEY_ESCAPE && keyCode != GLFW.GLFW_KEY_UNKNOWN && keyCode > 0) {
                 draft.setRecordKey(keyCode);
@@ -218,18 +223,39 @@ public class AreasHintConfigScreen extends Screen {
             }
             return true;
         }
+        //? if >=1.21.9 {
+        /*if (list != null && list.keyPressed(inputEvent)) {*/
+        //?} else {
         if (list != null && list.keyPressed(keyCode, scanCode, modifiers)) {
+        //?}
             return true;
         }
+        //? if >=1.21.9 {
+        /*return super.keyPressed(inputEvent);*/
+        //?} else {
         return super.keyPressed(keyCode, scanCode, modifiers);
+        //?}
     }
 
     @Override
+    //? if >=1.21.9 {
+    /*public boolean charTyped(net.minecraft.client.input.CharInput inputEvent) {
+        int chr = inputEvent.codepoint(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     public boolean charTyped(char chr, int modifiers) {
+    //?}
+        //? if >=1.21.9 {
+        /*if (list != null && list.charTyped(inputEvent)) {*/
+        //?} else {
         if (list != null && list.charTyped(chr, modifiers)) {
+        //?}
             return true;
         }
+        //? if >=1.21.9 {
+        /*return super.charTyped(inputEvent);*/
+        //?} else {
         return super.charTyped(chr, modifiers);
+        //?}
     }
 
     @Override
@@ -631,9 +657,18 @@ public class AreasHintConfigScreen extends Screen {
         }
 
         @Override
+        //? if >=1.21.9 {
+        /*public boolean mouseClicked(net.minecraft.client.gui.Click clickEvent, boolean doubled) {
+            double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+        //?} else {
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        //?}
             ClickableWidget widget = findConfigWidgetAt(mouseX, mouseY);
+            //? if >=1.21.9 {
+            /*if (widget != null && widget.mouseClicked(clickEvent, doubled)) {*/
+            //?} else {
             if (widget != null && widget.mouseClicked(mouseX, mouseY, button)) {
+            //?}
                 // 原版列表的行命中只知道“点中了某一行”，这里再明确把点击交给行内按钮或滑块。
                 this.focusedConfigWidget = widget;
                 setFocusedTextField(widget instanceof TextFieldWidget ? (TextFieldWidget) widget : null);
@@ -641,46 +676,102 @@ public class AreasHintConfigScreen extends Screen {
             }
 
             setFocusedTextField(null);
+            //? if >=1.21.9 {
+            /*return super.mouseClicked(clickEvent, doubled);*/
+            //?} else {
             return super.mouseClicked(mouseX, mouseY, button);
+            //?}
         }
 
         @Override
+        //? if >=1.21.9 {
+        /*public boolean mouseReleased(net.minecraft.client.gui.Click clickEvent) {
+            double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+        //?} else {
         public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        //?}
             if (this.focusedConfigWidget != null) {
                 ClickableWidget widget = this.focusedConfigWidget;
                 this.focusedConfigWidget = null;
+                //? if >=1.21.9 {
+                /*if (widget.mouseReleased(clickEvent)) {*/
+                //?} else {
                 if (widget.mouseReleased(mouseX, mouseY, button)) {
+                //?}
                     return true;
                 }
             }
 
+            //? if >=1.21.9 {
+            /*return super.mouseReleased(clickEvent);*/
+            //?} else {
             return super.mouseReleased(mouseX, mouseY, button);
+            //?}
         }
 
         @Override
+        //? if >=1.21.9 {
+        /*public boolean mouseDragged(net.minecraft.client.gui.Click clickEvent, double deltaX, double deltaY) {
+            double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+        //?} else {
         public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        //?}
             if (this.focusedConfigWidget != null
+                    //? if >=1.21.9 {
+                    /*&& this.focusedConfigWidget.mouseDragged(clickEvent, deltaX, deltaY)) {*/
+                    //?} else {
                     && this.focusedConfigWidget.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
+                    //?}
                 return true;
             }
 
+            //? if >=1.21.9 {
+            /*return super.mouseDragged(clickEvent, deltaX, deltaY);*/
+            //?} else {
             return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+            //?}
         }
 
         @Override
+        //? if >=1.21.9 {
+        /*public boolean keyPressed(net.minecraft.client.input.KeyInput inputEvent) {
+            int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();*/
+        //?} else {
         public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        //?}
+            //? if >=1.21.9 {
+            /*if (this.focusedTextField != null && this.focusedTextField.keyPressed(inputEvent)) {*/
+            //?} else {
             if (this.focusedTextField != null && this.focusedTextField.keyPressed(keyCode, scanCode, modifiers)) {
+            //?}
                 return true;
             }
+            //? if >=1.21.9 {
+            /*return super.keyPressed(inputEvent);*/
+            //?} else {
             return super.keyPressed(keyCode, scanCode, modifiers);
+            //?}
         }
 
         @Override
+        //? if >=1.21.9 {
+        /*public boolean charTyped(net.minecraft.client.input.CharInput inputEvent) {
+            int chr = inputEvent.codepoint(), modifiers = inputEvent.modifiers();*/
+        //?} else {
         public boolean charTyped(char chr, int modifiers) {
+        //?}
+            //? if >=1.21.9 {
+            /*if (this.focusedTextField != null && this.focusedTextField.charTyped(inputEvent)) {*/
+            //?} else {
             if (this.focusedTextField != null && this.focusedTextField.charTyped(chr, modifiers)) {
+            //?}
                 return true;
             }
+            //? if >=1.21.9 {
+            /*return super.charTyped(inputEvent);*/
+            //?} else {
             return super.charTyped(chr, modifiers);
+            //?}
         }
 
         private ClickableWidget findConfigWidgetAt(double mouseX, double mouseY) {
@@ -720,7 +811,12 @@ public class AreasHintConfigScreen extends Screen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX(), y = getContentY(), entryWidth = getWidth(), entryHeight = getContentHeight();*/
+            //?} else {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            //?}
                 context.drawTextWithShadow(AreasHintConfigScreen.this.textRenderer, Text.literal(t(key)), x + 4, y + 7, 0xFFFFFF55);
             }
 
@@ -745,7 +841,12 @@ public class AreasHintConfigScreen extends Screen {
             }
 
             @Override
+            //? if >=1.21.9 {
+            /*public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX(), y = getContentY(), entryWidth = getWidth(), entryHeight = getContentHeight();*/
+            //?} else {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            //?}
                 context.drawTextWithShadow(AreasHintConfigScreen.this.textRenderer, Text.literal(t(key)), x + 4, y + 6, 0xFFFFFFFF);
                 int widgetX = x + entryWidth - 4;
                 for (int i = this.widgets.size() - 1; i >= 0; i--) {

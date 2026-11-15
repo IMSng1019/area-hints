@@ -77,7 +77,7 @@ public final class VizEditNetworking {
     }
 
     private static boolean connected(ServerPlayerEntity player) {
-        return player.getServer() != null && player.getServer().getPlayerManager().getPlayer(player.getUuid()) == player;
+        return areahint.util.ServerPlayerCompat.server(player) != null && areahint.util.ServerPlayerCompat.server(player).getPlayerManager().getPlayer(player.getUuid()) == player;
     }
 
     private static void handle(ServerPlayerEntity player, String json) {
@@ -116,7 +116,7 @@ public final class VizEditNetworking {
             Areashint.LOGGER.error("保存可视化域名编辑失败", exception);
             failure(player, requestId, sessionId, "vizedit.error.storage");
         } catch (RuntimeException exception) {
-            Areashint.LOGGER.warn("拒绝无效可视化编辑消息: {}", player.getGameProfile().getName(), exception);
+            Areashint.LOGGER.warn("拒绝无效可视化编辑消息: {}", areahint.util.ProfileCompat.name(player.getGameProfile()), exception);
             failure(player, requestId, sessionId, "vizedit.error.invalid");
         }
     }

@@ -310,9 +310,18 @@ public final class VizEditScreen extends Screen {
     }
     private boolean hasChildren(AreaData area) { return session.areas.stream().anyMatch(child -> Objects.equals(child.getBaseName(), area.getName())); }
 
+    //? if >=1.21.9 {
+    /*@Override public boolean mouseClicked(net.minecraft.client.gui.Click clickEvent, boolean doubled) {
+        double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();*/
+    //?} else {
     @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    //?}
         finishStroke();
+        //? if >=1.21.9 {
+        /*if (super.mouseClicked(clickEvent, doubled)) return true;*/
+        //?} else {
         if (super.mouseClicked(mouseX, mouseY, button)) return true;
+        //?}
         if (button != 0) return true;
         if (mouseX < panelWidth) {
             if (mouseY >= 92 && mouseY < treeBottom) {
@@ -369,14 +378,21 @@ public final class VizEditScreen extends Screen {
         updateStroke(mouseX, mouseY); return true;
     }
 
-    @Override public boolean mouseDragged(double x, double y, int button, double dx, double dy) { samplePointer(x, y); return true; }
+    //? if >=1.21.9 {
+    /*@Override public boolean mouseDragged(net.minecraft.client.gui.Click clickEvent, double dx, double dy) {
+        double x = clickEvent.x(), y = clickEvent.y(); int button = clickEvent.button();*/
+    //?} else {
+    @Override public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
+    //?}
+        samplePointer(x, y); return true;
+    }
     public void samplePointer(double x, double y) {
         if (panning) { canvas.pan(x - dragX, y - dragY); dragX = x; dragY = y; }
         if (drawing && inCanvas(x, y)) updateStroke(x, y);
     }
     private void updateStroke(double x, double y) {
         if (session.draft == null || session.draft != drawingDraft || beforeStroke == null) return;
-        boolean constrain = hasShiftDown();
+        boolean constrain = areahint.util.GuiInputCompat.isShiftPressed();
         if (Double.compare(x, sampledX) == 0 && Double.compare(y, sampledY) == 0 && constrain == sampledShift) return;
         sampledX = x; sampledY = y; sampledShift = constrain;
         Vertex start = stroke.get(0), point = new Vertex(canvas.worldX(x), canvas.worldZ(y));
@@ -398,7 +414,14 @@ public final class VizEditScreen extends Screen {
         } catch (VizEditGeometry.GeometryException e) { session.status = t(e.errorKey()); }
         catch (IllegalArgumentException e) { session.status = t("vizedit.error.geometry_limit"); }
     }
-    @Override public boolean mouseReleased(double x, double y, int button) { finishStroke(); return true; }
+    //? if >=1.21.9 {
+    /*@Override public boolean mouseReleased(net.minecraft.client.gui.Click clickEvent) {
+        double x = clickEvent.x(), y = clickEvent.y(); int button = clickEvent.button();*/
+    //?} else {
+    @Override public boolean mouseReleased(double x, double y, int button) {
+    //?}
+        finishStroke(); return true;
+    }
     private void finishStroke() {
         if (drawing && beforeDraft != null && session.draft == drawingDraft && !session.draft.same(beforeDraft)) {
             // 只在笔画结束时优化新增轮廓，避免拖动帧反复简化导致误差累积或旧边界逐渐移动。
@@ -451,22 +474,44 @@ public final class VizEditScreen extends Screen {
     /*@Override public boolean mouseScrolled(double x, double y, double vertical) { return scroll(x, y, vertical); }*/
     //?}
 
+    //? if >=1.21.9 {
+    /*@Override public boolean keyPressed(net.minecraft.client.input.KeyInput inputEvent) {
+        int key = inputEvent.key(), scan = inputEvent.scancode(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     @Override public boolean keyPressed(int key, int scan, int modifiers) {
+    //?}
         if (getFocused() instanceof TextFieldWidget field && field.isFocused()) {
             if (key == GLFW.GLFW_KEY_ESCAPE) { field.setFocused(false); setFocused(null); return true; }
+            //? if >=1.21.9 {
+            /*return field.keyPressed(inputEvent);*/
+            //?} else {
             return field.keyPressed(key, scan, modifiers);
+            //?}
         }
         if (key == GLFW.GLFW_KEY_ESCAPE) { close(); return true; }
         if (key == GLFW.GLFW_KEY_SPACE) { spaceDown = true; return true; }
-        if (hasControlDown() && !VizEditClientManager.isBusy() && !VizEditClientManager.isDraftLocked() && !session.readOnly && !session.invalid) {
-            if (key == GLFW.GLFW_KEY_Z) { finishStroke(); if (hasShiftDown()) session.redo(); else session.undo(); return true; }
+        if (areahint.util.GuiInputCompat.hasControl(key, scan, modifiers) && !VizEditClientManager.isBusy() && !VizEditClientManager.isDraftLocked() && !session.readOnly && !session.invalid) {
+            if (key == GLFW.GLFW_KEY_Z) { finishStroke(); if (areahint.util.GuiInputCompat.hasShift(modifiers)) session.redo(); else session.undo(); return true; }
             if (key == GLFW.GLFW_KEY_Y) { finishStroke(); session.redo(); return true; }
         }
+        //? if >=1.21.9 {
+        /*return super.keyPressed(inputEvent);*/
+        //?} else {
         return super.keyPressed(key, scan, modifiers);
+        //?}
     }
+    //? if >=1.21.9 {
+    /*@Override public boolean keyReleased(net.minecraft.client.input.KeyInput inputEvent) {
+        int key = inputEvent.key(), scan = inputEvent.scancode(), modifiers = inputEvent.modifiers();*/
+    //?} else {
     @Override public boolean keyReleased(int key, int scan, int modifiers) {
+    //?}
         if (key == GLFW.GLFW_KEY_SPACE) { spaceDown = false; return true; }
+        //? if >=1.21.9 {
+        /*return super.keyReleased(inputEvent);*/
+        //?} else {
         return super.keyReleased(key, scan, modifiers);
+        //?}
     }
     private boolean inCanvas(double x, double y) { return x > panelWidth && x < width && y >= canvasTop && y < canvasBottom; }
     private void label(DrawContext context, String text, int x, int y, int maxWidth, int color) {

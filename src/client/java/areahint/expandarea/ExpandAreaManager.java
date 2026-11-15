@@ -99,7 +99,7 @@ public class ExpandAreaManager {
             return false;
         }
         
-        String playerName = client.player.getGameProfile().getName();
+        String playerName = areahint.util.ProfileCompat.name(client.player.getGameProfile());
         
         // 检查是否为管理员（权限等级2）
         if (client.player.hasPermissionLevel(2)) {
@@ -179,7 +179,7 @@ public class ExpandAreaManager {
      */
     private List<AreaData> getModifiableAreas() {
         List<AreaData> result = new ArrayList<>();
-        String playerName = client.player.getGameProfile().getName();
+        String playerName = areahint.util.ProfileCompat.name(client.player.getGameProfile());
         boolean isAdmin = client.player.hasPermissionLevel(2);
         
         System.out.println("DEBUG: 玩家名称: " + playerName + ", 是否管理员: " + isAdmin);

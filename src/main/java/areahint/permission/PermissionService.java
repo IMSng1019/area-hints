@@ -16,14 +16,14 @@ public final class PermissionService {
         if (source == null) {
             return false;
         }
-        return resolve(LuckPermsCompat.checkPermission(source, node), () -> source.hasPermissionLevel(fallbackLevel));
+        return resolve(LuckPermsCompat.checkPermission(source, node), () -> areahint.util.VanillaPermissionCompat.hasPermissionLevel(source, fallbackLevel));
     }
 
     public static boolean hasCommandPermission(ServerPlayerEntity player, String node, int fallbackLevel) {
         if (player == null) {
             return false;
         }
-        return resolve(LuckPermsCompat.checkPermission(player, node), () -> player.hasPermissionLevel(fallbackLevel));
+        return resolve(LuckPermsCompat.checkPermission(player, node), () -> areahint.util.VanillaPermissionCompat.hasPermissionLevel(player, fallbackLevel));
     }
 
     public static boolean hasNodeOr(ServerPlayerEntity player, String node, BooleanSupplier fallbackRule) {
@@ -40,7 +40,8 @@ public final class PermissionService {
         return resolve(LuckPermsCompat.checkPermission(source, node), fallbackRule);
     }
 
-    private static boolean resolve(LuckPermsCompat.Result result, BooleanSupplier fallbackRule) {
+    // 显式节点优先于原版等级与签名回退，缺省时才计算业务规则。
+    static boolean resolve(LuckPermsCompat.Result result, BooleanSupplier fallbackRule) {
         if (result == LuckPermsCompat.Result.TRUE) {
             return true;
         }

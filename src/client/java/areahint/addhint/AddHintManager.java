@@ -291,7 +291,7 @@ public class AddHintManager {
         if (client.player == null || client.world == null) return result;
 
         String playerName = areahint.util.ProfileCompat.name(client.player.getGameProfile());
-        boolean isAdmin = client.player.hasPermissionLevel(2);
+        boolean isAdmin = areahint.util.VanillaPermissionCompat.hasPermissionLevel(client.player, 2);
 
         List<AreaData> allAreas = loadAllAreas();
         for (AreaData area : allAreas) {

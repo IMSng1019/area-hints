@@ -92,9 +92,9 @@ public final class AreaManagementCapabilityService {
         return switch (operation) {
             case TCP, UDP -> PermissionService.hasCommandPermission(player, PermissionNodes.TELEPORT, 0);
             case RENAME -> PermissionService.hasNodeOr(player, PermissionNodes.RENAME,
-                () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
+                () -> areahint.util.VanillaPermissionCompat.hasPermissionLevel(player, 2) || AreaPermissionUtil.isSignedBy(area, playerName));
             case RECOLOR -> PermissionService.hasNodeOr(player, PermissionNodes.RECOLOR,
-                () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
+                () -> areahint.util.VanillaPermissionCompat.hasPermissionLevel(player, 2) || AreaPermissionUtil.isSignedBy(area, playerName));
             // 城市化同时识别本域名的创建者和扩展签名，命令节点不能绕过签名归属或审批。
             case APPLY_URBAN_AREA -> areahint.config.ServerConfig.isSubmitUrbanArea()
                 && PermissionService.hasCommandPermission(player, PermissionNodes.APPLY_URBAN_AREA, 0)
@@ -111,7 +111,7 @@ public final class AreaManagementCapabilityService {
                 () -> index.canModifyArea(player, area, playerName));
             case DELETE_SUBTITLE -> area.hasSubtitle()
                 && PermissionService.hasNodeOr(player, PermissionNodes.DELETE_SUBTITLE,
-                    () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
+                    () -> areahint.util.VanillaPermissionCompat.hasPermissionLevel(player, 2) || AreaPermissionUtil.isSignedBy(area, playerName));
             case REPLACE_SUBTITLE_COLOR -> area.hasSubtitle()
                 && PermissionService.hasNodeOr(player, PermissionNodes.REPLACE_SUBTITLE_COLOR,
                     () -> index.canModifyArea(player, area, playerName));
@@ -124,7 +124,7 @@ public final class AreaManagementCapabilityService {
                 () -> index.canModifyArea(player, area, playerName));
             // 收缩资格取决于目标域名本身的主签名或扩展签名，上级域名署名不再参与判断。
             case SHRINK_AREA -> PermissionService.hasNodeOr(player, PermissionNodes.SHRINKAREA,
-                () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
+                () -> areahint.util.VanillaPermissionCompat.hasPermissionLevel(player, 2) || AreaPermissionUtil.isSignedBy(area, playerName));
             case DIVIDE_AREA -> PermissionService.hasNodeOr(player, PermissionNodes.DIVIDEAREA,
                 () -> index.canModifyArea(player, area, playerName));
             case ADD_HINT -> PermissionService.hasNodeOr(player, PermissionNodes.ADDHINT,
@@ -133,7 +133,7 @@ public final class AreaManagementCapabilityService {
                 () -> index.canModifyArea(player, area, playerName));
             case DELETE -> !index.hasChildren(area)
                 && PermissionService.hasNodeOr(player, PermissionNodes.DELETE,
-                    () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName));
+                    () -> areahint.util.VanillaPermissionCompat.hasPermissionLevel(player, 2) || AreaPermissionUtil.isSignedBy(area, playerName));
             default -> false;
         };
     }
@@ -141,7 +141,7 @@ public final class AreaManagementCapabilityService {
     private static boolean canSetHigh(ServerPlayerEntity player, AreaData area,
                                       AreaIndex index, String playerName) {
         return PermissionService.hasNodeOr(player, PermissionNodes.SETHIGH, () -> {
-            if (player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, playerName)) {
+            if (areahint.util.VanillaPermissionCompat.hasPermissionLevel(player, 2) || AreaPermissionUtil.isSignedBy(area, playerName)) {
                 return true;
             }
             // 只遍历以本域名为上级的域名，命中顺序与原来的全表扫描一致
@@ -157,7 +157,7 @@ public final class AreaManagementCapabilityService {
     private static boolean canModifySignature(ServerPlayerEntity player, AreaData area, String permissionNode) {
         // 扩展签名者与创建者均可管理本域名的扩展签名，保留管理员及现有权限节点覆盖规则。
         return PermissionService.hasNodeOr(player, permissionNode,
-            () -> player.hasPermissionLevel(2) || AreaPermissionUtil.isSignedBy(area, areahint.util.ProfileCompat.name(player.getGameProfile())));
+            () -> areahint.util.VanillaPermissionCompat.hasPermissionLevel(player, 2) || AreaPermissionUtil.isSignedBy(area, areahint.util.ProfileCompat.name(player.getGameProfile())));
     }
 
     /**
@@ -222,7 +222,7 @@ public final class AreaManagementCapabilityService {
 
         // 与 AreaPermissionUtil.canModifyArea 等价，只把上级域名查找换成索引
         private boolean canModifyArea(ServerPlayerEntity player, AreaData area, String playerName) {
-            if (player.hasPermissionLevel(2)) {
+            if (areahint.util.VanillaPermissionCompat.hasPermissionLevel(player, 2)) {
                 return true;
             }
             if (AreaPermissionUtil.isSignedBy(area, playerName)) {

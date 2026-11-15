@@ -63,9 +63,11 @@ public class BoundVizRenderer {
     //?}
 
     // 1.21.6 起全局投影只剩 GPU 缓冲，CPU 剔除改用 Fabric 上下文传入的同帧投影。
+    //? if <1.21.9 {
     public static void render(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f projectionMatrix) {
         render(matrices, viewMatrix, projectionMatrix, MinecraftClient.getInstance().gameRenderer.getCamera().getPos());
     }
+    //?}
 
     // 1.21.9 起提取阶段传入该帧相机位置，避免绘制阶段重新查询发生变化的世界状态。
     public static void render(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f projectionMatrix, Vec3d cameraPos) {

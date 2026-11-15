@@ -17,7 +17,7 @@ public final class AreaPermissionUtil {
     // 语义较宽：允许域名签名者或上级域名签名者修改，不适合 delete/shrink 等特殊权限场景。
     public static boolean canModifyArea(ServerPlayerEntity player, AreaData area, List<AreaData> allAreas) {
         if (player == null || area == null) return false;
-        if (player.hasPermissionLevel(2)) return true;
+        if (areahint.util.VanillaPermissionCompat.hasPermissionLevel(player, 2)) return true;
         String playerName = areahint.util.ProfileCompat.name(player.getGameProfile());
         if (isSignedBy(area, playerName)) return true;
         return isBaseSignedByPlayer(area.getBaseName(), allAreas, playerName);

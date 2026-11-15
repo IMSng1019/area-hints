@@ -285,7 +285,11 @@ public final class DescriptionBookEditScreen extends Screen {
     private boolean isPageContentValid(String content) {
         return content != null
             && content.length() <= PAGE_CHARACTER_LIMIT
+            //? if >=1.21.11 {
+            /*&& textRenderer.getWrappedLinesHeight(Text.literal(content), MAX_TEXT_WIDTH) <= PAGE_TEXT_HEIGHT;*/
+            //?} else {
             && textRenderer.getWrappedLinesHeight(content, MAX_TEXT_WIDTH) <= PAGE_TEXT_HEIGHT;
+            //?}
     }
 
     private void drawCursor(DrawContext context, int textX, int textY, String page) {

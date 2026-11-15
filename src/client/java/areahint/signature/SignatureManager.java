@@ -123,7 +123,7 @@ public class SignatureManager {
         this.state = State.SELECT_AREA;
         this.active = true;
         this.currentDimension = client.world.getRegistryKey().getValue().toString();
-        this.currentPlayerAdmin = client.player.hasPermissionLevel(2);
+        this.currentPlayerAdmin = areahint.util.VanillaPermissionCompat.hasPermissionLevel(client.player, 2);
         this.visualFlowActive = visualRequested;
 
         selectableAreas.clear();

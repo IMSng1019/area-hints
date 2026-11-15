@@ -818,7 +818,7 @@ public class DivideAreaManager {
         List<AreaData> result = new ArrayList<>();
         if (client.player == null) return result;
         String playerName = areahint.util.ProfileCompat.name(client.player.getGameProfile());
-        boolean isAdmin = client.player.hasPermissionLevel(2);
+        boolean isAdmin = areahint.util.VanillaPermissionCompat.hasPermissionLevel(client.player, 2);
         List<AreaData> all = loadAllAreas();
         for (AreaData area : all) {
             if (isAdmin) { result.add(area); continue; }

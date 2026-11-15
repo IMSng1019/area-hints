@@ -65,7 +65,7 @@ public final class ApprovalManager {
 
     public static boolean isOperator(ServerPlayerEntity player) {
         return player != null && areahint.util.ServerPlayerCompat.server(player) != null
-            && player.hasPermissionLevel(2)
+            && areahint.util.VanillaPermissionCompat.hasPermissionLevel(player, 2)
             && areahint.util.ServerPlayerCompat.isOperator(player);
     }
 

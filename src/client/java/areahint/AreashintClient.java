@@ -156,6 +156,11 @@ public class AreashintClient implements ClientModInitializer {
 
 		// 初始化BoundViz功能
 		initBoundViz();
+		// 新版世界渲染签名和内部调试方法会变化，统一在世界绘制末期使用 Fabric 提供的矩阵上下文。
+		//? if >1.20.4 {
+		/*net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents.LAST.register(context ->
+				areahint.boundviz.BoundVizRenderer.render(context.matrixStack(), context.positionMatrix()));*/
+		//?}
 
 		// 初始化i18n系统
 		areahint.i18n.I18nManager.init();

@@ -157,8 +157,8 @@ public final class BlueMapMarkerFactory {
 
     private static HeightRange resolveHeightRange(AreaData area, ServerWorld world) {
         double bottomY = world.getBottomY();
-        // 1.21.4 起 HeightLimitView 只有 getTopYInclusive()
-        double topY = world.getTopYInclusive();
+        // 新接口返回最高方块坐标，加一恢复旧 getTopY() 的排他上边界，避免顶面和高度裁剪少一格。
+        double topY = world.getTopYInclusive() + 1.0;
 
         Double configuredMin = null;
         Double configuredMax = null;

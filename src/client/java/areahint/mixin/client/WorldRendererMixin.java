@@ -19,6 +19,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(WorldRenderer.class)
 public class WorldRendererMixin {
 
+    // 旧版本保留区块调试绘制后的原有时序；新版由客户端初始化时注册的 WorldRenderEvents.LAST 接管。
+    //? if <=1.20.4 {
     @Inject(
         method = "render",
         at = @At(
@@ -33,4 +35,5 @@ public class WorldRendererMixin {
         // 渲染边界可视化
         BoundVizRenderer.render(matrices, tickDelta);
     }
+    //?}
 }

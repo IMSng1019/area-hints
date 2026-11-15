@@ -119,11 +119,11 @@ public class SafeLandingFinder {
     }
 
     private int getMaxSearchY(ServerWorld world, AreaData area, int minY, int x, int z) {
-        // 1.21.2 起 HeightLimitView.getTopY() 改名为 getTopYInclusive()
+        // 1.21.2 起上界包含顶层方块，因此新版只减 1，保持旧版为脚部和头部预留两格的搜索范围。
         //? if <=1.21.1 {
         int max = world.getTopY() - 2;
         //?} else {
-        /*int max = world.getTopYInclusive() - 2;*/
+        /*int max = world.getTopYInclusive() - 1;*/
         //?}
         if (area.getAltitude() != null && area.getAltitude().getMax() != null) {
             max = Math.min(max, (int) Math.floor(area.getAltitude().getMax()));

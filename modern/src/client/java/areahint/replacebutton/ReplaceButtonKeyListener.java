@@ -3,7 +3,7 @@ package areahint.replacebutton;
 import areahint.i18n.I18nManager;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 /**
  * ReplaceButton按键监听器
@@ -43,20 +43,10 @@ public class ReplaceButtonKeyListener {
             return;
         }
 
-        long window = client.getWindow().handle();
-
-        // 遍历所有可能的按键
-        for (int keyCode = GLFW.GLFW_KEY_SPACE; keyCode <= GLFW.GLFW_KEY_LAST; keyCode++) {
-            if (GLFW.glfwGetKey(window, keyCode) == GLFW.GLFW_PRESS) {
-                // 获取按键名称
-                String keyName = getKeyName(keyCode);
-
-                // 通知管理器
-                ReplaceButtonManager.getInstance().handleKeyPress(keyCode, keyName);
-
-                // 只处理第一个按下的键
-                break;
-            }
+        // 平台兼容层返回首个可持久化的原生键，不把 SDL 窗口句柄传给 GLFW。
+        int keyCode = areahint.util.PlatformInputCompat.firstPressedKey(client);
+        if (keyCode != InputConstants.UNKNOWN.getValue()) {
+            ReplaceButtonManager.getInstance().handleKeyPress(keyCode, getKeyName(keyCode));
         }
     }
 
@@ -64,39 +54,39 @@ public class ReplaceButtonKeyListener {
      * 获取按键名称
      */
     public static String getKeyName(int keyCode) {
-        String glfwName = GLFW.glfwGetKeyName(keyCode, 0);
-        if (glfwName != null && !glfwName.isEmpty()) {
-            return glfwName.toUpperCase();
+        String platformName = areahint.util.PlatformInputCompat.printableKeyName(keyCode);
+        if (platformName != null && !platformName.isEmpty()) {
+            return platformName.toUpperCase(java.util.Locale.ROOT);
         }
 
         // 对于特殊键，返回自定义名称
         switch (keyCode) {
-            case GLFW.GLFW_KEY_SPACE: return I18nManager.translate("replacebutton.message.general_12");
-            case GLFW.GLFW_KEY_ESCAPE: return "ESC";
-            case GLFW.GLFW_KEY_ENTER: return I18nManager.translate("replacebutton.message.general_7");
-            case GLFW.GLFW_KEY_TAB: return "Tab";
-            case GLFW.GLFW_KEY_BACKSPACE: return I18nManager.translate("replacebutton.message.general_13");
-            case GLFW.GLFW_KEY_INSERT: return "Insert";
-            case GLFW.GLFW_KEY_DELETE: return "Delete";
-            case GLFW.GLFW_KEY_RIGHT: return I18nManager.translate("replacebutton.message.general_6");
-            case GLFW.GLFW_KEY_LEFT: return I18nManager.translate("replacebutton.message.general_11");
-            case GLFW.GLFW_KEY_DOWN: return I18nManager.translate("replacebutton.message.general_2");
-            case GLFW.GLFW_KEY_UP: return I18nManager.translate("replacebutton.message.general");
-            case GLFW.GLFW_KEY_PAGE_UP: return "Page Up";
-            case GLFW.GLFW_KEY_PAGE_DOWN: return "Page Down";
-            case GLFW.GLFW_KEY_HOME: return "Home";
-            case GLFW.GLFW_KEY_END: return "End";
-            case GLFW.GLFW_KEY_CAPS_LOCK: return "Caps Lock";
-            case GLFW.GLFW_KEY_SCROLL_LOCK: return "Scroll Lock";
-            case GLFW.GLFW_KEY_NUM_LOCK: return "Num Lock";
-            case GLFW.GLFW_KEY_PRINT_SCREEN: return "Print Screen";
-            case GLFW.GLFW_KEY_PAUSE: return "Pause";
-            case GLFW.GLFW_KEY_LEFT_SHIFT: return I18nManager.translate("replacebutton.message.general_10");
-            case GLFW.GLFW_KEY_LEFT_CONTROL: return I18nManager.translate("replacebutton.message.general_9");
-            case GLFW.GLFW_KEY_LEFT_ALT: return I18nManager.translate("replacebutton.message.general_8");
-            case GLFW.GLFW_KEY_RIGHT_SHIFT: return I18nManager.translate("replacebutton.message.general_5");
-            case GLFW.GLFW_KEY_RIGHT_CONTROL: return I18nManager.translate("replacebutton.message.general_4");
-            case GLFW.GLFW_KEY_RIGHT_ALT: return I18nManager.translate("replacebutton.message.general_3");
+            case InputConstants.KEY_SPACE: return I18nManager.translate("replacebutton.message.general_12");
+            case InputConstants.KEY_ESCAPE: return "ESC";
+            case InputConstants.KEY_RETURN: return I18nManager.translate("replacebutton.message.general_7");
+            case InputConstants.KEY_TAB: return "Tab";
+            case InputConstants.KEY_BACKSPACE: return I18nManager.translate("replacebutton.message.general_13");
+            case InputConstants.KEY_INSERT: return "Insert";
+            case InputConstants.KEY_DELETE: return "Delete";
+            case InputConstants.KEY_RIGHT: return I18nManager.translate("replacebutton.message.general_6");
+            case InputConstants.KEY_LEFT: return I18nManager.translate("replacebutton.message.general_11");
+            case InputConstants.KEY_DOWN: return I18nManager.translate("replacebutton.message.general_2");
+            case InputConstants.KEY_UP: return I18nManager.translate("replacebutton.message.general");
+            case InputConstants.KEY_PAGEUP: return "Page Up";
+            case InputConstants.KEY_PAGEDOWN: return "Page Down";
+            case InputConstants.KEY_HOME: return "Home";
+            case InputConstants.KEY_END: return "End";
+            case InputConstants.KEY_CAPSLOCK: return "Caps Lock";
+            case InputConstants.KEY_SCROLLLOCK: return "Scroll Lock";
+            case InputConstants.KEY_NUMLOCK: return "Num Lock";
+            case InputConstants.KEY_PRINTSCREEN: return "Print Screen";
+            case InputConstants.KEY_PAUSE: return "Pause";
+            case InputConstants.KEY_LSHIFT: return I18nManager.translate("replacebutton.message.general_10");
+            case InputConstants.KEY_LCONTROL: return I18nManager.translate("replacebutton.message.general_9");
+            case InputConstants.KEY_LALT: return I18nManager.translate("replacebutton.message.general_8");
+            case InputConstants.KEY_RSHIFT: return I18nManager.translate("replacebutton.message.general_5");
+            case InputConstants.KEY_RCONTROL: return I18nManager.translate("replacebutton.message.general_4");
+            case InputConstants.KEY_RALT: return I18nManager.translate("replacebutton.message.general_3");
             default: return I18nManager.translate("replacebutton.message.key") + keyCode;
         }
     }

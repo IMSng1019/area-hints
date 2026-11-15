@@ -1,5 +1,7 @@
 package areahint.description;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
@@ -12,7 +14,6 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import areahint.util.GuiInputCompat;
-import org.lwjgl.glfw.GLFW;
 
 import areahint.i18n.I18nManager;
 
@@ -82,10 +83,15 @@ public final class DescriptionBookEditScreen extends Screen {
         previousPageButton = addRenderableWidget(new PageButton(bookX + 43, 159, false, button -> openPreviousPage(), true));
         updatePageButtons();
         selectionManager.setCursorToEnd();
+        areahint.util.TextInputCompat.area(bookX + PAGE_TEXT_X_OFFSET, PAGE_TEXT_Y_OFFSET,
+            bookX + PAGE_TEXT_X_OFFSET + PAGE_TEXT_WIDTH, PAGE_TEXT_Y_OFFSET + PAGE_TEXT_HEIGHT);
+        areahint.util.TextInputCompat.start(this);
     }
 
     @Override
     public void removed() {
+        areahint.util.TextInputCompat.stop(this);
+        super.removed();
         if (!submitted && !canceled && DescriptionManager.getInstance().isWaitingForBookInput()) {
             DescriptionManager.getInstance().cancel();
         }
@@ -102,7 +108,7 @@ public final class DescriptionBookEditScreen extends Screen {
 
     @Override
     public boolean keyPressed(net.minecraft.client.input.KeyEvent inputEvent) {
-        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();
+        int keyCode = inputEvent.key(), scanCode = areahint.util.PlatformInputCompat.secondaryCode(inputEvent), modifiers = inputEvent.modifiers();
     /*public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
     */
         // 描述指令中的书本是编辑界面，不是“查看描述”的只读界面。
@@ -129,13 +135,13 @@ public final class DescriptionBookEditScreen extends Screen {
             return true;
         }
         switch (keyCode) {
-            case GLFW.GLFW_KEY_BACKSPACE -> selectionManager.removeCharsFromCursor(-1);
-            case GLFW.GLFW_KEY_DELETE -> selectionManager.removeCharsFromCursor(1);
-            case GLFW.GLFW_KEY_RIGHT -> selectionManager.moveByChars(1, GuiInputCompat.hasShift(modifiers));
-            case GLFW.GLFW_KEY_LEFT -> selectionManager.moveByChars(-1, GuiInputCompat.hasShift(modifiers));
-            case GLFW.GLFW_KEY_HOME -> selectionManager.setCursorToStart(GuiInputCompat.hasShift(modifiers));
-            case GLFW.GLFW_KEY_END -> selectionManager.setCursorToEnd(GuiInputCompat.hasShift(modifiers));
-            case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> selectionManager.insertText("\n");
+            case InputConstants.KEY_BACKSPACE -> selectionManager.removeCharsFromCursor(-1);
+            case InputConstants.KEY_DELETE -> selectionManager.removeCharsFromCursor(1);
+            case InputConstants.KEY_RIGHT -> selectionManager.moveByChars(1, GuiInputCompat.hasShift(modifiers));
+            case InputConstants.KEY_LEFT -> selectionManager.moveByChars(-1, GuiInputCompat.hasShift(modifiers));
+            case InputConstants.KEY_HOME -> selectionManager.setCursorToStart(GuiInputCompat.hasShift(modifiers));
+            case InputConstants.KEY_END -> selectionManager.setCursorToEnd(GuiInputCompat.hasShift(modifiers));
+            case InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> selectionManager.insertText("\n");
             default -> {
                 return false;
             }
@@ -185,6 +191,7 @@ public final class DescriptionBookEditScreen extends Screen {
 
         int textX = bookX + PAGE_TEXT_X_OFFSET;
         int textY = PAGE_TEXT_Y_OFFSET;
+        areahint.util.TextInputCompat.area(textX, textY, textX + PAGE_TEXT_WIDTH, textY + PAGE_TEXT_HEIGHT);
         String page = getCurrentPageContent();
         // 1.21.2 起 drawTextWrapped 改名为 drawWrappedText 并新增阴影参数（原方法无阴影，传 false）
         /*context.drawTextWrapped(textRenderer, Text.literal(page), textX, textY, MAX_TEXT_WIDTH, 0xFF000000);

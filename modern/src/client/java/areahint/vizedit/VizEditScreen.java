@@ -1,10 +1,10 @@
 package areahint.vizedit;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import areahint.data.AreaData;
 import areahint.data.AreaData.Vertex;
 import areahint.i18n.I18nManager;
 import areahint.vizedit.geometry.VizEditGeometry;
-import org.lwjgl.glfw.GLFW;
 
 import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
@@ -313,7 +313,7 @@ public final class VizEditScreen extends Screen {
         if (super.mouseClicked(clickEvent, doubled)) return true;
         /*if (super.mouseClicked(mouseX, mouseY, button)) return true;
         */
-        if (button != 0) return true;
+        if (button != com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) return true;
         if (mouseX < panelWidth) {
             if (mouseY >= 92 && mouseY < treeBottom) {
                 int index = session.treeOffset + (int) ((mouseY - 92) / 17);
@@ -457,30 +457,30 @@ public final class VizEditScreen extends Screen {
     @Override public boolean mouseScrolled(double x, double y, double horizontal, double vertical) { return scroll(x, y, vertical); }
     /*@Override public boolean mouseScrolled(double x, double y, double vertical) { return scroll(x, y, vertical); }*/
     @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent inputEvent) {
-        int key = inputEvent.key(), scan = inputEvent.scancode(), modifiers = inputEvent.modifiers();
+        int key = inputEvent.key(), scan = areahint.util.PlatformInputCompat.secondaryCode(inputEvent), modifiers = inputEvent.modifiers();
     /*@Override public boolean keyPressed(int key, int scan, int modifiers) {
     */
         if (getFocused() instanceof EditBox field && field.isFocused()) {
-            if (key == GLFW.GLFW_KEY_ESCAPE) { field.setFocused(false); setFocused(null); return true; }
+            if (key == InputConstants.KEY_ESCAPE) { field.setFocused(false); setFocused(null); return true; }
             return field.keyPressed(inputEvent);
             /*return field.keyPressed(key, scan, modifiers);
             */
         }
-        if (key == GLFW.GLFW_KEY_ESCAPE) { onClose(); return true; }
-        if (key == GLFW.GLFW_KEY_SPACE) { spaceDown = true; return true; }
+        if (key == InputConstants.KEY_ESCAPE) { onClose(); return true; }
+        if (key == InputConstants.KEY_SPACE) { spaceDown = true; return true; }
         if (areahint.util.GuiInputCompat.hasControl(key, scan, modifiers) && !VizEditClientManager.isBusy() && !VizEditClientManager.isDraftLocked() && !session.readOnly && !session.invalid) {
-            if (key == GLFW.GLFW_KEY_Z) { finishStroke(); if (areahint.util.GuiInputCompat.hasShift(modifiers)) session.redo(); else session.undo(); return true; }
-            if (key == GLFW.GLFW_KEY_Y) { finishStroke(); session.redo(); return true; }
+            if (areahint.util.GuiInputCompat.isUndoKey(key, scan)) { finishStroke(); if (areahint.util.GuiInputCompat.hasShift(modifiers)) session.redo(); else session.undo(); return true; }
+            if (areahint.util.GuiInputCompat.isRedoKey(key, scan)) { finishStroke(); session.redo(); return true; }
         }
         return super.keyPressed(inputEvent);
         /*return super.keyPressed(key, scan, modifiers);
         */
     }
     @Override public boolean keyReleased(net.minecraft.client.input.KeyEvent inputEvent) {
-        int key = inputEvent.key(), scan = inputEvent.scancode(), modifiers = inputEvent.modifiers();
+        int key = inputEvent.key(), scan = areahint.util.PlatformInputCompat.secondaryCode(inputEvent), modifiers = inputEvent.modifiers();
     /*@Override public boolean keyReleased(int key, int scan, int modifiers) {
     */
-        if (key == GLFW.GLFW_KEY_SPACE) { spaceDown = false; return true; }
+        if (key == InputConstants.KEY_SPACE) { spaceDown = false; return true; }
         return super.keyReleased(inputEvent);
         /*return super.keyReleased(key, scan, modifiers);
         */

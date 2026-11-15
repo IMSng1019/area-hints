@@ -7,7 +7,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
 import areahint.i18n.I18nManager;
 import com.mojang.blaze3d.platform.InputConstants;
-import org.lwjgl.glfw.GLFW;
 
 public class ExpandAreaKeyHandler {
     private static KeyMapping confirmKey;
@@ -21,8 +20,8 @@ public class ExpandAreaKeyHandler {
         // 注册确认按键 (Enter)
         confirmKey = KeyMappingHelper.registerKeyMapping(areahint.keyhandler.KeyBindingCompat.create(
             "key.areahint.expandarea.confirm",
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_ENTER
+            areahint.util.PlatformInputCompat.keyboardType(),
+            InputConstants.KEY_RETURN
         ));
         
         // 注册客户端tick事件

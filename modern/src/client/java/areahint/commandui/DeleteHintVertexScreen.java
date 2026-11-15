@@ -139,7 +139,7 @@ public class DeleteHintVertexScreen extends CommandWizardScreen {
                 double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();
             /*public boolean mouseClicked(double mouseX, double mouseY, int button) {
             */
-                if (button == 0) {
+                if (button == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) {
                     DeleteHintVertexScreen.this.manager.toggleVertex(this.index);
                     DeleteHintVertexScreen.this.rebuildList();
                     return true;

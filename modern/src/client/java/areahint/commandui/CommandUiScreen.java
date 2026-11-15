@@ -58,7 +58,7 @@ public abstract class CommandUiScreen extends Screen {
 
     @Override
     public boolean keyPressed(net.minecraft.client.input.KeyEvent inputEvent) {
-        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();
+        int keyCode = inputEvent.key(), scanCode = areahint.util.PlatformInputCompat.secondaryCode(inputEvent), modifiers = inputEvent.modifiers();
     /*public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
     */
         if (UnifiedKeyHandler.matchesRecordKey(keyCode, scanCode)) {
@@ -75,7 +75,7 @@ public abstract class CommandUiScreen extends Screen {
 
     @Override
     public boolean keyReleased(net.minecraft.client.input.KeyEvent inputEvent) {
-        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();
+        int keyCode = inputEvent.key(), scanCode = areahint.util.PlatformInputCompat.secondaryCode(inputEvent), modifiers = inputEvent.modifiers();
     /*public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
     */
         if (UnifiedKeyHandler.releaseSuppressedRecordKeyIfMatches(keyCode, scanCode)) {

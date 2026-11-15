@@ -130,7 +130,7 @@ public final class ApprovalDetailScreen extends CommandUiScreen {
 
     @Override
     public boolean keyPressed(net.minecraft.client.input.KeyEvent inputEvent) {
-        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();
+        int keyCode = inputEvent.key(), scanCode = areahint.util.PlatformInputCompat.secondaryCode(inputEvent), modifiers = inputEvent.modifiers();
     /*public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
     */
         // 输入意见时绑定键也可能是普通字母，交给随后到达的字符事件，不能关闭审批页面。

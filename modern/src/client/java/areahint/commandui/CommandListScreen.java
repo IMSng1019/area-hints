@@ -84,7 +84,7 @@ public class CommandListScreen extends CommandUiScreen {
 
     @Override
     public boolean keyPressed(net.minecraft.client.input.KeyEvent inputEvent) {
-        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();
+        int keyCode = inputEvent.key(), scanCode = areahint.util.PlatformInputCompat.secondaryCode(inputEvent), modifiers = inputEvent.modifiers();
     /*public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
     */
         if (this.searchField != null && this.searchField.isFocused()

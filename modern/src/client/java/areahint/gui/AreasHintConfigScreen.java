@@ -6,7 +6,6 @@ import areahint.data.ConfigData;
 import areahint.i18n.I18nManager;
 import areahint.render.VulkanModCompat;
 import com.mojang.blaze3d.platform.InputConstants;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,6 +44,7 @@ public class AreasHintConfigScreen extends Screen {
     private ConfigData draft;
     private ConfigListWidget list;
     private boolean listeningForKey;
+    private String recordKeyError;
     private boolean frequencyUsesCustomInput;
     private boolean syncingTextField;
     private FrequencySlider frequencySlider;
@@ -65,6 +65,7 @@ public class AreasHintConfigScreen extends Screen {
     @Override
     protected void init() {
         this.listeningForKey = false;
+        this.recordKeyError = null;
         this.list = new ConfigListWidget(this.minecraft, this.width, this.height, 32, this.height - 32);
         this.addRenderableWidget(this.list);
         rebuildList();
@@ -126,6 +127,7 @@ public class AreasHintConfigScreen extends Screen {
         this.list.addGroup("screen.areahint.config.group.input");
         this.list.addButton("screen.areahint.config.record_key", cycleButton(recordKeyText(), button -> {
             listeningForKey = true;
+            recordKeyError = null;
             button.setMessage(Component.literal(t("screen.areahint.config.record_key.listening")));
         }));
 
@@ -201,12 +203,15 @@ public class AreasHintConfigScreen extends Screen {
 
     @Override
     public boolean keyPressed(net.minecraft.client.input.KeyEvent inputEvent) {
-        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();
+        int keyCode = inputEvent.key(), scanCode = areahint.util.PlatformInputCompat.secondaryCode(inputEvent), modifiers = inputEvent.modifiers();
     /*public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
     */
         if (listeningForKey) {
-            if (keyCode != GLFW.GLFW_KEY_ESCAPE && keyCode != GLFW.GLFW_KEY_UNKNOWN && keyCode > 0) {
-                draft.setRecordKey(keyCode);
+            recordKeyError = null;
+            if (keyCode != InputConstants.KEY_ESCAPE) {
+                int storedCode = areahint.util.PlatformInputCompat.toStoredCode(keyCode);
+                if (storedCode > 0) draft.setRecordKey(storedCode);
+                else recordKeyError = t("replacebutton.message.record.key_2");
             }
             listeningForKey = false;
             rebuildList();
@@ -470,7 +475,8 @@ public class AreasHintConfigScreen extends Screen {
     }
 
     private Component recordKeyText() {
-        return InputConstants.Type.KEYSYM.getOrCreate(draft.getRecordKey()).getDisplayName();
+        if (recordKeyError != null) return Component.literal(recordKeyError);
+        return areahint.util.PlatformInputCompat.storedKey(draft.getRecordKey()).getDisplayName();
     }
 
     private Component soundEventText() {
@@ -696,7 +702,7 @@ public class AreasHintConfigScreen extends Screen {
 
         @Override
         public boolean keyPressed(net.minecraft.client.input.KeyEvent inputEvent) {
-            int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();
+            int keyCode = inputEvent.key(), scanCode = areahint.util.PlatformInputCompat.secondaryCode(inputEvent), modifiers = inputEvent.modifiers();
         /*public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         */
             if (this.focusedTextField != null && this.focusedTextField.keyPressed(inputEvent)) {

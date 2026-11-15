@@ -11,7 +11,6 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import org.lwjgl.glfw.GLFW;
 
 /**
  * 域名描述查询按键。
@@ -35,8 +34,8 @@ public final class DescriptionKeyHandler {
     public static void register() {
         queryKeyBinding = KeyMappingHelper.registerKeyMapping(areahint.keyhandler.KeyBindingCompat.create(
             "key.areahint.description.query",
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_UNKNOWN
+            areahint.util.PlatformInputCompat.keyboardType(),
+            InputConstants.UNKNOWN.getValue()
         ));
 
         if (!registered) {

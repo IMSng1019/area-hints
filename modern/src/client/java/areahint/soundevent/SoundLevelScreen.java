@@ -1,10 +1,11 @@
 package areahint.soundevent;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import areahint.commandui.CommandUiScreen;
 import areahint.config.ClientConfig;
 import areahint.data.ConfigData;
 import areahint.i18n.I18nManager;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.regex.Pattern;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -261,16 +262,16 @@ public final class SoundLevelScreen extends CommandUiScreen {
 
         @Override
         public boolean keyPressed(net.minecraft.client.input.KeyEvent inputEvent) {
-            int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();
+            int keyCode = inputEvent.key(), scanCode = areahint.util.PlatformInputCompat.secondaryCode(inputEvent), modifiers = inputEvent.modifiers();
         /*public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         */
             float previousSoundLevel = getSoundLevel();
             boolean handled = super.keyPressed(inputEvent);
             /*boolean handled = super.keyPressed(keyCode, scanCode, modifiers);
             */
-            if (handled && (keyCode == GLFW.GLFW_KEY_LEFT || keyCode == GLFW.GLFW_KEY_RIGHT)) {
+            if (handled && (keyCode == InputConstants.KEY_LEFT || keyCode == InputConstants.KEY_RIGHT)) {
                 // 原版滑条按像素计算键盘步长，宽控件会被 0.01 量化舍回原值，因此显式推进一个音量档。
-                float direction = keyCode == GLFW.GLFW_KEY_LEFT ? -1.0f : 1.0f;
+                float direction = keyCode == InputConstants.KEY_LEFT ? -1.0f : 1.0f;
                 SoundLevelScreen.this.setDraftSoundLevel(previousSoundLevel + direction * KEYBOARD_LEVEL_STEP);
             }
             return handled;

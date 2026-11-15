@@ -121,7 +121,7 @@ public class HelpCommandScreen extends CommandUiScreen {
                 double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();
             /*public boolean mouseClicked(double mouseX, double mouseY, int button) {
             */
-                if (button == 0) {
+                if (button == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) {
                     handler.open(HelpCommandScreen.this);
                     return true;
                 }

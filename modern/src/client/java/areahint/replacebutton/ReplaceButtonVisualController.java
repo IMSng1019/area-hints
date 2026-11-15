@@ -1,5 +1,7 @@
 package areahint.replacebutton;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import areahint.commandui.CommandUiActions;
 import areahint.commandui.CommandWizardScreen;
 import areahint.commandui.WizardConfirmScreen;
@@ -11,7 +13,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
@@ -120,10 +121,10 @@ public final class ReplaceButtonVisualController {
 
         @Override
         public boolean keyPressed(net.minecraft.client.input.KeyEvent inputEvent) {
-            int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();
+            int keyCode = inputEvent.key(), scanCode = areahint.util.PlatformInputCompat.secondaryCode(inputEvent), modifiers = inputEvent.modifiers();
         /*public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         */
-            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            if (keyCode == InputConstants.KEY_ESCAPE) {
                 cancelAndCloseToGame();
                 return true;
             }
@@ -143,7 +144,7 @@ public final class ReplaceButtonVisualController {
                 x, y, contentWidth, 0xFFFFFF);
             y += 18;
             drawTrimmed(context, Component.literal(I18nManager.translate("commandui.replacebutton.current",
-                    ReplaceButtonKeyListener.getKeyName(ClientConfig.getRecordKey()))),
+                ReplaceButtonKeyListener.getKeyName(areahint.util.PlatformInputCompat.fromStoredCode(ClientConfig.getRecordKey())))),
                 x, y, contentWidth, 0xAAAAAA);
             y += 14;
             drawTrimmed(context, Component.literal(t("commandui.replacebutton.waiting.detail")),

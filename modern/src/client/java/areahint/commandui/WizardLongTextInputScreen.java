@@ -1,5 +1,7 @@
 package areahint.commandui;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -8,7 +10,6 @@ import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import areahint.util.GuiInputCompat;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.function.Consumer;
 
@@ -53,11 +54,21 @@ public class WizardLongTextInputScreen extends CommandWizardScreen {
         this.addRenderableWidget(Button.builder(Component.literal(t("commandui.button.cancel")), button -> cancelAndCloseToGame())
             .bounds(x + buttonWidth + 8, y, buttonWidth, BUTTON_HEIGHT).build());
         this.selectionManager.setCursorToEnd();
+        int textWidth = Math.min(520, this.width - 40);
+        int textLeft = (this.width - textWidth) / 2;
+        areahint.util.TextInputCompat.area(textLeft + 4, 80, textLeft + textWidth - 4, 76 + Math.max(70, this.height - 118) - 4);
+        areahint.util.TextInputCompat.start(this);
+    }
+
+    @Override
+    public void removed() {
+        areahint.util.TextInputCompat.stop(this);
+        super.removed();
     }
 
     @Override
     public boolean keyPressed(net.minecraft.client.input.KeyEvent inputEvent) {
-        int keyCode = inputEvent.key(), scanCode = inputEvent.scancode(), modifiers = inputEvent.modifiers();
+        int keyCode = inputEvent.key(), scanCode = areahint.util.PlatformInputCompat.secondaryCode(inputEvent), modifiers = inputEvent.modifiers();
     /*public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
     */
         if (GuiInputCompat.isSelectAll(keyCode, scanCode, modifiers)) {
@@ -76,7 +87,7 @@ public class WizardLongTextInputScreen extends CommandWizardScreen {
             this.selectionManager.cut();
             return true;
         }
-        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+        if (keyCode == InputConstants.KEY_RETURN || keyCode == InputConstants.KEY_NUMPADENTER) {
             if (GuiInputCompat.hasShift(modifiers)) {
                 this.selectionManager.insertText("\n");
             } else {
@@ -85,12 +96,12 @@ public class WizardLongTextInputScreen extends CommandWizardScreen {
             return true;
         }
         switch (keyCode) {
-            case GLFW.GLFW_KEY_BACKSPACE -> this.selectionManager.removeCharsFromCursor(-1);
-            case GLFW.GLFW_KEY_DELETE -> this.selectionManager.removeCharsFromCursor(1);
-            case GLFW.GLFW_KEY_RIGHT -> this.selectionManager.moveByChars(1, GuiInputCompat.hasShift(modifiers));
-            case GLFW.GLFW_KEY_LEFT -> this.selectionManager.moveByChars(-1, GuiInputCompat.hasShift(modifiers));
-            case GLFW.GLFW_KEY_HOME -> this.selectionManager.setCursorToStart(GuiInputCompat.hasShift(modifiers));
-            case GLFW.GLFW_KEY_END -> this.selectionManager.setCursorToEnd(GuiInputCompat.hasShift(modifiers));
+            case InputConstants.KEY_BACKSPACE -> this.selectionManager.removeCharsFromCursor(-1);
+            case InputConstants.KEY_DELETE -> this.selectionManager.removeCharsFromCursor(1);
+            case InputConstants.KEY_RIGHT -> this.selectionManager.moveByChars(1, GuiInputCompat.hasShift(modifiers));
+            case InputConstants.KEY_LEFT -> this.selectionManager.moveByChars(-1, GuiInputCompat.hasShift(modifiers));
+            case InputConstants.KEY_HOME -> this.selectionManager.setCursorToStart(GuiInputCompat.hasShift(modifiers));
+            case InputConstants.KEY_END -> this.selectionManager.setCursorToEnd(GuiInputCompat.hasShift(modifiers));
             default -> {
                 return super.keyPressed(inputEvent);
                 /*return super.keyPressed(keyCode, scanCode, modifiers);
@@ -134,6 +145,7 @@ public class WizardLongTextInputScreen extends CommandWizardScreen {
 
         int boxY = 76;
         int boxHeight = Math.max(70, this.height - 118);
+        areahint.util.TextInputCompat.area(x + 4, boxY + 4, x + contentWidth - 4, boxY + boxHeight - 4);
         context.fill(x - 2, boxY - 2, x + contentWidth + 2, boxY + boxHeight + 2, 0x99202020);
         areahint.util.GuiDrawCompat.drawBorder(context, x - 2, boxY - 2, contentWidth + 4, boxHeight + 4, 0xCCAAAAAA);
         // 1.21.2 起 drawTextWrapped 改名为 drawWrappedText 并新增阴影参数（原方法无阴影，传 false）

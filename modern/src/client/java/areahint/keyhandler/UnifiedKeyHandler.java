@@ -4,7 +4,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
 
 import areahint.easyadd.EasyAddManager;
 import areahint.expandarea.ExpandAreaManager;
@@ -43,12 +42,12 @@ public class UnifiedKeyHandler {
      */
     public static void register() {
         // 获取配置的按键代码
-        int keyCode = ClientConfig.getRecordKey();
+        int keyCode = areahint.util.PlatformInputCompat.fromStoredCode(ClientConfig.getRecordKey());
 
         // 注册记录键绑定
         recordKeyBinding = KeyMappingHelper.registerKeyMapping(areahint.keyhandler.KeyBindingCompat.create(
             "key.areahint.unified.record", // 翻译键
-            InputConstants.Type.KEYSYM,
+            areahint.util.PlatformInputCompat.keyboardType(),
             keyCode // 使用配置的按键
         ));
 
@@ -75,7 +74,7 @@ public class UnifiedKeyHandler {
         int keyCode = ClientConfig.getRecordKey();
 
         // 使用 setBoundKey 方法更新按键绑定
-        recordKeyBinding.setKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+        recordKeyBinding.setKey(areahint.util.PlatformInputCompat.storedKey(keyCode));
 
         // 刷新按键映射表（重要：让 Minecraft 重新索引按键）
         net.minecraft.client.Minecraft client = net.minecraft.client.Minecraft.getInstance();
@@ -442,9 +441,8 @@ public class UnifiedKeyHandler {
 
     private static boolean isRecordKeyPhysicallyPressed(Minecraft client) {
         int keyCode = ClientConfig.getRecordKey();
-        if (client != null && client.getWindow() != null
-                && keyCode > GLFW.GLFW_KEY_UNKNOWN && keyCode <= GLFW.GLFW_KEY_LAST) {
-            return GLFW.glfwGetKey(client.getWindow().handle(), keyCode) == GLFW.GLFW_PRESS;
+        if (client != null && client.getWindow() != null) {
+            return areahint.util.PlatformInputCompat.isKeyDown(client, areahint.util.PlatformInputCompat.fromStoredCode(keyCode));
         }
         return recordKeyBinding != null && recordKeyBinding.isDown();
     }

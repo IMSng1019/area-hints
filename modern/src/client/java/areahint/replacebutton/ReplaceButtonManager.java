@@ -1,8 +1,9 @@
 package areahint.replacebutton;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import areahint.config.ClientConfig;
 import areahint.i18n.I18nManager;
-import org.lwjgl.glfw.GLFW;
 
 /**
  * ReplaceButton管理器
@@ -60,7 +61,7 @@ public class ReplaceButtonManager {
 
     /**
      * 处理玩家按下的键
-     * @param keyCode GLFW键码
+     * @param keyCode 当前平台原生键码，写入配置前转换回历史编号
      * @param keyName 按键名称
      */
     public void handleKeyPress(int keyCode, String keyName) {
@@ -69,13 +70,14 @@ public class ReplaceButtonManager {
         }
 
         // 忽略某些特殊键
-        if (isInvalidKey(keyCode)) {
+        int storedCode = areahint.util.PlatformInputCompat.toStoredCode(keyCode);
+        if (isInvalidKey(keyCode) || storedCode <= 0) {
             showInvalidKeyError();
             return;
         }
 
         // 保存临时按键信息
-        pendingKeyCode = keyCode;
+        pendingKeyCode = storedCode;
         pendingKeyName = keyName;
 
         // 切换到确认状态
@@ -142,16 +144,16 @@ public class ReplaceButtonManager {
      */
     private boolean isInvalidKey(int keyCode) {
         // 不允许使用的按键
-        return keyCode == GLFW.GLFW_KEY_ESCAPE ||      // ESC键
-               keyCode == GLFW.GLFW_KEY_ENTER ||       // 回车键
-               keyCode == GLFW.GLFW_KEY_TAB ||         // Tab键
-               keyCode == GLFW.GLFW_KEY_LEFT_SHIFT ||  // Shift键
-               keyCode == GLFW.GLFW_KEY_RIGHT_SHIFT ||
-               keyCode == GLFW.GLFW_KEY_LEFT_CONTROL || // Ctrl键
-               keyCode == GLFW.GLFW_KEY_RIGHT_CONTROL ||
-               keyCode == GLFW.GLFW_KEY_LEFT_ALT ||    // Alt键
-               keyCode == GLFW.GLFW_KEY_RIGHT_ALT ||
-               keyCode == GLFW.GLFW_KEY_UNKNOWN;       // 未知键
+        return keyCode == InputConstants.KEY_ESCAPE ||      // ESC键
+               keyCode == InputConstants.KEY_RETURN ||       // 回车键
+               keyCode == InputConstants.KEY_TAB ||         // Tab键
+               keyCode == InputConstants.KEY_LSHIFT ||  // Shift键
+               keyCode == InputConstants.KEY_RSHIFT ||
+               keyCode == InputConstants.KEY_LCONTROL || // Ctrl键
+               keyCode == InputConstants.KEY_RCONTROL ||
+               keyCode == InputConstants.KEY_LALT ||    // Alt键
+               keyCode == InputConstants.KEY_RALT ||
+               keyCode == InputConstants.UNKNOWN.getValue();       // 未知键
     }
 
     /**

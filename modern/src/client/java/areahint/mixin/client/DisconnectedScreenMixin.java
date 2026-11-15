@@ -30,7 +30,14 @@ public abstract class DisconnectedScreenMixin extends Screen {
         }
         int buttonWidth = Math.max(1, Math.min(340, width - 20));
         areahint$downloadButton = addRenderableWidget(Button.builder(Component.literal(ModHandshake.DOWNLOAD_URL),
-                        button -> Util.getPlatform().openUri(ModHandshake.DOWNLOAD_URL))
+                        button -> {
+                            // SDL 版本由 Blaze3D 提供浏览器入口，旧版本仍使用原平台实现。
+                            //? if >=26.3 {
+                            /*com.mojang.blaze3d.Blaze3D.openUri(java.net.URI.create(ModHandshake.DOWNLOAD_URL));*/
+                            //?} else {
+                            Util.getPlatform().openUri(ModHandshake.DOWNLOAD_URL);
+                            //?}
+                        })
                 .bounds((width - buttonWidth) / 2, height - 28, buttonWidth, 20)
                 .build());
     }

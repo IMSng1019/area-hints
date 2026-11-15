@@ -79,9 +79,9 @@ final class VizEditPropertiesScreen extends Screen {
     @Override public boolean shouldPause() { return false; }
     @Override public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         context.fill(0, 0, width, height, 0xF0171B22);
-        context.drawCenteredTextWithShadow(textRenderer, title, width / 2, 13, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, title, width / 2, 13, 0xFFFFFFFF);
         for (Label label : labels) context.drawTextWithShadow(textRenderer,
-            Text.literal(textRenderer.trimToWidth(t(label.key), label.width)), label.x, label.y, 0xC5D3E2);
+            Text.literal(textRenderer.trimToWidth(t(label.key), label.width)), label.x, label.y, 0xFFC5D3E2);
         super.render(context, mouseX, mouseY, delta);
         for (Label label : labels) if (mouseX >= label.x && mouseX <= label.x + label.width && mouseY >= label.y && mouseY < label.y + 11)
             context.drawTooltip(textRenderer, Text.literal(t(label.key)), mouseX, mouseY);

@@ -164,23 +164,25 @@ public final class DescriptionBookEditScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
         int bookX = (width - PAGE_BACKGROUND_WIDTH) / 2;
-        // 1.21.2 起 drawTexture 需要显式传入 RenderLayer 工厂，纹理尺寸沿用原 7 参重载的 256
+        // 1.21.2 起需 RenderLayer 工厂，1.21.6 起改用 GUI 管线；各代纹理尺寸均保留为 256。
         //? if <=1.21.1 {
         context.drawTexture(net.minecraft.client.gui.screen.ingame.BookScreen.BOOK_TEXTURE, bookX, 2, 0, 0, PAGE_BACKGROUND_WIDTH, PAGE_BACKGROUND_HEIGHT);
-        //?} else {
+        //?} else if <1.21.6 {
         /*context.drawTexture(net.minecraft.client.render.RenderLayer::getGuiTextured, net.minecraft.client.gui.screen.ingame.BookScreen.BOOK_TEXTURE, bookX, 2, 0F, 0F, PAGE_BACKGROUND_WIDTH, PAGE_BACKGROUND_HEIGHT, 256, 256);*/
+        //?} else {
+        /*context.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, net.minecraft.client.gui.screen.ingame.BookScreen.BOOK_TEXTURE, bookX, 2, 0F, 0F, PAGE_BACKGROUND_WIDTH, PAGE_BACKGROUND_HEIGHT, 256, 256);*/
         //?}
         Text pageIndicator = Text.literal((currentPage + 1) + "/" + pages.size());
-        context.drawText(textRenderer, pageIndicator, bookX + PAGE_TEXT_X_OFFSET + PAGE_TEXT_WIDTH - textRenderer.getWidth(pageIndicator), 18, 0, false);
+        context.drawText(textRenderer, pageIndicator, bookX + PAGE_TEXT_X_OFFSET + PAGE_TEXT_WIDTH - textRenderer.getWidth(pageIndicator), 18, 0xFF000000, false);
 
         int textX = bookX + PAGE_TEXT_X_OFFSET;
         int textY = PAGE_TEXT_Y_OFFSET;
         String page = getCurrentPageContent();
         // 1.21.2 起 drawTextWrapped 改名为 drawWrappedText 并新增阴影参数（原方法无阴影，传 false）
         //? if <=1.21.1 {
-        context.drawTextWrapped(textRenderer, Text.literal(page), textX, textY, MAX_TEXT_WIDTH, 0);
+        context.drawTextWrapped(textRenderer, Text.literal(page), textX, textY, MAX_TEXT_WIDTH, 0xFF000000);
         //?} else {
-        /*context.drawWrappedText(textRenderer, Text.literal(page), textX, textY, MAX_TEXT_WIDTH, 0, false);*/
+        /*context.drawWrappedText(textRenderer, Text.literal(page), textX, textY, MAX_TEXT_WIDTH, 0xFF000000, false);*/
         //?}
         drawCursor(context, textX, textY, page);
     }

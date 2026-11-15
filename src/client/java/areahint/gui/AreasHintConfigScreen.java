@@ -240,7 +240,7 @@ public class AreasHintConfigScreen extends Screen {
         //?} else {
         /*this.renderBackground(context);*/
         //?}
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 12, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 12, 0xFFFFFFFF);
         super.render(context, mouseX, mouseY, delta);
     }
 
@@ -721,7 +721,7 @@ public class AreasHintConfigScreen extends Screen {
 
             @Override
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                context.drawTextWithShadow(AreasHintConfigScreen.this.textRenderer, Text.literal(t(key)), x + 4, y + 7, 0xFFFF55);
+                context.drawTextWithShadow(AreasHintConfigScreen.this.textRenderer, Text.literal(t(key)), x + 4, y + 7, 0xFFFFFF55);
             }
 
             @Override
@@ -746,7 +746,7 @@ public class AreasHintConfigScreen extends Screen {
 
             @Override
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                context.drawTextWithShadow(AreasHintConfigScreen.this.textRenderer, Text.literal(t(key)), x + 4, y + 6, 0xFFFFFF);
+                context.drawTextWithShadow(AreasHintConfigScreen.this.textRenderer, Text.literal(t(key)), x + 4, y + 6, 0xFFFFFFFF);
                 int widgetX = x + entryWidth - 4;
                 for (int i = this.widgets.size() - 1; i >= 0; i--) {
                     ClickableWidget widget = this.widgets.get(i);

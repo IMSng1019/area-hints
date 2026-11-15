@@ -61,17 +61,17 @@ public final class EasyAddRecordingHud {
         context.drawBorder(x, y, panelWidth, panelHeight, 0x88FFFFFF);
 
         context.drawCenteredTextWithShadow(client.textRenderer,
-            Text.literal(I18nManager.translate("commandui.easyadd.record.title")), width / 2, y + 7, 0xFFFFFF);
+            Text.literal(I18nManager.translate("commandui.easyadd.record.title")), width / 2, y + 7, 0xFFFFFFFF);
         context.drawTextWithShadow(client.textRenderer,
-            Text.literal(I18nManager.translate("commandui.easyadd.record.count", points.size())), x + 10, y + 22, 0xFFFF00);
-        context.drawTextWithShadow(client.textRenderer, Text.literal(lastText), x + 10, y + 34, 0xAAAAAA);
+            Text.literal(I18nManager.translate("commandui.easyadd.record.count", points.size())), x + 10, y + 22, 0xFFFFFF00);
+        context.drawTextWithShadow(client.textRenderer, Text.literal(lastText), x + 10, y + 34, 0xFFAAAAAA);
         context.drawTextWithShadow(client.textRenderer,
             Text.literal(trim(client, I18nManager.translate("commandui.easyadd.record.action_hint", keyName), panelWidth - 20)),
-            x + 10, y + 46, 0x00FF00);
+            x + 10, y + 46, 0xFF00FF00);
         context.drawTextWithShadow(client.textRenderer,
             Text.literal(trim(client, I18nManager.translate(points.size() >= 3
                 ? "commandui.easyadd.record.ready"
-                : "commandui.easyadd.record.need_more"), panelWidth - 20)), x + 10, y + 58, 0x55FFFF);
+                : "commandui.easyadd.record.need_more"), panelWidth - 20)), x + 10, y + 58, 0xFF55FFFF);
     }
 
     private static String trim(MinecraftClient client, String value, int maxWidth) {

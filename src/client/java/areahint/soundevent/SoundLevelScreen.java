@@ -231,6 +231,8 @@ public final class SoundLevelScreen extends CommandUiScreen {
 
     private void drawCenteredTrimmed(DrawContext context, String value, int y, int color) {
         String trimmed = this.textRenderer.trimToWidth(value, Math.max(1, this.width - CONTENT_SIDE_MARGIN * 2));
+        // 音量界面的历史文字色为 RGB，新版 DrawContext 需要明确的 alpha 才会提交文字。
+        if ((color & 0xFF000000) == 0) color |= 0xFF000000;
         context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(trimmed), this.width / 2, y, color);
     }
 

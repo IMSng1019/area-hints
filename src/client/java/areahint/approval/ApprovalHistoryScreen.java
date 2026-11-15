@@ -76,7 +76,7 @@ public final class ApprovalHistoryScreen extends CommandUiScreen {
         int first = getPage() * rows;
         int x = (width - Math.min(520, width - 36)) / 2;
         for (int i = first; i < Math.min(first + rows, lines.size()); i++) {
-            context.drawTextWithShadow(textRenderer, lines.get(i), x, 50 + (i - first) * 12, 0xFFFFFF);
+            context.drawTextWithShadow(textRenderer, lines.get(i), x, 50 + (i - first) * 12, 0xFFFFFFFF);
         }
     }
 

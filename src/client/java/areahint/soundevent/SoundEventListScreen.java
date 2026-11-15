@@ -93,7 +93,7 @@ public final class SoundEventListScreen extends CommandUiScreen {
         super.render(drawContext, mouseX, mouseY, delta);
         drawContext.drawCenteredTextWithShadow(this.textRenderer,
                 Text.literal(this.textRenderer.trimToWidth(this.heading, Math.max(40, this.width - 40))),
-                this.width / 2, 28, 0xFFFF55);
+                this.width / 2, 28, 0xFFFFFF55);
     }
 
     @Override

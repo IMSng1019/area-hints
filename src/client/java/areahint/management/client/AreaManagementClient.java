@@ -172,10 +172,10 @@ public final class AreaManagementClient {
             //?} else {
             /*this.renderBackground(context);*/
             //?}
-            context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 18, 0xFFFFFF);
+            context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 18, 0xFFFFFFFF);
             context.drawCenteredTextWithShadow(this.textRenderer,
                 Text.literal(I18nManager.translate("xaero.areahint.loading.prompt", areaName)),
-                this.width / 2, this.height / 2 - 4, 0xAAAAAA);
+                this.width / 2, this.height / 2 - 4, 0xFFAAAAAA);
             super.render(context, mouseX, mouseY, delta);
         }
 

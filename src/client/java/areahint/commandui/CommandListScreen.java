@@ -353,7 +353,7 @@ public class CommandListScreen extends CommandUiScreen {
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
                 String text = t("commandui.search.empty");
                 int textX = x + (entryWidth - CommandListScreen.this.textRenderer.getWidth(text)) / 2;
-                context.drawTextWithShadow(CommandListScreen.this.textRenderer, Text.literal(text), textX, y + 12, 0xAAAAAA);
+                context.drawTextWithShadow(CommandListScreen.this.textRenderer, Text.literal(text), textX, y + 12, 0xFFAAAAAA);
             }
 
             @Override

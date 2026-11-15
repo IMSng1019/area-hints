@@ -50,13 +50,20 @@ public class BoundVizRenderer {
     private static boolean[] visibleFlags = new boolean[0];
 
     // ========== 主渲染方法 ==========
+    //? if <1.21.6 {
     public static void render(MatrixStack matrices, float tickDelta) {
         // 1.20.4 及更早版本的世界矩阵栈已包含相机视图，保留原 Mixin 的调用入口和变换来源。
         render(matrices, matrices.peek().getPositionMatrix());
     }
 
-    // 新版相机视图保存在全局 model-view 中，独立传给 CPU 剔除，顶点仍只使用局部矩阵栈以免重复旋转。
+    // 旧版仍能读取全局投影矩阵，保留既有调用签名与投影来源。
     public static void render(MatrixStack matrices, Matrix4f viewMatrix) {
+        render(matrices, viewMatrix, RenderSystem.getProjectionMatrix());
+    }
+    //?}
+
+    // 1.21.6 起全局投影只剩 GPU 缓冲，CPU 剔除改用 Fabric 上下文传入的同帧投影。
+    public static void render(MatrixStack matrices, Matrix4f viewMatrix, Matrix4f projectionMatrix) {
         BoundVizManager manager = BoundVizManager.getInstance();
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null || client.world == null) return;
@@ -67,7 +74,7 @@ public class BoundVizRenderer {
         Vec3d cameraPos = client.gameRenderer.getCamera().getPos();
 
         // 提取视锥平面（每帧动态更新，跟随玩家视角）
-        extractFrustumPlanes(viewMatrix, RenderSystem.getProjectionMatrix());
+        extractFrustumPlanes(viewMatrix, projectionMatrix);
 
         // 更新几何缓存（仅在数据变化时重建）
         if (manager.isEnabled()) {
@@ -78,6 +85,7 @@ public class BoundVizRenderer {
         BufferCompat.beginWorld();
 
         matrices.push();
+        // 新版栈只承载局部变换，相机旋转由 GPU 的全局 model-view 应用，不能再次乘入 viewMatrix。
         matrices.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
 
         Matrix4f matrix = matrices.peek().getPositionMatrix();

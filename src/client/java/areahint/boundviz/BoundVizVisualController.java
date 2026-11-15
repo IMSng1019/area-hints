@@ -57,11 +57,11 @@ public final class BoundVizVisualController {
             }
             boolean enabled = BoundVizManager.getInstance().isEnabled();
             String status = enabled ? t("commandui.boundviz.status.on") : t("commandui.boundviz.status.off");
-            int statusColor = enabled ? 0x55FF55 : 0xAAAAAA;
+            int statusColor = enabled ? 0xFF55FF55 : 0xFFAAAAAA;
             context.drawCenteredTextWithShadow(this.textRenderer,
                 Text.literal(t("commandui.boundviz.status") + status), this.width / 2, 56, statusColor);
             context.drawCenteredTextWithShadow(this.textRenderer,
-                Text.literal("/areahint boundviz"), this.width / 2, 108, 0xFFFF55);
+                Text.literal("/areahint boundviz"), this.width / 2, 108, 0xFFFFFF55);
         }
     }
 }

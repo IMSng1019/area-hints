@@ -87,7 +87,7 @@ public class WizardSelectionListScreen<T> extends CommandWizardScreen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
         if (this.promptKey != null && !this.promptKey.isBlank()) {
-            context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(t(this.promptKey)), this.width / 2, 34, 0xFFFFFF);
+            context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(t(this.promptKey)), this.width / 2, 34, 0xFFFFFFFF);
         }
     }
 

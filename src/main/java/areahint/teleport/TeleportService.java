@@ -84,7 +84,8 @@ public final class TeleportService {
             return;
         }
 
-        ServerWorld world = player.getServerWorld();
+        // 服务端玩家的世界始终是 ServerWorld，统一入口兼容 1.21.6 移除 getServerWorld 的变更。
+        ServerWorld world = (ServerWorld) player.getWorld();
         Optional<Vec3d> landing = "tcp".equals(normalizedMode)
                 ? SAFE_LANDING_FINDER.findCenterLanding(world, area)
                 : SAFE_LANDING_FINDER.findRandomLanding(world, area);
@@ -104,7 +105,7 @@ public final class TeleportService {
     }
 
     private static boolean executeTeleport(ServerPlayerEntity player, Vec3d position) {
-        return executeTeleport(player, player.getServerWorld(), position);
+        return executeTeleport(player, (ServerWorld) player.getWorld(), position);
     }
 
     // 审批预览仍使用 TCP 的中心安全落点算法，只把查找目标换成服务端保存的临时域名。
@@ -143,7 +144,7 @@ public final class TeleportService {
             //?} else {
             /*player.teleport(world, position.x, position.y, position.z, java.util.Set.of(), player.getYaw(), player.getPitch(), false);*/
             //?}
-            return player.getServerWorld() == world && player.squaredDistanceTo(position) < 1.0D;
+            return player.getWorld() == world && player.squaredDistanceTo(position) < 1.0D;
         } catch (Exception e) {
             Areashint.LOGGER.error("执行域名传送时发生错误", e);
             return false;

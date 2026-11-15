@@ -70,10 +70,10 @@ final class AreaManagementScreen extends Screen {
         //?} else {
         /*this.renderBackground(context);*/
         //?}
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 10, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 10, 0xFFFFFFFF);
         context.drawCenteredTextWithShadow(this.textRenderer,
             Text.literal(I18nManager.translate("xaero.areahint.management.area", area.name(), area.level())),
-            this.width / 2, 28, 0xAAAAAA);
+            this.width / 2, 28, 0xFFAAAAAA);
         super.render(context, mouseX, mouseY, delta);
     }
 
@@ -156,7 +156,7 @@ final class AreaManagementScreen extends Screen {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
                 context.drawTextWithShadow(AreaManagementScreen.this.textRenderer,
-                    Text.literal(I18nManager.translate(key)), x + 6, y + 8, 0xFFFF55);
+                    Text.literal(I18nManager.translate(key)), x + 6, y + 8, 0xFFFFFF55);
             }
 
             @Override public List<? extends Element> children() { return List.of(); }
@@ -183,7 +183,7 @@ final class AreaManagementScreen extends Screen {
                     String detail = handler.description().getString();
                     int detailX = x + 206;
                     context.drawTextWithShadow(AreaManagementScreen.this.textRenderer,
-                        Text.literal(trim(detail, entryWidth - 212)), detailX, y + 9, 0xAAAAAA);
+                        Text.literal(trim(detail, entryWidth - 212)), detailX, y + 9, 0xFFAAAAAA);
                 }
             }
 

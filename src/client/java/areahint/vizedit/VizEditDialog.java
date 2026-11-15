@@ -72,12 +72,12 @@ final class VizEditDialog extends Screen {
     }
     @Override public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         context.fill(0, 0, width, height, 0xFA151B24);
-        context.drawCenteredTextWithShadow(textRenderer, title, width / 2, 13, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, title, width / 2, 13, 0xFFFFFFFF);
         int visible = Math.max(1, (height - 82) / 11);
         offset = Math.max(0, Math.min(offset, Math.max(0, lines.size() - visible)));
         int x = (width - Math.min(620, width - 32)) / 2;
-        for (int i = offset; i < Math.min(offset + visible, lines.size()); i++) context.drawTextWithShadow(textRenderer, lines.get(i), x, 39 + (i - offset) * 11, 0xCFD8E4);
-        if (lines.size() > visible) context.drawTextWithShadow(textRenderer, Text.literal("↕ " + (offset + 1) + "/" + lines.size()), width - 76, 28, 0x91ABC5);
+        for (int i = offset; i < Math.min(offset + visible, lines.size()); i++) context.drawTextWithShadow(textRenderer, lines.get(i), x, 39 + (i - offset) * 11, 0xFFCFD8E4);
+        if (lines.size() > visible) context.drawTextWithShadow(textRenderer, Text.literal("↕ " + (offset + 1) + "/" + lines.size()), width - 76, 28, 0xFF91ABC5);
         super.render(context, mouseX, mouseY, delta);
     }
     @Override public void close() {

@@ -58,7 +58,7 @@ public final class SoundEventCategoryScreen extends CommandUiScreen {
                 SoundEventManager.getDisplayText(this.context.currentSelection()));
         drawContext.drawCenteredTextWithShadow(this.textRenderer,
                 Text.literal(this.textRenderer.trimToWidth(currentText, Math.max(40, this.width - 40))),
-                this.width / 2, 32, 0xAAAAAA);
+                this.width / 2, 32, 0xFFAAAAAA);
     }
 
     @Override

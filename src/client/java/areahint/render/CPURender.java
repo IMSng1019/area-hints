@@ -5,7 +5,7 @@ import areahint.config.ClientConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.util.math.MatrixStack;
+import areahint.util.GuiMatrixCompat;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
@@ -156,12 +156,11 @@ public class CPURender implements RenderManager.IRender {
         
         // 渲染主标题和副字幕。CPU模式沿用原本的半透明背景框效果。
         TextRenderer textRenderer = client.textRenderer;
-        MatrixStack matrixStack = drawContext.getMatrices();
-        matrixStack.push();
-        matrixStack.translate(x, y + yOffset, 0);
+        GuiMatrixCompat.push(drawContext);
+        GuiMatrixCompat.translate(drawContext, x, y + yOffset);
 
         float titleScale = TitleRenderHelper.getTitleScale();
-        TitleRenderHelper.drawCenteredLine(drawContext, textRenderer, matrixStack, currentText, currentColor, alpha, titleScale, 0, true);
+        TitleRenderHelper.drawCenteredLine(drawContext, textRenderer, currentText, currentColor, alpha, titleScale, 0, true);
 
         if (TitleRenderHelper.hasNormalizedSubtitle(currentSubtitle)) {
             float subtitleScale = TitleRenderHelper.getSubtitleScale();
@@ -170,13 +169,13 @@ public class CPURender implements RenderManager.IRender {
             java.util.List<String> subtitleLines = TitleRenderHelper.buildSubtitleLinesNormalized(currentSubtitle, textRenderer, screenWidth, subtitleScale);
 
             for (int i = 0; i < subtitleLines.size(); i++) {
-                TitleRenderHelper.drawCenteredLine(drawContext, textRenderer, matrixStack,
+                TitleRenderHelper.drawCenteredLine(drawContext, textRenderer,
                     subtitleLines.get(i), currentSubtitleColor, alpha, subtitleScale, subtitleY + i * lineHeight, true);
             }
         }
 
         // 恢复矩阵状态
-        matrixStack.pop();
+        GuiMatrixCompat.pop(drawContext);
         
         // 输出调试信息
         if (animationState == AnimationState.IN) {

@@ -58,7 +58,7 @@ public final class ApprovalListScreen extends CommandUiScreen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
         context.drawCenteredTextWithShadow(textRenderer, Text.literal(t(ApprovalClientManager.getVisibleRequests().isEmpty()
-            ? "approval.ui.empty" : "approval.ui.select")), width / 2, 34, 0xAAAAAA);
+            ? "approval.ui.empty" : "approval.ui.select")), width / 2, 34, 0xFFAAAAAA);
     }
 
     private final class RequestList extends CompatEntryListWidget<RequestList.Entry> {

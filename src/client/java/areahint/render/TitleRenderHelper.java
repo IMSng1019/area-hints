@@ -4,7 +4,7 @@ import areahint.config.ClientConfig;
 import areahint.data.ConfigData;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.util.math.MatrixStack;
+import areahint.util.GuiMatrixCompat;
 import net.minecraft.text.Text;
 
 import java.lang.ref.WeakReference;
@@ -225,15 +225,15 @@ public final class TitleRenderHelper {
      * 绘制一行居中文本。
      * @param drawBackground 是否绘制半透明背景，CPU 渲染模式沿用原有背景框效果
      */
-    public static void drawCenteredLine(DrawContext drawContext, TextRenderer textRenderer, MatrixStack matrixStack,
+    public static void drawCenteredLine(DrawContext drawContext, TextRenderer textRenderer,
                                         String line, String color, float alpha, float scale, int y, boolean drawBackground) {
         if (line == null || line.isEmpty()) {
             return;
         }
 
-        matrixStack.push();
-        matrixStack.translate(0, y, 0);
-        matrixStack.scale(scale, scale, 1.0f);
+        GuiMatrixCompat.push(drawContext);
+        GuiMatrixCompat.translate(drawContext, 0, y);
+        GuiMatrixCompat.scale(drawContext, scale, scale);
 
         Text text = Text.of(line);
         int textWidth = textRenderer.getWidth(text);
@@ -246,7 +246,7 @@ public final class TitleRenderHelper {
         }
 
         drawTextWithColor(drawContext, textRenderer, text, line, finalX, finalY, color, alpha);
-        matrixStack.pop();
+        GuiMatrixCompat.pop(drawContext);
     }
 
     private static void drawTextWithColor(DrawContext drawContext, TextRenderer textRenderer, Text text,

@@ -132,9 +132,9 @@ public class WizardLongTextInputScreen extends CommandWizardScreen {
         context.drawBorder(x - 2, boxY - 2, contentWidth + 4, boxHeight + 4, 0xCCAAAAAA);
         // 1.21.2 起 drawTextWrapped 改名为 drawWrappedText 并新增阴影参数（原方法无阴影，传 false）
         //? if <=1.21.1 {
-        context.drawTextWrapped(this.textRenderer, Text.literal(this.text), x + 4, boxY + 4, contentWidth - 8, 0xFFFFFF);
+        context.drawTextWrapped(this.textRenderer, Text.literal(this.text), x + 4, boxY + 4, contentWidth - 8, 0xFFFFFFFF);
         //?} else {
-        /*context.drawWrappedText(this.textRenderer, Text.literal(this.text), x + 4, boxY + 4, contentWidth - 8, 0xFFFFFF, false);*/
+        /*context.drawWrappedText(this.textRenderer, Text.literal(this.text), x + 4, boxY + 4, contentWidth - 8, 0xFFFFFFFF, false);*/
         //?}
     }
 

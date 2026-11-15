@@ -152,6 +152,16 @@ dependencies {
 		declareThirdParty('xaero_world_map', 'Xaero 世界地图') { v ->
 			modCompileOnly "maven.modrinth:xaeros-world-map:${v}"
 			modLocalRuntime "maven.modrinth:xaeros-world-map:${v}"
+			// 新版 Xaero 把公开接口放入内嵌库，编译时从同一远程构件读取，运行时仍由地图模组提供。
+			def bundledLibrary = thirdPartyProp('xaero_bundled_library')
+			if (bundledLibrary != null) {
+				def bundle = configurations.detachedConfiguration(dependencies.create("maven.modrinth:xaeros-world-map:${v}"))
+				bundle.transitive = false
+				def library = zipTree(bundle.singleFile).matching { include "META-INF/jars/${bundledLibrary}" }.singleFile
+				modCompileOnly files(library)
+				// Loom 的开发重映射会移除地图的内嵌 JAR 声明，因此开发运行也需单独加载同一库。
+				modLocalRuntime files(library)
+			}
 		}
 	}
 

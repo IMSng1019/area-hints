@@ -470,6 +470,8 @@ public final class VizEditScreen extends Screen {
     }
     private boolean inCanvas(double x, double y) { return x > panelWidth && x < width && y >= canvasTop && y < canvasBottom; }
     private void label(DrawContext context, String text, int x, int y, int maxWidth, int color) {
+        // 编辑器标签沿用 RGB 配色，补全不透明 alpha；多边形填充与边线的实际透明度不经过这里。
+        if ((color & 0xFF000000) == 0) color |= 0xFF000000;
         context.drawTextWithShadow(textRenderer, Text.literal(textRenderer.trimToWidth(text, Math.max(1, maxWidth))), x, y, color);
     }
     private static String t(String key) { return I18nManager.translate(key); }

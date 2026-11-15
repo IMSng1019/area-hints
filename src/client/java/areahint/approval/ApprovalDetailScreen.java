@@ -170,7 +170,7 @@ public final class ApprovalDetailScreen extends CommandUiScreen {
             // 意见按窗口可用高度换行，剩余内容和此前各轮意见仍可从历史页面完整查看。
             for (OrderedText line : textRenderer.wrapLines(Text.literal(replyText), contentWidth)) {
                 if (y + textRenderer.fontHeight > bottom) break;
-                context.drawTextWithShadow(textRenderer, line, contentX, y, 0xFFFFFF);
+                context.drawTextWithShadow(textRenderer, line, contentX, y, 0xFFFFFFFF);
                 y += 12;
             }
         }

@@ -52,11 +52,11 @@ public final class DebugVisualController {
             drawTrimmed(context, Text.literal(t("commandui.debug.detail")), 20, 36, this.width - 40, 0xAAAAAA);
             boolean enabled = ClientDebugManager.isDebugEnabled();
             String status = enabled ? t("commandui.debug.on") : t("commandui.debug.off");
-            int statusColor = enabled ? 0x55FF55 : 0xFF5555;
+            int statusColor = enabled ? 0xFF55FF55 : 0xFFFF5555;
             context.drawCenteredTextWithShadow(this.textRenderer,
                 Text.literal(t("commandui.debug.status") + ": " + status), this.width / 2, 56, statusColor);
             context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("/areahint debug"),
-                this.width / 2, 184, 0xFFFF55);
+                this.width / 2, 184, 0xFFFFFF55);
         }
 
         private void addActionButton(String labelKey, String command, int x, int y, int width) {

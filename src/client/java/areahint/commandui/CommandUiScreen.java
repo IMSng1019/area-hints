@@ -13,8 +13,8 @@ import net.minecraft.text.Text;
 public abstract class CommandUiScreen extends Screen {
     protected static final int BUTTON_HEIGHT = 20;
     protected static final int FOOTER_Y_OFFSET = 26;
-    protected static final int BRIGHT_YELLOW = 0xFFFF00;
-    protected static final int BRIGHT_GREEN = 0x00FF00;
+    protected static final int BRIGHT_YELLOW = 0xFFFFFF00;
+    protected static final int BRIGHT_GREEN = 0xFF00FF00;
     private static final int IN_GAME_BACKGROUND = 0x55000000;
     private static final int TOOLTIP_MAX_WIDTH = 260;
     protected final Screen parent;
@@ -79,13 +79,15 @@ public abstract class CommandUiScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         renderSoftBackground(context, mouseX, mouseY, delta);
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 12, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 12, 0xFFFFFFFF);
         super.render(context, mouseX, mouseY, delta);
     }
 
     protected void drawTrimmed(DrawContext context, Text text, int x, int y, int maxWidth, int color) {
         String value = text.getString();
         String trimmed = this.textRenderer.trimToWidth(value, Math.max(0, maxWidth));
+        // 向导历史调用传入 RGB，补全不透明 alpha；显式 ARGB 保留原透明度，兼容新版文字渲染。
+        if ((color & 0xFF000000) == 0) color |= 0xFF000000;
         context.drawTextWithShadow(this.textRenderer, Text.literal(trimmed), x, y, color);
     }
 

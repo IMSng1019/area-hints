@@ -1,5 +1,14 @@
 pluginManagement {
 	repositories {
+		// Stonecutter 优先从作者发布仓库解析，避免首次构建只依赖插件门户的下载路径。
+		maven {
+			name = 'KikuGie Releases'
+			url = 'https://maven.kikugie.dev/releases/'
+			content {
+				includeModule('dev.kikugie.stonecutter', 'dev.kikugie.stonecutter.gradle.plugin')
+				includeModule('dev.kikugie', 'stonecutter')
+			}
+		}
 		maven {
 			name = 'Fabric'
 			url = 'https://maven.fabricmc.net/'

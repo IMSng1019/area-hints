@@ -441,7 +441,9 @@ public final class VizEditScreen extends Screen {
                 if (stroke.size() > 8192) throw new IllegalArgumentException();
                 paint = VizEditGeometry.stroke(stroke, session.brushWidth);
             }
-            session.draft.shape = session.tool == VizEditSession.Tool.ERASER ? VizEditGeometry.subtract(beforeStroke, paint) : VizEditGeometry.union(beforeStroke, paint);
+            Area painted = session.tool == VizEditSession.Tool.ERASER ? VizEditGeometry.subtract(beforeStroke, paint) : VizEditGeometry.union(beforeStroke, paint);
+            // 选区笔闭合后立即预览实心内部，填充与本次笔画共用同一撤销记录。
+            session.draft.shape = session.tool == VizEditSession.Tool.BRUSH ? VizEditGeometry.fillNewlyEnclosed(beforeStroke, painted) : painted;
             session.status = "";
         } catch (VizEditGeometry.GeometryException e) { session.status = t(e.errorKey()); }
         catch (IllegalArgumentException e) { session.status = t("vizedit.error.geometry_limit"); }

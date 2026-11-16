@@ -12,6 +12,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
+import net.minecraft.client.gui.screens.Screen;
+
 import java.awt.geom.Area;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import net.minecraft.client.gui.screens.Screen;
 
 // 两种画布只改变投影，不持有独立草稿；切换画布、表单和窗口大小均复用本会话。
 public final class VizEditSession {
@@ -30,6 +31,8 @@ public final class VizEditSession {
     public final Screen parentScreen;
     public final List<AreaData> areas = new ArrayList<>();
     public final Map<String, Set<String>> capabilities = new LinkedHashMap<>();
+    public final Set<String> creationCapabilities = new HashSet<>();
+    public final JsonObject descriptions;
     public final Set<String> collapsed = new HashSet<>();
     public final DraftHistory<Draft> history = new DraftHistory<>(64, Draft::copy);
     public final boolean canCreate;
@@ -63,6 +66,9 @@ public final class VizEditSession {
         this.canCreate = data.has("canCreate") && data.get("canCreate").getAsBoolean();
         this.parentScreen = parentScreen;
         this.readOnly = readOnly;
+        this.descriptions = data.has("descriptions") && data.get("descriptions").isJsonObject()
+            ? data.getAsJsonObject("descriptions").deepCopy() : new JsonObject();
+        if (data.has("creationCapabilities")) for (JsonElement item : data.getAsJsonArray("creationCapabilities")) creationCapabilities.add(item.getAsString());
         if (data.has("areas")) for (JsonElement item : data.getAsJsonArray("areas")) {
             AreaData area = GSON.fromJson(item, AreaData.class);
             if (area != null && area.getName() != null) areas.add(area);
@@ -76,8 +82,9 @@ public final class VizEditSession {
             target = string(data, "target", null);
             operation = string(data, "operation", "update");
             originalArea = find(target);
-            draft = originalArea == null ? new Draft() : Draft.from(originalArea);
+            draft = originalArea == null ? new Draft() : draftFrom(originalArea);
             if (data.has("fields") && data.get("fields").isJsonObject()) draft.read(data.getAsJsonObject("fields"));
+            refreshDescriptionTarget();
             originalDraft = draft.copy();
             focusRequested = true;
         }
@@ -92,7 +99,7 @@ public final class VizEditSession {
         AreaData area = find(name);
         if (area == null) return;
         Draft next;
-        try { next = Draft.from(area); }
+        try { next = draftFrom(area); }
         catch (VizEditGeometry.GeometryException e) { VizEditClientManager.report(e.errorKey()); return; }
         target = name;
         operation = "update";
@@ -102,6 +109,43 @@ public final class VizEditSession {
         focusRequested = true;
         history.clear();
         status = "";
+    }
+
+    private Draft draftFrom(AreaData area) {
+        Draft result = Draft.from(area);
+        String surface = area.getSurfacename() == null || area.getSurfacename().isBlank() ? area.getName() : area.getSurfacename();
+        result.description = VizEditDescriptions.content(VizEditDescriptions.document(descriptions, VizEditDescriptions.key(surface)));
+        result.originalDescription = result.description;
+        return result;
+    }
+
+    private JsonElement descriptionTarget() {
+        String surface = draft.surface.isBlank() ? draft.name.trim() : draft.surface.trim();
+        return VizEditDescriptions.document(descriptions, VizEditDescriptions.key(surface));
+    }
+
+    public String descriptionAction() { return descriptionTarget().isJsonNull() ? "adddescription" : "replacedescription"; }
+
+    public String storedDescription() { return VizEditDescriptions.content(descriptionTarget()); }
+
+    public void setDescription(String text) {
+        if (draft == null) return;
+        draft.description = text;
+        draft.descriptionSpecified = true;
+    }
+
+    // 未主动编辑的描述跟随联合域名切换，空目标沿用旧描述；用户输入始终保留在草稿。
+    public void refreshDescriptionTarget() {
+        if (draft == null || draft.descriptionSpecified || !Objects.equals(draft.description, draft.originalDescription)) return;
+        JsonElement target = descriptionTarget();
+        String text = VizEditDescriptions.content(target);
+        if (target.isJsonNull() && originalArea != null) {
+            String source = originalArea.getSurfacename() == null || originalArea.getSurfacename().isBlank()
+                ? originalArea.getName() : originalArea.getSurfacename();
+            text = VizEditDescriptions.content(VizEditDescriptions.document(descriptions, VizEditDescriptions.key(source)));
+        }
+        draft.description = text;
+        draft.originalDescription = text;
     }
 
     public void create() {
@@ -122,7 +166,10 @@ public final class VizEditSession {
 
     public boolean allows(String action) {
         if (readOnly || invalid || draft == null || VizEditClientManager.isDraftLocked()) return false;
-        if ("create".equals(operation)) return canCreate;
+        if ("create".equals(operation)) {
+            boolean metadata = Set.of("adddescription", "replacedescription", "deletedescription", "addsubtitle", "replacesubtitle", "deletesubtitle", "replacesubtitlecolor").contains(action);
+            return canCreate && (!metadata || creationCapabilities.contains(action));
+        }
         return capabilities.getOrDefault(target, Set.of()).contains(action);
     }
 
@@ -227,6 +274,15 @@ public final class VizEditSession {
         public String parent = "";
         public String min = "";
         public String max = "";
+        public String description = "";
+        public String subtitle = "";
+        public String subtitleColor = "#FFFFFF";
+        private String originalDescription = "";
+        private String originalSubtitle = "";
+        private String originalSubtitleColor = "#FFFFFF";
+        private boolean descriptionSpecified;
+        private boolean subtitleSpecified;
+        private boolean subtitleColorSpecified;
         public Area shape = new Area();
         // 自然岸段偏移和保存保护属于草稿，撤销时必须与面积一起恢复。
         public BoundaryBrush.State boundaryState = new BoundaryBrush.State();
@@ -241,6 +297,10 @@ public final class VizEditSession {
             value.color = area.getColor();
             value.level = Integer.toString(area.getLevel());
             value.parent = text(area.getBaseName());
+            value.subtitle = text(area.getSubtitle());
+            value.subtitleColor = area.getSubtitleColor();
+            value.originalSubtitle = value.subtitle;
+            value.originalSubtitleColor = value.subtitleColor;
             if (area.getAltitude() != null) {
                 value.altitudeObject = true;
                 value.min = text(area.getAltitude().getMin());
@@ -252,6 +312,9 @@ public final class VizEditSession {
 
         void read(JsonObject data) {
             if (data.has("name")) name = string(data, "name", "");
+            if (data.has("description")) { description = string(data, "description", ""); descriptionSpecified = true; }
+            if (data.has("subtitle")) { subtitle = string(data, "subtitle", ""); subtitleSpecified = true; }
+            if (data.has("subtitlecolor")) { subtitleColor = string(data, "subtitlecolor", "#FFFFFF"); subtitleColorSpecified = true; }
             if (data.has("surfacename")) surface = string(data, "surfacename", "");
             if (data.has("color")) color = string(data, "color", "#FFFFFF");
             if (data.has("level")) level = string(data, "level", "1");
@@ -292,6 +355,9 @@ public final class VizEditSession {
             Double low = number(min), high = number(max);
             if (low != null && high != null && low > high) throw new IllegalArgumentException();
             value.addProperty("name", name.trim());
+            if (descriptionSpecified || !Objects.equals(description, originalDescription)) value.addProperty("description", description);
+            if (subtitleSpecified || !Objects.equals(subtitle, originalSubtitle)) value.addProperty("subtitle", subtitle);
+            if (subtitleColorSpecified || !Objects.equals(subtitleColor, originalSubtitleColor)) value.addProperty("subtitlecolor", subtitleColor);
             value.addProperty("surfacename", surface.trim().isEmpty() ? null : surface.trim());
             value.addProperty("color", color);
             value.addProperty("level", number);
@@ -320,6 +386,11 @@ public final class VizEditSession {
             value.name = name; value.surface = surface; value.color = color; value.level = level;
             value.parent = parent; value.min = min; value.max = max; value.shape = new Area(shape);
             value.altitudeObject = altitudeObject;
+            value.description = description; value.subtitle = subtitle; value.subtitleColor = subtitleColor;
+            value.originalDescription = originalDescription; value.originalSubtitle = originalSubtitle;
+            value.originalSubtitleColor = originalSubtitleColor;
+            value.descriptionSpecified = descriptionSpecified; value.subtitleSpecified = subtitleSpecified;
+            value.subtitleColorSpecified = subtitleColorSpecified;
             value.boundaryState = boundaryState.copy();
             // 顶点列表只在准备保存时整体赋值，历史快照可共享只读列表；用于比较的 Area 单独复制。
             value.saveVertices = saveVertices;
@@ -328,7 +399,8 @@ public final class VizEditSession {
         }
 
         public boolean same(Draft other) {
-            return sameContent(other) && boundaryState.same(other.boundaryState);
+            return sameContent(other) && descriptionSpecified == other.descriptionSpecified
+                && boundaryState.same(other.boundaryState);
         }
 
         // 偏移记忆参与撤销，但仅记忆变化不要求玩家保存一份没有数据变更的域名。
@@ -336,7 +408,8 @@ public final class VizEditSession {
             return other != null && Objects.equals(name, other.name) && Objects.equals(surface, other.surface)
                 && Objects.equals(color, other.color) && Objects.equals(level, other.level)
                 && Objects.equals(parent, other.parent) && Objects.equals(min, other.min)
-                && Objects.equals(max, other.max) && shape.equals(other.shape);
+                && Objects.equals(max, other.max) && Objects.equals(description, other.description)
+                && Objects.equals(subtitle, other.subtitle) && Objects.equals(subtitleColor, other.subtitleColor) && shape.equals(other.shape);
         }
 
         private static String text(Object value) { return value == null ? "" : value.toString(); }

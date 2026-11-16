@@ -2571,7 +2571,21 @@
   "vizedit.error.geometry_self_intersection": "Контур пересекает или касается самого себя.",
   "vizedit.error.geometry_vertices": "Слишком много вершин. После объединения коллинеарных точек без потерь допускается не более 4096.",
   "vizedit.error.geometry_coordinates": "Координаты должны быть конечными числами от -30000000 до 30000000.",
-  "vizedit.error.geometry_limit": "Рисунок слишком большой. Укоротите штрих или уменьшите толщину кисти.",
+  "vizedit.error.geometry_limit": "Фигура или штрих слишком сложны. Рисуйте частями или уменьшите толщину кисти.",
   "help.command.vizedit": "§a/areahint editviz §7- Открыть визуальный редактор областей (карта/сетка, рисование, свойства и рассмотрение)",
-  "approval.type.vizedit": "Визуальная правка области"
+  "approval.type.vizedit": "Визуальная правка области",
+  "vizedit.properties.prompt": "Выберите свойство для изменения",
+  "vizedit.properties.detail": "Подтверждённые изменения остаются в черновике до сохранения или отправки.",
+  "vizedit.properties.names": "Название области и поверхности",
+  "vizedit.properties.hierarchy": "Уровень и родительская область",
+  "vizedit.properties.custom_level": "Свой уровень",
+  "vizedit.properties.altitude": "Диапазон высоты",
+  "vizedit.properties.description": "Описание области",
+  "vizedit.properties.description_hint": "Области с одинаковым именем поверхности имеют общее описание. Shift+Enter — новая строка; очистите для удаления.",
+  "vizedit.properties.subtitle": "Подзаголовок",
+  "vizedit.properties.subtitle_hint": "Задайте текст и цвет; \\n добавляет строку. Очистите текст для удаления.",
+  "vizedit.properties.subtitle_color": "Цвет подзаголовка",
+  "vizedit.properties.edit_text": "Изменить текст",
+  "vizedit.properties.clear_text": "Очистить текст",
+  "vizedit.error.description_conflict": "Имя файла описания конфликтует с другим именем поверхности. Измените имя области или поверхности."
 }

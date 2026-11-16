@@ -9,6 +9,7 @@ import net.minecraft.client.gui.screen.Screen;
 public abstract class CommandWizardScreen extends CommandUiScreen {
     private final Runnable cancelAction;
     private boolean cancelHandled;
+    private boolean returnToParentOnCancel;
 
     protected CommandWizardScreen(String titleKey, Screen parent, Runnable cancelAction) {
         super(titleKey, parent);
@@ -19,8 +20,27 @@ public abstract class CommandWizardScreen extends CommandUiScreen {
         cancelFlow();
         MinecraftClient client = MinecraftClient.getInstance();
         if (client != null) {
-            client.setScreen(null);
+            client.setScreen(this.returnToParentOnCancel ? this.parent : null);
         }
+    }
+
+    // 嵌入编辑器时取消只返回属性页，独立指令向导仍沿用关闭到游戏的默认行为。
+    public final void setReturnToParentOnCancel(boolean returnToParentOnCancel) {
+        this.returnToParentOnCancel = returnToParentOnCancel;
+    }
+
+    @Override
+    protected boolean closesOnBoundKey() {
+        // 嵌入属性页的文本框允许正常输入绑定字符，避免默认 X 键把未确认内容关闭。
+        return !this.returnToParentOnCancel || !(this instanceof WizardTextInputScreen || this instanceof WizardLongTextInputScreen);
+    }
+
+    @Override
+    protected void closeToGameFromBoundKey() {
+        if (!closesOnBoundKey()) return;
+        if (!this.returnToParentOnCancel) { super.closeToGameFromBoundKey(); return; }
+        areahint.keyhandler.UnifiedKeyHandler.suppressRecordKeyUntilRelease();
+        cancelAndCloseToGame();
     }
 
     protected final void cancelFlow() {

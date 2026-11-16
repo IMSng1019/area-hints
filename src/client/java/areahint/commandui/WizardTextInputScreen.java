@@ -23,6 +23,7 @@ public class WizardTextInputScreen extends CommandWizardScreen {
 
     private final List<FieldSpec> fieldSpecs;
     private final List<TextFieldWidget> fields = new ArrayList<>();
+    private final List<String> inputValues = new ArrayList<>();
     private final String promptKey;
     private final String detailKey;
     private final String errorKey;
@@ -33,6 +34,7 @@ public class WizardTextInputScreen extends CommandWizardScreen {
                                  Consumer<List<String>> submitAction, Runnable cancelAction) {
         super(titleKey, parent, cancelAction);
         this.fieldSpecs = fieldSpecs;
+        for (FieldSpec spec : fieldSpecs) this.inputValues.add(spec.initialValue() == null ? "" : spec.initialValue());
         this.promptKey = promptKey;
         this.detailKey = detailKey;
         this.errorKey = errorKey;
@@ -50,7 +52,10 @@ public class WizardTextInputScreen extends CommandWizardScreen {
             TextFieldWidget field = new TextFieldWidget(this.textRenderer, x, firstY + i * FIELD_GAP + LABEL_GAP,
                 INPUT_WIDTH, BUTTON_HEIGHT, Text.empty());
             field.setMaxLength(Math.max(1, spec.maxLength()));
-            field.setText(spec.initialValue() == null ? "" : spec.initialValue());
+            field.setText(this.inputValues.get(i));
+            // 窗口重建时保留尚未确认的输入，避免属性向导在调整尺寸后恢复旧值。
+            int index = i;
+            field.setChangedListener(value -> this.inputValues.set(index, value));
             if (spec.placeholderKey() != null && !spec.placeholderKey().isBlank()) {
                 field.setPlaceholder(Text.literal(t(spec.placeholderKey())));
             }

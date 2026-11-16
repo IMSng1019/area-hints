@@ -2571,7 +2571,21 @@
   "vizedit.error.geometry_self_intersection": "边界存在自交或自接触喵",
   "vizedit.error.geometry_vertices": "顶点过多，无损合并共线点后最多允许 4096 个喵",
   "vizedit.error.geometry_coordinates": "坐标必须为有限数字，且介于 -30000000 与 30000000 之间喵",
-  "vizedit.error.geometry_limit": "本次绘制过大，请缩短笔画或减小画笔粗细喵",
+  "vizedit.error.geometry_limit": "形状或笔画过于复杂，请分段绘制或减小画笔粗细喵。",
   "help.command.vizedit": "§a/areahint editviz §7- 打开可视化域名编辑器（地图／网格、绘制、属性与审批）喵",
-  "approval.type.vizedit": "可视化域名编辑喵"
+  "approval.type.vizedit": "可视化域名编辑喵",
+  "vizedit.properties.prompt": "选择要编辑的属性喵",
+  "vizedit.properties.detail": "确认后保留在当前草稿，最后一起保存／提交喵。",
+  "vizedit.properties.names": "域名与联合域名",
+  "vizedit.properties.hierarchy": "等级与上级域名",
+  "vizedit.properties.custom_level": "自定义等级",
+  "vizedit.properties.altitude": "高度范围",
+  "vizedit.properties.description": "域名描述",
+  "vizedit.properties.description_hint": "同一联合域名共用描述喵。Shift+Enter 换行，清空可删除。",
+  "vizedit.properties.subtitle": "副标题",
+  "vizedit.properties.subtitle_hint": "设置文字与颜色喵；支持 \\n 换行，清空可删除。",
+  "vizedit.properties.subtitle_color": "副标题颜色",
+  "vizedit.properties.edit_text": "编辑内容",
+  "vizedit.properties.clear_text": "清除内容",
+  "vizedit.error.description_conflict": "描述文件名与其他联合域名冲突，请修改域名或联合域名喵。"
 }

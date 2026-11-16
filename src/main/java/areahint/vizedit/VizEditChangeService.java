@@ -5,12 +5,13 @@ import areahint.util.ColorUtil;
 import areahint.vizedit.geometry.VizEditGeometry;
 import com.google.gson.*;
 import java.math.BigDecimal;
+import java.nio.file.Path;
 import java.util.*;
 
 // 纯数据变更服务不依赖玩家或世界实例，正式保存、审批草稿和最终批准共用同一套约束。
 public final class VizEditChangeService {
     public static final Gson GSON = new GsonBuilder().serializeNulls().create();
-    public static final Set<String> EDITABLE_FIELDS = Set.of("name", "surfacename", "color", "altitude", "level", "base-name", "vertices");
+    public static final Set<String> EDITABLE_FIELDS = Set.of("name", "surfacename", "color", "altitude", "level", "base-name", "vertices", "subtitle", "subtitlecolor", "description");
 
     private VizEditChangeService() { }
 
@@ -21,7 +22,12 @@ public final class VizEditChangeService {
 
     // before/after 只包含真正变化的记录，dependencies 则保留提交时需要核验的完整目标和后代快照。
     public record Prepared(JsonArray document, JsonArray before, JsonArray after, JsonArray dependencies,
-                           String operation, String targetName, String resultName, JsonObject fields) { }
+                           String operation, String targetName, String resultName, JsonObject fields,
+                           DescriptionChange descriptionChange, JsonObject descriptionDependencies, long descriptionUpdatedAt) { }
+
+    public record DescriptionChange(Path file, JsonElement before, JsonElement after) { }
+
+    public record DescriptionContext(Path folder, JsonObject baseline, JsonObject current, long updatedAt) { }
 
     public static final class EditException extends IllegalArgumentException {
         public EditException(String key) { super(key); }
@@ -33,6 +39,12 @@ public final class VizEditChangeService {
 
     public static Prepared prepare(JsonArray baseline, JsonArray current, String operation, String target,
             JsonObject fields, String dimensionId, String dimensionalName, String author, PermissionCheck permissions) {
+        return prepare(baseline, current, operation, target, fields, dimensionId, dimensionalName, author, permissions, null);
+    }
+
+    public static Prepared prepare(JsonArray baseline, JsonArray current, String operation, String target,
+            JsonObject fields, String dimensionId, String dimensionalName, String author, PermissionCheck permissions,
+            DescriptionContext descriptions) {
         if (!Set.of("create", "update", "delete").contains(operation) || fields == null) throw error("invalid");
         if (!EDITABLE_FIELDS.containsAll(fields.keySet())) throw error("invalid");
         Map<String, JsonObject> old = index(baseline);
@@ -54,7 +66,9 @@ public final class VizEditChangeService {
             proposed.addProperty("level", 1);
         }
         if (!deleting) {
-            fields.entrySet().forEach(entry -> proposed.add(entry.getKey(), entry.getValue().deepCopy()));
+            fields.entrySet().stream().filter(entry -> !"description".equals(entry.getKey()))
+                .forEach(entry -> proposed.add(entry.getKey(), entry.getValue().deepCopy()));
+            normalizeSubtitle(proposed, fields);
             normalize(proposed);
             if (original != null) preserveEquivalentFields(original, proposed);
         }
@@ -83,7 +97,10 @@ public final class VizEditChangeService {
             if (deleting && !currentChildren.isEmpty()) throw error("children");
         }
         AreaData beforeArea = original == null ? null : GSON.fromJson(original, AreaData.class);
-        if (creating) require(permissions, "easyadd", null);
+        if (creating) {
+            require(permissions, "easyadd", null);
+            if (GSON.fromJson(proposed, AreaData.class).hasSubtitle()) require(permissions, "addsubtitle", GSON.fromJson(proposed, AreaData.class));
+        }
         else if (deleting) require(permissions, "delete", beforeArea);
         else {
             AreaData afterArea = GSON.fromJson(proposed, AreaData.class);
@@ -92,6 +109,11 @@ public final class VizEditChangeService {
                 require(permissions, "rename", beforeArea);
             }
             if (!Objects.equals(beforeArea.getColor(), afterArea.getColor())) require(permissions, "recolor", beforeArea);
+            if (!Objects.equals(beforeArea.getSubtitle(), afterArea.getSubtitle())) {
+                require(permissions, afterArea.hasSubtitle() ? "addsubtitle" : "deletesubtitle", beforeArea);
+            } else if (!Objects.equals(beforeArea.getSubtitleColor(), afterArea.getSubtitleColor())) {
+                require(permissions, "replacesubtitlecolor", beforeArea);
+            }
             if (!sameAltitude(beforeArea.getAltitude(), afterArea.getAltitude())) {
                 require(permissions, "sethigh", beforeArea);
             }
@@ -131,16 +153,22 @@ public final class VizEditChangeService {
         for (var entry : merged.entrySet()) {
             if (!entry.getValue().equals(actual.get(entry.getKey()))) after.add(entry.getValue().deepCopy());
         }
-        if (before.isEmpty() && after.isEmpty()) throw error("no_changes");
+        VizEditDescriptions.Result description = VizEditDescriptions.prepare(original, deleting ? null : proposed, fields,
+            dimensionId, author, permissions, descriptions);
+        if (before.isEmpty() && after.isEmpty() && description.change() == null) throw error("no_changes");
         JsonArray document = new JsonArray();
         merged.values().forEach(value -> document.add(value.deepCopy()));
         JsonArray dependencies = new JsonArray();
         dependent.forEach(name -> dependencies.add(actual.get(name).deepCopy()));
+        JsonObject replayFields = deleting ? new JsonObject() : fields(proposed);
+        // 未主动修改的副字幕不进入重提投影，重提时保留服务端后来更新的内容。
+        for (String key : List.of("subtitle", "subtitlecolor")) if (!fields.has(key)) replayFields.remove(key);
+        if (!deleting && fields.has("description")) replayFields.add("description", fields.get("description").deepCopy());
         return new Prepared(document, before, after, dependencies, operation, target, deleting ? null : newName,
-            deleting ? new JsonObject() : fields(proposed));
+            replayFields, description.change(), description.dependencies(), descriptions == null ? 0 : descriptions.updatedAt());
     }
 
-    // 生成客户端可编辑投影，署名、副字幕、城市类型、游戏模式和自定义字段始终保留在服务端原记录。
+    // 生成客户端可编辑投影，署名、城市类型、游戏模式和自定义字段始终保留在服务端原记录。
     public static JsonObject fields(JsonObject area) {
         JsonObject result = new JsonObject();
         for (String key : EDITABLE_FIELDS) {
@@ -199,6 +227,28 @@ public final class VizEditChangeService {
         object.add("second-vertices", VizEditVertexFormat.encode(VizEditGeometry.bounds(quantized.vertices())));
     }
 
+    // 副字幕沿用现有换行约定；只校验本次开放字段，历史未改文本和缺省颜色保持原值。
+    private static void normalizeSubtitle(JsonObject proposed, JsonObject fields) {
+        if (fields.has("subtitle")) {
+            String subtitle = multiline(fields.get("subtitle"), 32767).replace("/n", "\n").replace("\\n", "\n").trim();
+            proposed.addProperty("subtitle", subtitle.isEmpty() ? null : subtitle);
+            if (subtitle.isEmpty()) { proposed.add("subtitlecolor", JsonNull.INSTANCE); return; }
+        }
+        if (fields.has("subtitlecolor")) {
+            String color = text(proposed, "subtitlecolor", true);
+            if (color != null && !ColorUtil.isValidColor(color)) throw error("color");
+            proposed.addProperty("subtitlecolor", color);
+        }
+    }
+
+    public static String multiline(JsonElement value, int limit) {
+        if (value == null || value.isJsonNull()) return "";
+        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) throw error("invalid");
+        String result = value.getAsString().replace("\r\n", "\n").replace('\r', '\n');
+        if (result.length() > limit || result.codePoints().anyMatch(c -> Character.isISOControl(c) && c != '\n' && c != '\t')) throw error("invalid");
+        return result;
+    }
+
     private static double coordinate(JsonObject point, String key) {
         JsonElement value = point.get(key);
         if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) throw error("geometry_coordinates");
@@ -219,6 +269,9 @@ public final class VizEditChangeService {
         for (String key : List.of("surfacename", "base-name")) {
             if (Objects.equals(text(original, key, true), text(proposed, key, true))) restoreField(original, proposed, key);
         }
+        if (Objects.equals(before.getSubtitle(), after.getSubtitle())) restoreField(original, proposed, "subtitle");
+        if (Objects.equals(before.getSubtitleColor(), after.getSubtitleColor())
+                || before.getSubtitleColor().equalsIgnoreCase(after.getSubtitleColor())) restoreField(original, proposed, "subtitlecolor");
     }
 
     private static void restoreField(JsonObject original, JsonObject proposed, String key) {

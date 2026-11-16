@@ -22,8 +22,13 @@ final class BlockSnap {
         if (area == null || area.isEmpty()) return new Area();
         VizEditGeometry.checkBounds(area);
         Rectangle2D box = area.getBounds2D();
+        // 矩形直接按方块中心规则量化，世界边界范围的简单选区也无需逐行扫描。
+        if (area.isRectangular()) {
+            double x0 = Math.ceil(box.getMinX() - 0.5), z0 = Math.ceil(box.getMinY() - 0.5);
+            double x1 = Math.ceil(box.getMaxX() - 0.5), z1 = Math.ceil(box.getMaxY() - 0.5);
+            return new Area(new Rectangle2D.Double(x0, z0, x1 - x0, z1 - z0));
+        }
         int from = (int) Math.floor(box.getMinY()), to = (int) Math.ceil(box.getMaxY()) - 1;
-        if ((long) to - from > VizEditGeometry.MAX_DRAG_SPAN) throw VizEditGeometry.error("geometry_limit");
         List<double[]> edges = edgesOf(area);
         edges.sort((a, b) -> Double.compare(a[1], b[1]));
         Builder builder = new Builder();
@@ -45,9 +50,31 @@ final class BlockSnap {
                 int first = (int) Math.ceil(hits[i] - 0.5), last = (int) Math.ceil(hits[i + 1] - 0.5) - 1;
                 if (last >= first) runs.add(new int[]{first, last});
             }
-            builder.row(row, runs);
+            // 量化交点未变化的连续行一次合并，极高的窄选区只按实际轮廓复杂度消耗时间。
+            int last = to;
+            if (cursor < edges.size()) last = Math.min(last, (int) Math.ceil(edges.get(cursor)[1] - 0.5) - 1);
+            for (double[] edge : active) last = Math.min(last, (int) Math.ceil(edge[3] - 0.5) - 1);
+            for (double[] edge : active) last = stableRow(edge, row, last);
+            builder.rows(row, last, runs);
+            row = last;
         }
         return builder.build();
+    }
+
+    private static int stableRow(double[] edge, int first, int last) {
+        double initial = snappedIntersection(edge, first);
+        if (snappedIntersection(edge, last) == initial) return last;
+        int low = first, high = last;
+        while (low + 1 < high) {
+            int middle = low + (high - low) / 2;
+            if (snappedIntersection(edge, middle) == initial) low = middle;
+            else high = middle;
+        }
+        return low;
+    }
+
+    private static double snappedIntersection(double[] edge, int row) {
+        return Math.ceil(edge[0] + (edge[2] - edge[0]) * (row + 0.5 - edge[1]) / (edge[3] - edge[1]) - 0.5);
     }
 
     // 曲线扁平化仅发生在新椭圆扫描线内，绝不会把已有域名的斜边变为阶梯。
@@ -141,8 +168,11 @@ final class BlockSnap {
         private List<int[]> current;
         private int firstRow, lastRow;
         void row(int row, List<int[]> runs) {
-            if (current != null && row == lastRow + 1 && same(current, runs)) { lastRow = row; return; }
-            flush(); current = runs; firstRow = lastRow = row;
+            rows(row, row, runs);
+        }
+        void rows(int first, int last, List<int[]> runs) {
+            if (current != null && first == lastRow + 1 && same(current, runs)) { lastRow = last; return; }
+            flush(); current = runs; firstRow = first; lastRow = last;
         }
         void flush() {
             if (current == null) return;

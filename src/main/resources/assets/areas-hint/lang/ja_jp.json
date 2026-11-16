@@ -2571,7 +2571,21 @@
   "vizedit.error.geometry_self_intersection": "境界が自己交差または自己接触しています。",
   "vizedit.error.geometry_vertices": "頂点が多すぎます。同一直線上の点を形状を変えずに統合した後、最大4096点までです。",
   "vizedit.error.geometry_coordinates": "座標は有限の数値で、-30000000 から 30000000 の範囲にしてください。",
-  "vizedit.error.geometry_limit": "描画が大きすぎます。筆跡を短くするか、ブラシを細くしてください。",
+  "vizedit.error.geometry_limit": "図形または筆跡が複雑すぎます。分けて描画するか、ブラシを細くしてください。",
   "help.command.vizedit": "§a/areahint editviz §7- 領域ビジュアルエディターを開く（地図／グリッド、描画、プロパティ、審査）",
-  "approval.type.vizedit": "領域のビジュアル編集"
+  "approval.type.vizedit": "領域のビジュアル編集",
+  "vizedit.properties.prompt": "編集する属性を選択",
+  "vizedit.properties.detail": "確定した変更は下書きに保持され、最後にまとめて保存・提出されます。",
+  "vizedit.properties.names": "エリア名と表面名",
+  "vizedit.properties.hierarchy": "レベルと親エリア",
+  "vizedit.properties.custom_level": "レベルを指定",
+  "vizedit.properties.altitude": "高度範囲",
+  "vizedit.properties.description": "エリアの説明",
+  "vizedit.properties.description_hint": "同じ表面名のエリアは説明を共有します。Shift+Enterで改行、空欄で削除します。",
+  "vizedit.properties.subtitle": "サブタイトル",
+  "vizedit.properties.subtitle_hint": "文字と色を設定します。\\nで改行、空欄で削除します。",
+  "vizedit.properties.subtitle_color": "サブタイトルの色",
+  "vizedit.properties.edit_text": "内容を編集",
+  "vizedit.properties.clear_text": "内容を消去",
+  "vizedit.error.description_conflict": "説明ファイル名が別の表面名と競合しています。エリア名または表面名を変更してください。"
 }

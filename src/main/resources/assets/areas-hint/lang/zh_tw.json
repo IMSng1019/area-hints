@@ -2571,7 +2571,21 @@
   "vizedit.error.geometry_self_intersection": "邊界存在自交或自接觸。",
   "vizedit.error.geometry_vertices": "頂點過多，無損合併共線點後最多允許 4096 個。",
   "vizedit.error.geometry_coordinates": "座標必須為有限數字，且介於 -30000000 與 30000000 之間。",
-  "vizedit.error.geometry_limit": "本次繪製過大，請縮短筆畫或減小畫筆粗細。",
+  "vizedit.error.geometry_limit": "形狀或筆畫過於複雜，請分段繪製或減小畫筆粗細。",
   "help.command.vizedit": "§a/areahint editviz §7- 開啟視覺化域名編輯器（地圖／網格、繪製、屬性與審核）",
-  "approval.type.vizedit": "視覺化域名編輯"
+  "approval.type.vizedit": "視覺化域名編輯",
+  "vizedit.properties.prompt": "選擇要編輯的屬性",
+  "vizedit.properties.detail": "確認後保留於目前草稿，最後統一儲存／提交。",
+  "vizedit.properties.names": "域名與聯合域名",
+  "vizedit.properties.hierarchy": "等級與上級域名",
+  "vizedit.properties.custom_level": "自訂等級",
+  "vizedit.properties.altitude": "高度範圍",
+  "vizedit.properties.description": "域名描述",
+  "vizedit.properties.description_hint": "同一聯合域名共用描述。Shift+Enter 換行，清空可刪除。",
+  "vizedit.properties.subtitle": "副標題",
+  "vizedit.properties.subtitle_hint": "設定文字與顏色；支援 \\n 換行，清空可刪除。",
+  "vizedit.properties.subtitle_color": "副標題顏色",
+  "vizedit.properties.edit_text": "編輯內容",
+  "vizedit.properties.clear_text": "清除內容",
+  "vizedit.error.description_conflict": "描述檔名與其他聯合域名衝突，請修改域名或聯合域名。"
 }

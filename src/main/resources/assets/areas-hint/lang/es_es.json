@@ -2571,7 +2571,21 @@
   "vizedit.error.geometry_self_intersection": "El contorno se cruza o se toca a sí mismo.",
   "vizedit.error.geometry_vertices": "Demasiados vértices. Se permiten 4096 tras fusionar puntos colineales sin pérdida.",
   "vizedit.error.geometry_coordinates": "Las coordenadas deben ser finitas y estar entre -30000000 y 30000000.",
-  "vizedit.error.geometry_limit": "Este dibujo es demasiado grande. Acorta el trazo o reduce el grosor del pincel.",
+  "vizedit.error.geometry_limit": "La forma o el trazo es demasiado complejo. Dibuja por partes o reduce el grosor del pincel.",
   "help.command.vizedit": "§a/areahint editviz §7- Abrir el editor visual de dominios (mapa/cuadrícula, dibujo, propiedades y aprobación)",
-  "approval.type.vizedit": "Edición visual de dominio"
+  "approval.type.vizedit": "Edición visual de dominio",
+  "vizedit.properties.prompt": "Elige una propiedad para editar",
+  "vizedit.properties.detail": "Los cambios confirmados permanecen en el borrador hasta guardar o enviar.",
+  "vizedit.properties.names": "Nombres del área y de superficie",
+  "vizedit.properties.hierarchy": "Nivel y área superior",
+  "vizedit.properties.custom_level": "Nivel personalizado",
+  "vizedit.properties.altitude": "Rango de altura",
+  "vizedit.properties.description": "Descripción del área",
+  "vizedit.properties.description_hint": "Las áreas con el mismo nombre de superficie comparten descripción. Mayús+Enter añade una línea; vacía para eliminar.",
+  "vizedit.properties.subtitle": "Subtítulo",
+  "vizedit.properties.subtitle_hint": "Configura el texto y el color; \\n añade una línea. Vacía el texto para eliminarlo.",
+  "vizedit.properties.subtitle_color": "Color del subtítulo",
+  "vizedit.properties.edit_text": "Editar texto",
+  "vizedit.properties.clear_text": "Borrar texto",
+  "vizedit.error.description_conflict": "El nombre del archivo de descripción entra en conflicto con otro nombre de superficie. Cambia el nombre del área o de superficie."
 }

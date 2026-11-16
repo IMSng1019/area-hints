@@ -27,6 +27,12 @@ public class WizardLongTextInputScreen extends CommandWizardScreen {
     public WizardLongTextInputScreen(Screen parent, String titleKey, String promptKey, String detailKey,
                                      String initialValue, String errorKey, Consumer<String> submitAction,
                                      Runnable cancelAction) {
+        this(parent, titleKey, promptKey, detailKey, initialValue, errorKey, submitAction, cancelAction, MAX_LENGTH);
+    }
+
+    public WizardLongTextInputScreen(Screen parent, String titleKey, String promptKey, String detailKey,
+                                     String initialValue, String errorKey, Consumer<String> submitAction,
+                                     Runnable cancelAction, int maxLength) {
         super(titleKey, parent, cancelAction);
         this.promptKey = promptKey;
         this.detailKey = detailKey;
@@ -38,7 +44,7 @@ public class WizardLongTextInputScreen extends CommandWizardScreen {
             value -> this.text = value == null ? "" : value,
             SelectionManager.makeClipboardGetter(MinecraftClient.getInstance()),
             SelectionManager.makeClipboardSetter(MinecraftClient.getInstance()),
-            value -> value != null && value.length() <= MAX_LENGTH
+            value -> value != null && value.length() <= maxLength
         );
     }
 

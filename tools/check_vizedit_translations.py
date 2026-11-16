@@ -33,7 +33,7 @@ for language, values in languages.items():
 
 # 动态工具名、操作名和错误后缀由对应键集覆盖；此处额外检查源码内直接写出的完整键。
 used = set()
-for folder in ["src/main/java", "src/client/java"]:
+for folder in ["src/main/java", "src/client/java", "modern/src/main/java", "modern/src/client/java"]:
     for path in (ROOT / folder).rglob("*.java"):
         used.update(re.findall(r'"((?:vizedit\.|help\.command\.vizedit|approval\.type\.vizedit)[a-z_.]*)"', path.read_text(encoding="utf-8-sig")))
 missing = {key for key in used if not key.endswith(".") and key not in expected}

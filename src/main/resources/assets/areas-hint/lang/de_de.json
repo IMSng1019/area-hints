@@ -2571,7 +2571,21 @@
   "vizedit.error.geometry_self_intersection": "Die Grenze schneidet oder berührt sich selbst.",
   "vizedit.error.geometry_vertices": "Zu viele Eckpunkte. Nach verlustfreiem Zusammenführen kollinearer Punkte sind maximal 4096 erlaubt.",
   "vizedit.error.geometry_coordinates": "Koordinaten müssen endlich sein und zwischen -30000000 und 30000000 liegen.",
-  "vizedit.error.geometry_limit": "Diese Zeichnung ist zu groß. Verkürze den Strich oder verkleinere den Pinsel.",
+  "vizedit.error.geometry_limit": "Die Form oder der Strich ist zu komplex. Zeichne in Abschnitten oder verkleinere den Pinsel.",
   "help.command.vizedit": "§a/areahint editviz §7- Visuellen Gebietseditor öffnen (Karte/Raster, Zeichnen, Eigenschaften und Prüfung)",
-  "approval.type.vizedit": "Visuelle Gebietsänderung"
+  "approval.type.vizedit": "Visuelle Gebietsänderung",
+  "vizedit.properties.prompt": "Zu bearbeitende Eigenschaft wählen",
+  "vizedit.properties.detail": "Bestätigte Änderungen bleiben bis zum Speichern oder Einreichen im Entwurf.",
+  "vizedit.properties.names": "Gebiets- und Oberflächenname",
+  "vizedit.properties.hierarchy": "Ebene und übergeordnetes Gebiet",
+  "vizedit.properties.custom_level": "Benutzerdefinierte Ebene",
+  "vizedit.properties.altitude": "Höhenbereich",
+  "vizedit.properties.description": "Gebietsbeschreibung",
+  "vizedit.properties.description_hint": "Gebiete mit gleichem Oberflächennamen teilen die Beschreibung. Umschalt+Enter: neue Zeile; leeren zum Löschen.",
+  "vizedit.properties.subtitle": "Untertitel",
+  "vizedit.properties.subtitle_hint": "Text und Farbe festlegen; \\n erzeugt eine neue Zeile. Leeren zum Löschen.",
+  "vizedit.properties.subtitle_color": "Untertitelfarbe",
+  "vizedit.properties.edit_text": "Text bearbeiten",
+  "vizedit.properties.clear_text": "Text leeren",
+  "vizedit.error.description_conflict": "Der Dateiname der Beschreibung kollidiert mit einem anderen Oberflächennamen. Gebiets- oder Oberflächennamen ändern."
 }

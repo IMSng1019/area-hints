@@ -22,6 +22,7 @@ public class WizardTextInputScreen extends CommandWizardScreen {
 
     private final List<FieldSpec> fieldSpecs;
     private final List<EditBox> fields = new ArrayList<>();
+    private final List<String> inputValues = new ArrayList<>();
     private final String promptKey;
     private final String detailKey;
     private final String errorKey;
@@ -32,6 +33,7 @@ public class WizardTextInputScreen extends CommandWizardScreen {
                                  Consumer<List<String>> submitAction, Runnable cancelAction) {
         super(titleKey, parent, cancelAction);
         this.fieldSpecs = fieldSpecs;
+        for (FieldSpec spec : fieldSpecs) this.inputValues.add(spec.initialValue() == null ? "" : spec.initialValue());
         this.promptKey = promptKey;
         this.detailKey = detailKey;
         this.errorKey = errorKey;
@@ -49,7 +51,10 @@ public class WizardTextInputScreen extends CommandWizardScreen {
             EditBox field = new EditBox(this.font, x, firstY + i * FIELD_GAP + LABEL_GAP,
                 INPUT_WIDTH, BUTTON_HEIGHT, Component.empty());
             field.setMaxLength(Math.max(1, spec.maxLength()));
-            field.setValue(spec.initialValue() == null ? "" : spec.initialValue());
+            field.setValue(this.inputValues.get(i));
+            // 窗口重建时保留尚未确认的输入，避免属性向导在调整尺寸后恢复旧值。
+            int index = i;
+            field.setResponder(value -> this.inputValues.set(index, value));
             if (spec.placeholderKey() != null && !spec.placeholderKey().isBlank()) {
                 field.setHint(Component.literal(t(spec.placeholderKey())));
             }

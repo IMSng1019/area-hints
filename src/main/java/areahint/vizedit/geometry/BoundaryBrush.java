@@ -75,7 +75,7 @@ public final class BoundaryBrush {
         private final Set<Long> missing = new HashSet<>();
         private Area shape;
         private Area rawPaint = new Area();
-        private Vertex previous, start;
+        private Vertex previous;
         private Edge anchor;
         private double offset;
         private int samples;
@@ -100,15 +100,11 @@ public final class BoundaryBrush {
 
         public Result paint(Vertex point) {
             VizEditGeometry.checkCoordinate(point);
-            if (start == null) start = point;
-            if (Math.abs(point.getX() - start.getX()) > VizEditGeometry.MAX_DRAG_SPAN
-                    || Math.abs(point.getZ() - start.getZ()) > VizEditGeometry.MAX_DRAG_SPAN)
-                throw VizEditGeometry.error("geometry_limit");
             samples = 0;
             missing.clear();
             // 稀疏鼠标事件仍沿途检查岸线，避免快速拖动只在终点识别自然限制。
             Vertex from = previous;
-            int steps = from == null ? 1 : Math.max(1, (int) Math.ceil(Math.hypot(point.getX() - from.getX(), point.getZ() - from.getZ()) / 8));
+            int steps = from == null || terrain == null ? 1 : Math.max(1, (int) Math.ceil(Math.hypot(point.getX() - from.getX(), point.getZ() - from.getZ()) / 8));
             for (int step = 1; step <= steps; step++) {
                 double fraction = (double) step / steps;
                 Vertex next = from == null ? point : new Vertex(from.getX() + (point.getX() - from.getX()) * fraction,
@@ -155,7 +151,16 @@ public final class BoundaryBrush {
                 state.naturalForbidden.add(natural);
             } else guides = List.of();
             // 只保护落笔前面积；同一笔未知地形补齐后重裁原笔迹，不把临时越界当作旧域名永久保留。
-            paint = new Area(rawPaint);
+            // 闭合填充也只增加当前笔画面积，完整父域名和同级限制需同时覆盖未被笔尖扫过的内部。
+            paint = VizEditGeometry.fillNewlyEnclosed(existing, VizEditGeometry.union(existing, rawPaint));
+            paint.subtract(existing);
+            Area interiorHard = new Area(paint);
+            if (parent == null) interiorHard.reset();
+            else interiorHard.subtract(parent);
+            Area occupiedInterior = new Area(peers);
+            occupiedInterior.intersect(paint);
+            interiorHard.add(occupiedInterior);
+            state.hardForbidden.add(interiorHard);
             paint.subtract(state.hardForbidden);
             paint.subtract(state.naturalForbidden);
             shape = VizEditGeometry.union(existing, paint);

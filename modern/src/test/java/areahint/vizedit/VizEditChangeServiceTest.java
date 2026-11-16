@@ -133,6 +133,7 @@ class VizEditChangeServiceTest {
     @Test void resubmissionRechecksPermissionsAndPreservesLatestProtectedData() {
         JsonObject original = area("A", 1, null);
         JsonObject fields = VizEditChangeService.fields(original);
+        fields.remove("subtitle");
         fields.addProperty("name", "New");
         JsonObject latest = original.deepCopy();
         latest.addProperty("subtitle", "最新副字幕");
@@ -250,5 +251,55 @@ class VizEditChangeServiceTest {
             assertDoesNotThrow(() -> VizEditChangeService.prepare(legacyCurrent, legacyCurrent, "update", reserved,
                 recolor, ROOT, "World", "creator", (operation, before) -> "recolor".equals(operation)));
         }
+    }
+
+    @Test void subtitleChangesCheckTheirOwnPermissionsAndRetainColorOnTextEdit() {
+        JsonObject original = area("A", 1, null);
+        original.addProperty("subtitlecolor", "#123456");
+        JsonArray current = list(original);
+        JsonObject textFields = new JsonObject();
+        textFields.addProperty("subtitle", "第一行\\n第二行");
+        assertThrows(VizEditChangeService.EditException.class,
+            () -> change(current, current, "update", "A", textFields, Set.of("addsubtitle:A")));
+        var changed = change(current, current, "update", "A", textFields, Set.of());
+        JsonObject saved = changed.after().get(0).getAsJsonObject();
+        assertEquals("第一行\n第二行", saved.get("subtitle").getAsString());
+        assertEquals("#123456", saved.get("subtitlecolor").getAsString());
+        JsonObject fields = new JsonObject();
+        fields.addProperty("subtitlecolor", "#AABBCC");
+        final JsonObject colorFields = fields;
+        assertThrows(VizEditChangeService.EditException.class,
+            () -> change(current, current, "update", "A", colorFields, Set.of("replacesubtitlecolor:A")));
+        fields.add("subtitle", JsonNull.INSTANCE);
+        assertThrows(VizEditChangeService.EditException.class,
+            () -> change(current, current, "update", "A", colorFields, Set.of("deletesubtitle:A")));
+        assertTrue(change(current, current, "update", "A", fields, Set.of()).after().get(0)
+            .getAsJsonObject().get("subtitlecolor").isJsonNull());
+    }
+
+    @Test void subtitleRejectsInvalidColorWithoutChangingOriginal() {
+        JsonObject original = area("A", 1, null);
+        JsonArray current = list(original);
+        JsonObject fields = new JsonObject();
+        fields.addProperty("subtitlecolor", "bad-color");
+        assertThrows(VizEditChangeService.EditException.class,
+            () -> change(current, current, "update", "A", fields, Set.of()));
+        assertFalse(original.has("subtitlecolor"));
+    }
+
+    @Test void descriptionOnlyEditIsAcceptedAndNotEmbeddedIntoAreaJson() {
+        JsonObject fields = VizEditChangeService.fields(area("A", 1, null));
+        var created = change(new JsonArray(), new JsonArray(), "create", null, fields, Set.of());
+        JsonArray current = created.document();
+        JsonObject description = new JsonObject();
+        description.addProperty("description", "Long text\nSecond line");
+        var changed = VizEditChangeService.prepare(current, current, "update", "A", description, ROOT, ROOT,
+            "creator", (action, before) -> true, new VizEditChangeService.DescriptionContext(
+                java.nio.file.Path.of("descriptions"), new JsonObject(), new JsonObject(), 1L));
+        assertTrue(changed.before().isEmpty());
+        assertTrue(changed.after().isEmpty());
+        assertNotNull(changed.descriptionChange());
+        assertFalse(changed.document().get(0).getAsJsonObject().has("description"));
+        assertEquals(description.get("description"), changed.fields().get("description"));
     }
 }

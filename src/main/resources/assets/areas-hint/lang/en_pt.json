@@ -2571,7 +2571,21 @@
   "vizedit.error.geometry_self_intersection": "TEH BOUNDARY CROSSES OR TOUCHES ITSELF.",
   "vizedit.error.geometry_vertices": "TOO MANY VERTICES. MAX 4096 AFTR LOSSLESS COLLINEAR MERGIN.",
   "vizedit.error.geometry_coordinates": "COORDINATES MUST BE FINITE AN BETWEEN -30000000 AN 30000000.",
-  "vizedit.error.geometry_limit": "DIS DRAWIN IZ TOO BIG. SHORTEN TEH STROKE OR USE A SMALLER BRUSH.",
+  "vizedit.error.geometry_limit": "DIS SHAPE OR STROKE IZ TOO COMPLEX. DRAW IN PARTZ OR USE A SMALLER BRUSH.",
   "help.command.vizedit": "§a/areahint editviz §7- OPEN TEH VISUAL DOMAIN EDITOR (MAP/GRID, DRAWIN, PROPERTIEZ AN APPROVAL)",
-  "approval.type.vizedit": "VISUAL DOMAIN EDIT"
+  "approval.type.vizedit": "VISUAL DOMAIN EDIT",
+  "vizedit.properties.prompt": "PICK A PROPERTY TO EDIT",
+  "vizedit.properties.detail": "CONFIRMED CHAYNJZ STAY IN UR DRAFT TIL U SAVE OR SUBMIT.",
+  "vizedit.properties.names": "DOMAIN AN SURFACE NAMEZ",
+  "vizedit.properties.hierarchy": "LEVEL AN PARENT DOMAIN",
+  "vizedit.properties.custom_level": "CUSTOM LEVEL",
+  "vizedit.properties.altitude": "HEIGHT RANGE",
+  "vizedit.properties.description": "DOMAIN DESCRIPSHUN",
+  "vizedit.properties.description_hint": "DOMAINZ WITH TEH SAME SURFACE NAME SHARE A DESCRIPSHUN. Shift+Enter ADDS A LINE; CLEAR TO DELETE.",
+  "vizedit.properties.subtitle": "SUBTITLE",
+  "vizedit.properties.subtitle_hint": "SET TEXT AN COLOR; \\n ADDS A LINE. CLEAR TEH TEXT TO DELETE.",
+  "vizedit.properties.subtitle_color": "SUBTITLE COLOR",
+  "vizedit.properties.edit_text": "EDIT TEH TEXT",
+  "vizedit.properties.clear_text": "CLEAR TEH TEXT",
+  "vizedit.error.description_conflict": "TEH DESCRIPSHUN FILENAME CLASHES WITH ANOTHER SURFACE NAME. CHANGE TEH DOMAIN OR SURFACE NAME PLZ."
 }

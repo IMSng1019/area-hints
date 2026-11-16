@@ -11,11 +11,11 @@ import areahint.permission.PermissionNodes;
 import areahint.permission.PermissionService;
 import areahint.world.WorldFolderManager;
 import com.google.gson.*;
+import net.minecraft.server.level.ServerPlayer;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
-import net.minecraft.server.level.ServerPlayer;
 
 // 会话只存在于服务端主线程，客户端只持有随机令牌，不能自行上传或替换比较基线。
 public final class VizEditServerService {
@@ -26,7 +26,7 @@ public final class VizEditServerService {
     private VizEditServerService() { }
 
     private record Session(String id, String dimension, String world, JsonArray baseline,
-                           String approvalId, int approvalRevision, long started) { }
+                           String approvalId, int approvalRevision, long started, JsonObject descriptions) { }
 
     public static void clear(UUID player) { SESSIONS.remove(player); }
     public static void clearAll() { SESSIONS.clear(); }
@@ -58,7 +58,7 @@ public final class VizEditServerService {
         ApprovalRequest approval = approvalId == null ? null : ApprovalManager.editableVizEdit(player, approvalId);
         if (approval != null && !dimension.equals(approval.dimensionId)) throw VizEditChangeService.error("dimension");
         Session session = new Session(UUID.randomUUID().toString(), dimension, world(), current.deepCopy(),
-            approvalId, approval == null ? 0 : approval.revision, System.currentTimeMillis());
+            approvalId, approval == null ? 0 : approval.revision, System.currentTimeMillis(), readDescriptions(dimension));
         JsonObject response = new JsonObject();
         response.addProperty("kind", "session");
         response.addProperty("requestId", VizEditChangeService.text(action, "requestId", false));
@@ -67,6 +67,12 @@ public final class VizEditServerService {
         response.addProperty("dimensionalName", DimensionalNameManager.getDimensionalName(dimension));
         response.addProperty("canCreate", canCreate(player));
         response.add("areas", current.deepCopy());
+        response.add("descriptions", session.descriptions.deepCopy());
+        AreaData creation = new AreaData();
+        creation.setName("");
+        creation.setSignature(areahint.util.ProfileCompat.name(player.getGameProfile()));
+        creation.setSubtitle("preview");
+        response.add("creationCapabilities", GSON.toJsonTree(AreaManagementCapabilityService.getAllowedOperations(player, creation, toAreas(current))));
         List<AreaData> areas = toAreas(current);
         JsonObject capabilities = new JsonObject();
         for (AreaData area : areas) {
@@ -114,7 +120,8 @@ public final class VizEditServerService {
         JsonArray current = readAreas(file);
         VizEditChangeService.Prepared prepared = VizEditChangeService.prepare(session.baseline, current, operation, target,
             incoming.getAsJsonObject(), session.dimension, DimensionalNameManager.getDimensionalName(session.dimension),
-            author, permissions(player, current));
+            author, permissions(player, current), new VizEditChangeService.DescriptionContext(descriptionFolder(session.dimension),
+                session.descriptions, readDescriptions(session.dimension), System.currentTimeMillis()));
         validateDocumentSize(prepared);
         JsonObject result = new JsonObject();
         result.addProperty("requestId", VizEditChangeService.text(action, "requestId", false));
@@ -132,8 +139,8 @@ public final class VizEditServerService {
             approvalId = ApprovalManager.submitVizEdit(player, file, prepared);
             outcome = "submitted";
         } else {
-            // 一个维度只有一次临时文件原子替换，所有后代与目标一起成功或一起失败。
-            ApprovalManager.writeDocument(file, prepared.document());
+            // 目标、后代与描述交给统一事务保存，异常或重启时恢复整笔修改。
+            ApprovalManager.writePrepared(file, prepared);
             outcome = "saved";
             try {
                 ServerNetworking.sendAllAreaDataToAll();
@@ -150,17 +157,61 @@ public final class VizEditServerService {
     }
 
     // 审批通过前从依赖快照再次重建结果，不信任持久化 after 中出现的非开放属性。
-    public static VizEditChangeService.Prepared validateApproval(ApprovalRequest request, JsonArray current) {
+    public static VizEditChangeService.Prepared validateApproval(ApprovalRequest request, JsonArray current) throws IOException {
         VizEditMetadata metadata = request.vizEdit;
         if (metadata == null || metadata.dependencies == null || metadata.fields == null) throw VizEditChangeService.error("invalid");
+        // 旧申请没有描述快照，批准时沿用原语义；重新编辑或重提后才启用描述迁移。
+        VizEditChangeService.DescriptionContext descriptions = metadata.descriptionDependencies == null && !metadata.fields.has("description")
+            ? null : new VizEditChangeService.DescriptionContext(descriptionFolder(request.dimensionId),
+                metadata.descriptionDependencies == null ? new JsonObject() : metadata.descriptionDependencies,
+                readDescriptions(request.dimensionId), metadata.descriptionUpdatedAt);
         var prepared = VizEditChangeService.prepare(metadata.dependencies, current, metadata.operation, metadata.targetName,
             metadata.fields, request.dimensionId, DimensionalNameManager.getDimensionalName(request.dimensionId),
-            request.applicantName, (operation, area) -> true);
+            request.applicantName, (operation, area) -> true, descriptions);
         // 旧申请若仍含高精度顶点，必须重新预览提交，不能在批准时悄悄改成另一条量化后的边界。
         if (!"delete".equals(metadata.operation) && !Objects.equals(metadata.fields.get("vertices"), prepared.fields().get("vertices")))
             throw VizEditChangeService.error("precision");
         validateDocumentSize(prepared);
         return prepared;
+    }
+
+    // 旧审批界面的重新申请也需重取描述基线并重新核验修改权限。
+    public static VizEditChangeService.Prepared prepareResubmission(ServerPlayer player, ApprovalRequest request, JsonArray current) throws IOException {
+        JsonObject descriptions = readDescriptions(request.dimensionId);
+        return VizEditChangeService.prepare(current, current, request.vizEdit.operation, request.vizEdit.targetName,
+            request.vizEdit.fields, request.dimensionId, DimensionalNameManager.getDimensionalName(request.dimensionId),
+            request.applicantName, permissions(player, current),
+            new VizEditChangeService.DescriptionContext(descriptionFolder(request.dimensionId), descriptions, descriptions, System.currentTimeMillis()));
+    }
+
+    public static Path descriptionFolder(String dimension) {
+        file(dimension);
+        return WorldFolderManager.getWorldDimensionDatabaseFolder(dimension.substring(dimension.indexOf(':') + 1));
+    }
+
+    // 会话记录现有描述文件快照，用户改名或更换联合域名后仍可检查目标路径是否被并发占用。
+    public static JsonObject readDescriptions(String dimension) throws IOException {
+        JsonObject descriptions = new JsonObject();
+        Path folder = descriptionFolder(dimension);
+        if (Files.notExists(folder)) return descriptions;
+        int size = 0;
+        try (DirectoryStream<Path> files = Files.newDirectoryStream(folder, "*.json")) {
+            for (Path path : files) {
+                if (!Files.isRegularFile(path)) continue;
+                if (Files.size(path) > VizEditNetworking.MAX_MESSAGE_LENGTH * 4L) throw VizEditChangeService.error("size");
+                String raw = Files.readString(path, StandardCharsets.UTF_8);
+                size += raw.length();
+                if (size > VizEditNetworking.MAX_MESSAGE_LENGTH) throw VizEditChangeService.error("size");
+                try {
+                    JsonElement document = JsonParser.parseString(raw);
+                    if (!document.isJsonObject()) throw new JsonParseException("Description must be an object");
+                    descriptions.add(path.getFileName().toString(), document);
+                } catch (JsonParseException exception) {
+                    throw new IOException("域名描述文件 JSON 无效", exception);
+                }
+            }
+        }
+        return descriptions;
     }
 
     private static void validateDocumentSize(VizEditChangeService.Prepared prepared) {

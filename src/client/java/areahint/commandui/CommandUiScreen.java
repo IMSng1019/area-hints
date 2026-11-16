@@ -41,6 +41,8 @@ public abstract class CommandUiScreen extends Screen {
         // 子界面可在这里丢弃自己的临时流程状态。
     }
 
+    protected boolean closesOnBoundKey() { return true; }
+
     protected void closeToGameFromBoundKey() {
         onDiscard();
         UnifiedKeyHandler.suppressRecordKeyUntilRelease();
@@ -63,7 +65,7 @@ public abstract class CommandUiScreen extends Screen {
     //?} else {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
     //?}
-        if (UnifiedKeyHandler.matchesRecordKey(keyCode, scanCode)) {
+        if (closesOnBoundKey() && UnifiedKeyHandler.matchesRecordKey(keyCode, scanCode)) {
             if (UnifiedKeyHandler.isRecordKeySuppressedUntilRelease()) {
                 return true;
             }

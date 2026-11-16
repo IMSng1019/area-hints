@@ -2571,7 +2571,21 @@
   "vizedit.error.geometry_self_intersection": "경계가 자신과 교차하거나 맞닿아 있습니다.",
   "vizedit.error.geometry_vertices": "꼭짓점이 너무 많습니다. 일직선상의 점을 손실 없이 병합한 뒤 최대 4096개까지 허용됩니다.",
   "vizedit.error.geometry_coordinates": "좌표는 유한한 숫자여야 하며 -30000000에서 30000000 사이여야 합니다.",
-  "vizedit.error.geometry_limit": "그림이 너무 큽니다. 획을 짧게 하거나 브러시 두께를 줄이세요.",
+  "vizedit.error.geometry_limit": "도형이나 획이 너무 복잡합니다. 나누어 그리거나 브러시 두께를 줄이세요.",
   "help.command.vizedit": "§a/areahint editviz §7- 영역 시각 편집기 열기 (지도/격자, 그리기, 속성 및 심사)",
-  "approval.type.vizedit": "영역 시각 편집"
+  "approval.type.vizedit": "영역 시각 편집",
+  "vizedit.properties.prompt": "편집할 속성을 선택하세요",
+  "vizedit.properties.detail": "확인한 변경 사항은 초안에 보관되며 마지막에 함께 저장하거나 제출합니다.",
+  "vizedit.properties.names": "영역 이름과 표면 이름",
+  "vizedit.properties.hierarchy": "등급과 상위 영역",
+  "vizedit.properties.custom_level": "사용자 지정 등급",
+  "vizedit.properties.altitude": "높이 범위",
+  "vizedit.properties.description": "영역 설명",
+  "vizedit.properties.description_hint": "표면 이름이 같은 영역은 설명을 공유합니다. Shift+Enter로 줄을 바꾸고, 비우면 삭제합니다.",
+  "vizedit.properties.subtitle": "부제목",
+  "vizedit.properties.subtitle_hint": "텍스트와 색상을 설정하세요. \\n으로 줄을 바꾸고, 텍스트를 비우면 삭제합니다.",
+  "vizedit.properties.subtitle_color": "부제목 색상",
+  "vizedit.properties.edit_text": "내용 편집",
+  "vizedit.properties.clear_text": "내용 지우기",
+  "vizedit.error.description_conflict": "설명 파일 이름이 다른 표면 이름과 충돌합니다. 영역 이름 또는 표면 이름을 변경하세요."
 }

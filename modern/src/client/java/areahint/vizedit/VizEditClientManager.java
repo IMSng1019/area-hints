@@ -130,6 +130,15 @@ public final class VizEditClientManager {
         data.addProperty("dimensionId", request.dimensionId);
         data.addProperty("dimensionalName", request.dimensionId);
         data.add("areas", VizEditSession.GSON.toJsonTree(request.previewAreas));
+        // 审批预览从同一事务中的描述差异读取文本，不会请求或改写正式描述。
+        JsonObject descriptions = new JsonObject();
+        if (request.vizEdit != null) for (ApprovalRequest.Change change : request.changes) {
+            if ("document".equals(change.kind) && change.after != null && change.after.isJsonObject()) {
+                JsonObject document = change.after.getAsJsonObject();
+                if (document.has("surfaceName")) descriptions.add(VizEditDescriptions.key(document.get("surfaceName").getAsString()), document.deepCopy());
+            }
+        }
+        data.add("descriptions", descriptions);
         session = new VizEditSession(data, parent, true);
         connection = client.getConnection();
         worldDimension = request.dimensionId;

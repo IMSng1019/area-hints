@@ -15,7 +15,6 @@ import java.util.List;
 public final class VizEditGeometry {
     public static final int MAX_VERTICES = 4096;
     public static final double MAX_COORDINATE = 30_000_000;
-    public static final int MAX_DRAG_SPAN = 4096;
     public static final int MAX_BRUSH_WIDTH = 256;
     public static final int MAX_DRAFT_VERTICES = 65_536;
 
@@ -67,6 +66,27 @@ public final class VizEditGeometry {
 
     public static Area copy(Area area) { return area == null ? new Area() : new Area(area); }
 
+    // 仅填充本次加笔新围出的空洞，之前用橡皮擦留下的洞和仍有缺口的开放笔迹保持原样。
+    public static Area fillNewlyEnclosed(Area before, Area painted) {
+        Area filling = enclosedVoids(painted);
+        if (filling.isEmpty()) return copy(painted);
+        filling.subtract(enclosedVoids(before));
+        return union(painted, filling);
+    }
+
+    private static Area enclosedVoids(Area shape) {
+        Path2D.Double path = new Path2D.Double(Path2D.WIND_NON_ZERO);
+        for (List<Vertex> ring : contours(shape)) {
+            if (signedArea(ring) <= 0) continue;
+            path.moveTo(ring.get(0).getX(), ring.get(0).getZ());
+            for (int i = 1; i < ring.size(); i++) path.lineTo(ring.get(i).getX(), ring.get(i).getZ());
+            path.closePath();
+        }
+        Area holes = new Area(path);
+        if (shape != null) holes.subtract(shape);
+        return holes;
+    }
+
     // 绘制中的简化可保留旧边，普通布尔运算仍保留原始精度；提交前另走整体量化的保存入口。
     public static Area optimize(Area shape, Area preserved) { return BoundaryOptimizer.optimize(shape, preserved); }
 
@@ -90,14 +110,7 @@ public final class VizEditGeometry {
         if (!Double.isFinite(width) || width < 1 || width > MAX_BRUSH_WIDTH) throw error("geometry_limit");
         if (points == null || points.isEmpty()) return new Area();
         if (points.size() > 8192) throw error("geometry_limit");
-        double minX = Double.POSITIVE_INFINITY, minZ = Double.POSITIVE_INFINITY;
-        double maxX = Double.NEGATIVE_INFINITY, maxZ = Double.NEGATIVE_INFINITY;
-        for (Vertex point : points) {
-            checkCoordinate(point);
-            minX = Math.min(minX, point.getX()); minZ = Math.min(minZ, point.getZ());
-            maxX = Math.max(maxX, point.getX()); maxZ = Math.max(maxZ, point.getZ());
-        }
-        if (maxX - minX > MAX_DRAG_SPAN || maxZ - minZ > MAX_DRAG_SPAN) throw error("geometry_limit");
+        for (Vertex point : points) checkCoordinate(point);
         Area result = BlockSnap.brushStroke(points, width);
         checkBounds(result);
         return result;
@@ -128,7 +141,6 @@ public final class VizEditGeometry {
             double side = Math.max(Math.abs(dx), Math.abs(dz));
             x1 = x0 + Math.copySign(side, dx); z1 = z0 + Math.copySign(side, dz);
         }
-        if (Math.abs(x1 - x0) > MAX_DRAG_SPAN || Math.abs(z1 - z0) > MAX_DRAG_SPAN) throw error("geometry_limit");
         checkCoordinate(new Vertex(x1, z1));
         return new double[]{Math.min(x0, x1), Math.min(z0, z1), Math.abs(x1 - x0), Math.abs(z1 - z0)};
     }

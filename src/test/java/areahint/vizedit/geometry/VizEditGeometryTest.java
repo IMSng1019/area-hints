@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.awt.geom.Area;
 import java.awt.geom.Path2D;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,6 +64,49 @@ class VizEditGeometryTest {
         Vertex constrained = VizEditGeometry.constrainLine(new Vertex(1, 2), new Vertex(7, 5));
         assertEquals(7, constrained.getX());
         assertEquals(2, constrained.getZ());
+    }
+
+    @Test
+    void largeSelectionsAreNotLimitedByTheirCoordinateSpan() {
+        Area rectangle = VizEditGeometry.rectangle(-30000000, -30000000, 30000000, 30000000, false);
+        assertEquals(3600000000000000d, VizEditGeometry.measure(rectangle));
+        assertTrue(VizEditGeometry.validate(rectangle).valid());
+        assertTrue(VizEditGeometry.ellipse(-2500, -2500, 2500, 2500, false).contains(0, 0));
+        assertTrue(VizEditGeometry.stroke(points(-2500, 0, 2500, 0), 1).contains(2499.5, 0.5));
+    }
+
+    @Test
+    void veryTallNarrowEllipseBatchesRowsWithoutChangingBlockCenterSampling() {
+        Area narrow = assertTimeout(Duration.ofSeconds(5), () -> VizEditGeometry.ellipse(0, -5000000, 4, 5000000, false));
+        assertTrue(narrow.contains(1.5, 0.5));
+        assertFalse(narrow.contains(-0.5, 0.5));
+        for (int height : List.of(13, 401)) {
+            var ellipse = new java.awt.geom.Ellipse2D.Double(-5, -height / 2, 10, height);
+            Area snapped = BlockSnap.snap(new Area(ellipse));
+            Path2D.Double flattenedPath = new Path2D.Double();
+            flattenedPath.append(new Area(ellipse).getPathIterator(null, 0.125), false);
+            var flattened = new Area(flattenedPath);
+            for (int z = -height / 2 - 1; z <= height / 2 + 1; z++) for (int x = -6; x <= 6; x++)
+                assertEquals(flattened.contains(x + 0.5, z + 0.5), snapped.contains(x + 0.5, z + 0.5));
+        }
+    }
+
+    @Test
+    void additivePenFillsOnlyNewlyEnclosedVoidsAcrossStrokes() {
+        Area open = VizEditGeometry.stroke(points(0, 0, 10, 0, 10, 10, 0, 10), 1);
+        assertFalse(VizEditGeometry.fillNewlyEnclosed(new Area(), open).contains(5.5, 5.5));
+        Area closed = VizEditGeometry.union(open, VizEditGeometry.stroke(points(0, 10, 0, 0), 1));
+        Area filled = VizEditGeometry.fillNewlyEnclosed(open, closed);
+        assertTrue(filled.contains(5.5, 5.5));
+        assertTrue(VizEditGeometry.validate(filled).valid());
+        assertFalse(open.contains(5.5, 5.5));
+        assertFalse(closed.contains(5.5, 5.5));
+        Area oldHole = VizEditGeometry.subtract(VizEditGeometry.rectangle(20, 0, 30, 10, false),
+            VizEditGeometry.rectangle(23, 3, 27, 7, false));
+        Area before = VizEditGeometry.union(oldHole, open);
+        Area result = VizEditGeometry.fillNewlyEnclosed(before, VizEditGeometry.union(oldHole, closed));
+        assertTrue(result.contains(5.5, 5.5));
+        assertFalse(result.contains(25.5, 5.5));
     }
 
     @Test
@@ -146,15 +190,16 @@ class VizEditGeometryTest {
     }
 
     @Test
-    void magicWandRejectsExcessiveFenceAndRasterWorkBeforeBuildingLargeShapes() {
+    void magicWandRejectsExcessiveFenceButAcceptsLargeSimpleFace() {
         List<double[]> excessive = new ArrayList<>();
         for (int i = 0; i < 4097; i++) excessive.add(new double[]{i, 0, i, 1});
         assertEquals("vizedit.error.geometry_limit", assertThrows(VizEditGeometry.GeometryException.class,
             () -> VizEditGeometry.magicWand(excessive, 1, 1)).errorKey());
         List<double[]> huge = List.of(new double[]{0, 0, 1000000, 0}, new double[]{1000000, 0, 1000000, 1000000},
             new double[]{1000000, 1000000, 0, 1000000}, new double[]{0, 1000000, 0, 0});
-        assertEquals("vizedit.error.geometry_limit", assertThrows(VizEditGeometry.GeometryException.class,
-            () -> VizEditGeometry.magicWand(huge, 1, 1)).errorKey());
+        Area selected = assertTimeout(Duration.ofSeconds(5), () -> VizEditGeometry.magicWand(huge, 1, 1));
+        assertEquals(1000000000000d, VizEditGeometry.measure(selected));
+        assertTrue(VizEditGeometry.validate(selected).valid());
     }
 
     @Test

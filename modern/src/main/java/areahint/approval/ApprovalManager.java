@@ -40,6 +40,7 @@ public final class ApprovalManager {
         try {
             Files.createDirectories(requestFolder);
             recoverTransactions();
+            recoverVizEditTransactions();
             try (var files = Files.list(requestFolder)) {
                 files.filter(path -> path.getFileName().toString().endsWith(".json")).forEach(path -> {
                     try {
@@ -146,8 +147,7 @@ public final class ApprovalManager {
             areahint.vizedit.VizEditChangeService.Prepared prepared) throws IOException {
         ApprovalRequest request = create(player, "vizedit", areahint.util.ServerPlayerCompat.world(player).dimension().identifier().toString());
         request.changes.add(change("areas", file, prepared.before(), prepared.after()));
-        request.vizEdit = areahint.vizedit.VizEditMetadata.from(prepared);
-        request.previewAreas = toAreas(prepared.after().isEmpty() ? prepared.before() : prepared.after());
+        replaceVizEdit(request, prepared);
         saveNew(request);
         return request.id;
     }
@@ -156,7 +156,7 @@ public final class ApprovalManager {
         ApprovalRequest request = findVisible(player, id);
         request = editable(player, id, request.revision);
         if (!"vizedit".equals(request.operation) || request.vizEdit == null || request.vizEdit.fields == null
-                || request.changes.size() != 1 || !"areas".equals(request.changes.get(0).kind)) throw error("invalid");
+                || !validVizEditChanges(request)) throw error("invalid");
         return request;
     }
 
@@ -164,7 +164,7 @@ public final class ApprovalManager {
     public static void saveVizEdit(ServerPlayer player, String id, int revision,
             areahint.vizedit.VizEditChangeService.Prepared prepared, boolean resubmit) throws IOException, ApprovalException {
         ApprovalRequest request = editable(player, id, revision);
-        if (!"vizedit".equals(request.operation) || request.vizEdit == null || request.changes.size() != 1
+        if (!"vizedit".equals(request.operation) || request.vizEdit == null || !validVizEditChanges(request)
                 || !Objects.equals(prepared.operation(), request.vizEdit.operation)
                 || !Objects.equals(prepared.targetName(), request.vizEdit.targetName)) throw error("invalid");
         if (resubmit && (!player.getStringUUID().equals(request.applicantId) || !"returned".equals(request.status))) {
@@ -180,12 +180,54 @@ public final class ApprovalManager {
         }
     }
 
-    private static void replaceVizEdit(ApprovalRequest request, areahint.vizedit.VizEditChangeService.Prepared prepared) {
+    private static boolean validVizEditChanges(ApprovalRequest request) {
+        return request.changes != null && !request.changes.isEmpty() && request.changes.size() <= 2
+            && "areas".equals(request.changes.get(0).kind)
+            && (request.changes.size() == 1 || "document".equals(request.changes.get(1).kind));
+    }
+
+    private static void replaceVizEdit(ApprovalRequest request, areahint.vizedit.VizEditChangeService.Prepared prepared) throws IOException {
         ApprovalRequest.Change change = request.changes.get(0);
         change.before = prepared.before().deepCopy();
         change.after = prepared.after().deepCopy();
+        request.changes.subList(1, request.changes.size()).clear();
+        var description = prepared.descriptionChange();
+        if (description != null) request.changes.add(change("document", description.file(), description.before(), description.after()));
         request.vizEdit = areahint.vizedit.VizEditMetadata.from(prepared);
         request.previewAreas = toAreas(prepared.after().isEmpty() ? prepared.before() : prepared.after());
+        // 只改描述时域名差异为空，审批地图仍需显示本次操作对应的域名。
+        if (request.previewAreas.isEmpty()) {
+            for (JsonElement item : prepared.document()) {
+                if (Objects.equals(prepared.resultName(), item.getAsJsonObject().get("name").getAsString())) {
+                    request.previewAreas = toAreas(singleton(item));
+                    break;
+                }
+            }
+        }
+    }
+
+    private static JsonArray singleton(JsonElement item) { JsonArray array = new JsonArray(); array.add(item); return array; }
+
+    // 免审保存同样记录原文和提交标记，描述与域名一起成功或在异常／重启后一起恢复。
+    public static void writePrepared(Path areaFile, areahint.vizedit.VizEditChangeService.Prepared prepared) throws IOException {
+        var description = prepared.descriptionChange();
+        if (description == null) { writeDocument(areaFile, prepared.document()); return; }
+        if (requestFolder == null) throw new IOException("域名编辑事务存储未就绪");
+        if (!readDocument(description.file()).equals(description.before())) throw areahint.vizedit.VizEditChangeService.error("conflict");
+        Map<Path, JsonElement> replacements = new LinkedHashMap<>();
+        replacements.put(areaFile, prepared.document());
+        replacements.put(description.file(), description.after());
+        JsonDocumentTransaction.execute(requestFolder.resolve(UUID.randomUUID() + ".editviz-transaction"),
+            worldKey, WorldFolderManager.getCurrentWorldFolder(), replacements);
+    }
+
+    private static void recoverVizEditTransactions() throws IOException {
+        try (var files = Files.list(requestFolder)) {
+            for (Path journal : files.filter(path -> path.getFileName().toString().endsWith(".editviz-transaction")).toList()) {
+                try { JsonDocumentTransaction.recover(journal, worldKey, WorldFolderManager.getCurrentWorldFolder()); }
+                catch (IOException | RuntimeException exception) { Areashint.LOGGER.error("恢复域名编辑事务失败，保留日志等待处理: {}", journal, exception); }
+            }
+        }
     }
 
     private static ApprovalRequest create(ServerPlayer player, String operation, String dimensionId) throws IOException {
@@ -324,10 +366,7 @@ public final class ApprovalManager {
             if (!areahint.vizedit.VizEditServerService.canOpen(player) || request.vizEdit == null) throw error("denied");
             if (!request.dimensionId.equals(areahint.util.ServerPlayerCompat.world(player).dimension().identifier().toString())) throw error("conflict");
             JsonArray current = areahint.vizedit.VizEditServerService.readAreas(areahint.vizedit.VizEditServerService.file(request.dimensionId));
-            var prepared = areahint.vizedit.VizEditChangeService.prepare(current, current, request.vizEdit.operation,
-                request.vizEdit.targetName, request.vizEdit.fields, request.dimensionId,
-                areahint.dimensional.DimensionalNameManager.getDimensionalName(request.dimensionId), request.applicantName,
-                areahint.vizedit.VizEditServerService.permissions(player, current));
+            var prepared = areahint.vizedit.VizEditServerService.prepareResubmission(player, request, current);
             replaceVizEdit(request, prepared);
             request.status = "pending";
             update(request);
@@ -576,22 +615,32 @@ public final class ApprovalManager {
     }
 
     private static void applyApproved(ServerPlayer reviewer, ApprovalRequest request) throws IOException, ApprovalException {
-        if ("vizedit".equals(request.operation) && (request.vizEdit == null || request.changes.size() != 1)) throw error("invalid");
+        if ("vizedit".equals(request.operation) && (request.vizEdit == null || !validVizEditChanges(request))) throw error("invalid");
         Map<Path, JsonElement> originals = new LinkedHashMap<>();
         Map<Path, JsonElement> replacements = new LinkedHashMap<>();
+        areahint.vizedit.VizEditChangeService.Prepared vizPrepared = null;
         for (ApprovalRequest.Change change : request.changes) {
             if ("applyurbanarea".equals(request.operation)) validateUrbanChange(change);
             Path file = resolve(change.path);
             JsonElement current = readDocument(file);
             originals.put(file, current);
             if ("vizedit".equals(request.operation)) {
-                if (!"areas".equals(change.kind) || !file.toAbsolutePath().normalize().equals(
-                        areahint.vizedit.VizEditServerService.file(request.dimensionId).toAbsolutePath().normalize())) throw error("invalid");
                 try {
-                    JsonArray areas = current.isJsonNull() ? new JsonArray() : current.getAsJsonArray();
-                    var prepared = areahint.vizedit.VizEditServerService.validateApproval(request, areas);
-                    if (!prepared.before().equals(change.before) || !prepared.after().equals(change.after)) throw error("invalid");
-                    replacements.put(file, prepared.document());
+                    if ("areas".equals(change.kind)) {
+                        if (!file.toAbsolutePath().normalize().equals(areahint.vizedit.VizEditServerService.file(request.dimensionId).toAbsolutePath().normalize())) throw error("invalid");
+                        JsonArray areas = current.isJsonNull() ? new JsonArray() : current.getAsJsonArray();
+                        vizPrepared = areahint.vizedit.VizEditServerService.validateApproval(request, areas);
+                        if (!vizPrepared.before().equals(change.before) || !vizPrepared.after().equals(change.after)
+                                || request.changes.size() != (vizPrepared.descriptionChange() == null ? 1 : 2)) throw error("invalid");
+                        replacements.put(file, vizPrepared.document());
+                    } else {
+                        // 描述的路径和内容必须与服务端重建结果一致，不能借审批记录写入其他文件。
+                        var description = vizPrepared == null ? null : vizPrepared.descriptionChange();
+                        if (description == null || !file.equals(description.file().toAbsolutePath().normalize())
+                                || !change.before.equals(description.before()) || !change.after.equals(description.after())) throw error("invalid");
+                        if (!current.equals(description.before())) throw error("conflict");
+                        replacements.put(file, description.after());
+                    }
                 } catch (areahint.vizedit.VizEditChangeService.EditException exception) {
                     throw new ApprovalException(exception.getMessage());
                 }

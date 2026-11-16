@@ -55,9 +55,18 @@ final class VizEditDialog extends Screen {
             for (String name : affected) append("• " + name, contentWidth);
             var gson = new GsonBuilder().serializeNulls().setPrettyPrinting().create();
             append(t("vizedit.ui.before"), contentWidth);
-            append(session.originalArea == null ? "∅" : gson.toJson(session.originalArea), contentWidth);
+            if (session.originalArea == null) append("∅", contentWidth);
+            else {
+                JsonObject original = gson.toJsonTree(session.originalArea).getAsJsonObject();
+                original.addProperty("description", VizEditDescriptions.content(VizEditDescriptions.document(
+                    session.descriptions, VizEditDescriptions.key(VizEditDescriptions.surface(original)))));
+                append(gson.toJson(original), contentWidth);
+            }
             append(t("vizedit.ui.after"), contentWidth);
-            append("delete".equals(session.operation) ? "∅" : gson.toJson(fields), contentWidth);
+            // 核对页补全描述显示，但确认提交仍使用原始差异，避免把仅查看误当作显式覆盖。
+            JsonObject preview = fields.deepCopy();
+            preview.addProperty("description", session.draft.description);
+            append("delete".equals(session.operation) ? "∅" : gson.toJson(preview), contentWidth);
             int w = (contentWidth - 8) / 2;
             button("vizedit.ui.confirm", left, height - 32, w, () -> VizEditClientManager.submit(fields, draftOnly, continuation));
             button("vizedit.ui.continue", left + w + 8, height - 32, w, this::onClose);

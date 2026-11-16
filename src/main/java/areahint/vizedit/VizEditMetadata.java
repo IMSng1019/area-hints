@@ -10,6 +10,8 @@ public final class VizEditMetadata {
     public String resultName;
     public JsonObject fields;
     public JsonArray dependencies;
+    public JsonObject descriptionDependencies;
+    public long descriptionUpdatedAt;
 
     public static VizEditMetadata from(VizEditChangeService.Prepared prepared) {
         VizEditMetadata metadata = new VizEditMetadata();
@@ -18,6 +20,8 @@ public final class VizEditMetadata {
         metadata.resultName = prepared.resultName();
         metadata.fields = prepared.fields().deepCopy();
         metadata.dependencies = prepared.dependencies().deepCopy();
+        metadata.descriptionDependencies = prepared.descriptionDependencies().deepCopy();
+        metadata.descriptionUpdatedAt = prepared.descriptionUpdatedAt();
         return metadata;
     }
 }

@@ -2571,7 +2571,21 @@
   "vizedit.error.geometry_self_intersection": "La limite se croise ou se touche elle-même.",
   "vizedit.error.geometry_vertices": "Trop de sommets. Maximum : 4096 après fusion sans perte des points colinéaires.",
   "vizedit.error.geometry_coordinates": "Les coordonnées doivent être finies et comprises entre -30000000 et 30000000.",
-  "vizedit.error.geometry_limit": "Ce dessin est trop grand. Raccourcissez le trait ou réduisez l'épaisseur du pinceau.",
+  "vizedit.error.geometry_limit": "La forme ou le trait est trop complexe. Dessinez par sections ou réduisez l’épaisseur du pinceau.",
   "help.command.vizedit": "§a/areahint editviz §7- Ouvrir l'éditeur visuel de domaines (carte/grille, dessin, propriétés et validation)",
-  "approval.type.vizedit": "Modification visuelle de domaine"
+  "approval.type.vizedit": "Modification visuelle de domaine",
+  "vizedit.properties.prompt": "Choisissez une propriété à modifier",
+  "vizedit.properties.detail": "Les modifications confirmées restent dans le brouillon jusqu’à l’enregistrement ou l’envoi.",
+  "vizedit.properties.names": "Noms de zone et de surface",
+  "vizedit.properties.hierarchy": "Niveau et zone parente",
+  "vizedit.properties.custom_level": "Niveau personnalisé",
+  "vizedit.properties.altitude": "Plage de hauteur",
+  "vizedit.properties.description": "Description de la zone",
+  "vizedit.properties.description_hint": "Les zones portant le même nom de surface partagent leur description. Maj+Entrée ajoute une ligne ; videz pour supprimer.",
+  "vizedit.properties.subtitle": "Sous-titre",
+  "vizedit.properties.subtitle_hint": "Définissez le texte et la couleur ; \\n ajoute une ligne. Videz le texte pour le supprimer.",
+  "vizedit.properties.subtitle_color": "Couleur du sous-titre",
+  "vizedit.properties.edit_text": "Modifier le texte",
+  "vizedit.properties.clear_text": "Effacer le texte",
+  "vizedit.error.description_conflict": "Le nom du fichier de description est en conflit avec un autre nom de surface. Modifiez le nom de zone ou de surface."
 }

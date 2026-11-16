@@ -21,6 +21,57 @@ class BoundaryBrushTest {
     }
 
     @Test
+    void closedStrokeFillsItsInteriorWithoutClosingAnOpenStroke() {
+        var brush = stroke(new Area(), new BoundaryBrush.State(), null, 1);
+        brush.paint(new Vertex(0, 0));
+        brush.paint(new Vertex(10, 0));
+        brush.paint(new Vertex(10, 10));
+        var open = brush.paint(new Vertex(0, 10));
+        assertFalse(open.shape().contains(5.5, 5.5));
+        var closed = brush.paint(new Vertex(0, 0));
+        assertTrue(closed.shape().contains(5.5, 5.5));
+        assertTrue(VizEditGeometry.validate(closed.shape()).valid());
+    }
+
+    @Test
+    void automaticInteriorFillRespectsPeersAndParentAcrossTheWholeInterior() {
+        var brush = new BoundaryBrush.Stroke(new Area(), rectangle(-1, -1, 11, 11),
+            List.of(rectangle(4, 4, 7, 7)), new BoundaryBrush.State(), null, 1);
+        brush.paint(new Vertex(0, 0));
+        brush.paint(new Vertex(12, 0));
+        brush.paint(new Vertex(12, 12));
+        brush.paint(new Vertex(0, 12));
+        var closed = brush.paint(new Vertex(0, 0));
+        assertFalse(closed.shape().contains(12.5, 5.5));
+        assertFalse(closed.shape().contains(5.5, 5.5));
+        assertTrue(closed.shape().contains(2.5, 5.5));
+        assertTrue(closed.state().forbidden().contains(5.5, 5.5));
+    }
+
+    @Test
+    void closedBoundaryStrokeKeepsPreviouslyErasedInterior() {
+        Area existing = rectangle(2, 2, 8, 8);
+        existing.subtract(rectangle(4, 4, 6, 6));
+        var brush = stroke(existing, new BoundaryBrush.State(), null, 1);
+        brush.paint(new Vertex(0, 0));
+        brush.paint(new Vertex(10, 0));
+        brush.paint(new Vertex(10, 10));
+        brush.paint(new Vertex(0, 10));
+        var result = brush.paint(new Vertex(0, 0));
+        assertTrue(result.shape().contains(1.5, 5.5));
+        assertFalse(result.shape().contains(5, 5));
+        assertFalse(existing.contains(1.5, 5.5));
+    }
+
+    @Test
+    void boundaryStrokeCanSpanMoreThan4096BlocksWithoutTerrain() {
+        var brush = stroke(new Area(), new BoundaryBrush.State(), null, 1);
+        brush.paint(new Vertex(0, 0));
+        var result = brush.paint(new Vertex(5000, 0));
+        assertTrue(result.shape().contains(4999.5, 0.5));
+    }
+
+    @Test
     void clipsNewPaintAtParentAndPeersWithoutRemovingExistingOverlap() {
         Area existing = rectangle(-8, -4, 3, 4);
         Area parent = rectangle(-10, -10, 0, 10);

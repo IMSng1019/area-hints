@@ -175,7 +175,7 @@ Areas Hint 是一个适用于 **Minecraft Fabric** 的区域提示模组，当�
 
 - **LuckPerms**：权限节点兼容
 - **BlueMap**：地图标记相关扩展
-- **Xaero's Minimap / Xaero's World Map**：域名边界、填充与名称覆盖层；需要匹配下方兼容性表中的版本
+- **Xaero's Minimap / Xaero's World Map**：域名边界、填充与名称覆盖层；需安装对应 Minecraft 版本的 Fabric 文件，兼容接口更新时仍可联动
 - **Mod Menu**：可选配置界面集成
 - **Sodium**：已在 `fabric.mod.json` 中作为建议兼容项列出
 - **VulkanMod**：实验性 Vulkan 渲染模式所需的可选环境
@@ -1218,7 +1218,7 @@ areas-hint/
 | Xaero's World Map | 世界地图上的域名覆盖层与交互 |
 | VulkanMod | 实验性 Vulkan 渲染模式 |
 
-Xaero 联动按精确版本检查；未安装或版本不匹配时，对应覆盖层不会启用。请使用与 Minecraft 目标版本匹配的 Fabric 文件：
+Xaero 联动按实际接口检查，不再要求模组版本号完全相同；对应 Minecraft 版本中接口兼容的更新仍可联动。未安装或初始化接口不兼容时，仅关闭对应联动。请使用与 Minecraft 目标版本匹配的 Fabric 文件。下表为编译基线，已检查的较新版本与验证范围见[联动检查记录](docs/plans/2026-11-16-optional-integration-audit.md)。
 
 | Minecraft | Xaero's Minimap | Xaero's World Map |
 |---|---|---|

@@ -6,6 +6,7 @@
 		"ExampleClientMixin",
 		"DisconnectedScreenMixin",
 		"WorldRendererMixin",
+		"XaeroWorldMapTooltipMixin",
 		"TranslationStorageMixin"
 	],
 	"injectors": {

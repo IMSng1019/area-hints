@@ -8,7 +8,7 @@ public final class XaeroCompat {
     private XaeroCompat() {
     }
 
-    /** 装配本节点支持的 Xaero 联动；依赖是否存在、版本是否匹配都在实现里判定 */
+    /** 装配本节点支持的 Xaero 联动；依赖是否存在、接口是否兼容都在实现里判定 */
     public static void initialize() {
         XaeroCompatFactory.create().initialize();
     }

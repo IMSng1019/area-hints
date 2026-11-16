@@ -3,6 +3,7 @@
 package areahint.xaero.worldmap;
 
 import areahint.AreashintClient;
+import areahint.compat.RendererRegistration;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.MinecraftClient;
@@ -27,9 +28,10 @@ public final class XaeroWorldMapBridge {
     private XaeroWorldMapBridge() {
     }
 
-    public static void initialize() {
+    public static boolean initialize() {
         resolveReflection();
-        if (!failed) VizEditXaeroBridge.initialize();
+        if (failed) return false;
+        VizEditXaeroBridge.initialize();
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             // 先处理右键双击安排好的域名管理打开，再补齐渲染器注册
             AreaWorldMapRightClick.tick();
@@ -42,6 +44,7 @@ public final class XaeroWorldMapBridge {
             }
         });
         tryRegister();
+        return !failed;
     }
 
     public static String getViewedDimensionId() {
@@ -80,7 +83,7 @@ public final class XaeroWorldMapBridge {
             if (WorldMap.mapElementRenderHandler == null) {
                 return;
             }
-            WorldMap.mapElementRenderHandler.add(new AreaWorldMapRenderer());
+            RendererRegistration.register(WorldMap.mapElementRenderHandler, new AreaWorldMapRenderer());
             registered = true;
             AreashintClient.LOGGER.info("Xaero 世界地图域名覆盖层渲染器已注册。");
         } catch (Throwable throwable) {

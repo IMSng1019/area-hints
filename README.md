@@ -104,7 +104,7 @@ These are the targets currently enabled in `settings.gradle`, with dependencies 
 
 Each JAR targets one Minecraft version. Install the matching JAR and Fabric API. All twelve targets pass the build and automated tests. Builds from `1.21.5` use version-specific GPU rendering backends; in-game rendering and multiplayer verification are still pending.
 
-LuckPerms, BlueMap, Mod Menu, Xaero's Minimap, Xaero's World Map, and VulkanMod are optional. See [Optional integrations](#compatibility) for their roles and the exact Xaero versions.
+LuckPerms, BlueMap, Mod Menu, Xaero's Minimap, Xaero's World Map, and VulkanMod are optional. See [Optional integrations](#compatibility) for their roles and the Xaero compatibility baselines.
 
 <a id="installation"></a>
 
@@ -823,7 +823,7 @@ Shared feature packages cover creation and geometry editing, subtitles, descript
 | Xaero's World Map | Area overlays and map interaction |
 | VulkanMod | Experimental Vulkan rendering mode |
 
-Xaero integrations check exact versions. If a mod is absent or its version does not match, its overlay is not enabled. Use the Fabric download matching the Minecraft target:
+Xaero integrations check the installed interfaces instead of requiring an exact mod version. Compatible updates for the same Minecraft target can load; an absent mod or an incompatible initialization disables only that integration. Use the Fabric download matching the Minecraft target. The table lists the build baselines; newer releases checked for compatibility are recorded in the [integration audit](docs/plans/2026-11-16-optional-integration-audit.md).
 
 | Minecraft | Xaero's Minimap | Xaero's World Map |
 |---|---|---|

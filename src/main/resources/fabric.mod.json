@@ -45,8 +45,8 @@
 		"sodium": "*",
 		"modmenu": "*",
 		"bluemap": "*",
-		"xaerominimap": "=${xaero_minimap}",
-		"xaeroworldmap": "=${xaero_world_map}",
+		"xaerominimap": ">=${xaero_minimap}",
+		"xaeroworldmap": ">=${xaero_world_map}",
 		"vulkanmod": "*"
 	},
 	"recommends": {

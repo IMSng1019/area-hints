@@ -25,10 +25,12 @@ public final class XaeroMinimapBridge {
     private XaeroMinimapBridge() {
     }
 
-    public static void initialize() {
+    public static boolean initialize() {
         resolveReflection();
+        if (failed) return false;
         ClientTickEvents.END_CLIENT_TICK.register(client -> tryRegister());
         tryRegister();
+        return !failed;
     }
 
     public static MinimapTransformState captureTransform() {

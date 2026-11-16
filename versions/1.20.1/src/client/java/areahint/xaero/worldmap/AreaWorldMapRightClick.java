@@ -18,7 +18,7 @@ import java.util.List;
 final class AreaWorldMapRightClick {
     // 双击判定窗口，超过该间隔的两次右击各自算单击
     private static final long DOUBLE_CLICK_MILLIS = 400L;
-    // 双击允许的鼠标位移（界面像素），超过该距离视为两次独立右击
+    // 双击允许的鼠标位移（窗口像素），超过该距离视为两次独立右击
     private static final double DOUBLE_CLICK_MAX_MOUSE_OFFSET = 6.0D;
     // 鼠标右键编号，与 GLFW 保持一致
     private static final int RIGHT_BUTTON = 1;
@@ -42,7 +42,13 @@ final class AreaWorldMapRightClick {
 
     /** 为已经打开的世界地图界面注册右键抬起回调。 */
     static void register(Screen screen) {
-        ScreenMouseEvents.afterMouseRelease(screen).register(AreaWorldMapRightClick::onMouseRelease);
+        ScreenMouseEvents.afterMouseRelease(screen).register((current, x, y, button) -> {
+            MinecraftClient client = MinecraftClient.getInstance();
+            // 点击记录使用窗口像素，Fabric 回调使用 GUI 坐标，比较前必须转换到同一坐标系。
+            double mouseX = x * client.getWindow().getWidth() / client.getWindow().getScaledWidth();
+            double mouseY = y * client.getWindow().getHeight() / client.getWindow().getScaledHeight();
+            onMouseRelease(current, mouseX, mouseY, button);
+        });
     }
 
     /** 记录一次落在域名上的右击，供紧随其后的抬起回调判断双击。 */

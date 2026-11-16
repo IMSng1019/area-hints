@@ -8,8 +8,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 
 /**
- * 26.1.2 节点的 Xaero 装配实现：只在依赖存在且版本精确匹配时才触碰桥接类。
- * 支持版本号与 gradle.properties 的 deps.26.1.2.xaero_minimap / xaero_world_map 保持一致。
+ * 26.1.2 节点的 Xaero 装配实现：仅在依赖存在时加载桥接，实际接口不兼容时单独降级。
+ * 编译参考版本与 gradle.properties 的 deps.26.1.2.xaero_minimap / xaero_world_map 保持一致。
  */
 public final class XaeroCompatImpl1211 implements XaeroBridgeHost {
     private static final String MINIMAP_ID = "xaerominimap";
@@ -19,29 +19,31 @@ public final class XaeroCompatImpl1211 implements XaeroBridgeHost {
 
     @Override
     public void initialize() {
-        String minimapVersion = matchedVersion(MINIMAP_ID, MINIMAP_VERSION);
+        String minimapVersion = installedVersion(MINIMAP_ID, MINIMAP_VERSION);
         if (minimapVersion != null) {
             try {
-                XaeroMinimapBridge.initialize();
-                AreashintClient.LOGGER.info("已启用 {} {} 联动。", MINIMAP_ID, minimapVersion);
+                if (XaeroMinimapBridge.initialize()) {
+                    AreashintClient.LOGGER.info("已装配 {} {} 联动。", MINIMAP_ID, minimapVersion);
+                }
             } catch (Throwable throwable) {
                 AreashintClient.LOGGER.warn("{} 接口加载失败，已关闭对应联动且不影响 Areas Hint 本体。", MINIMAP_ID, throwable);
             }
         }
 
-        String worldMapVersion = matchedVersion(WORLD_MAP_ID, WORLD_MAP_VERSION);
+        String worldMapVersion = installedVersion(WORLD_MAP_ID, WORLD_MAP_VERSION);
         if (worldMapVersion != null) {
             try {
-                XaeroWorldMapBridge.initialize();
-                AreashintClient.LOGGER.info("已启用 {} {} 联动。", WORLD_MAP_ID, worldMapVersion);
+                if (XaeroWorldMapBridge.initialize()) {
+                    AreashintClient.LOGGER.info("已装配 {} {} 联动。", WORLD_MAP_ID, worldMapVersion);
+                }
             } catch (Throwable throwable) {
                 AreashintClient.LOGGER.warn("{} 接口加载失败，已关闭对应联动且不影响 Areas Hint 本体。", WORLD_MAP_ID, throwable);
             }
         }
     }
 
-    /** 版本匹配时返回已安装版本号，未安装或不匹配返回 null（此时不加载任何 Xaero 类型） */
-    private static String matchedVersion(String modId, String supportedVersion) {
+    /** 返回已安装版本供日志使用；未安装时不加载任何 Xaero 类型，版本差异交给桥接实际校验 */
+    private static String installedVersion(String modId, String referenceVersion) {
         FabricLoader loader = FabricLoader.getInstance();
         if (!loader.isModLoaded(modId)) {
             AreashintClient.LOGGER.info("未安装 {}，已跳过对应 Xaero 联动。", modId);
@@ -50,10 +52,9 @@ public final class XaeroCompatImpl1211 implements XaeroBridgeHost {
 
         ModContainer container = loader.getModContainer(modId).orElse(null);
         String installedVersion = container == null ? "unknown" : container.getMetadata().getVersion().getFriendlyString();
-        if (!supportedVersion.equals(installedVersion)) {
-            AreashintClient.LOGGER.warn("检测到不受支持的 {} 版本 {}，仅支持 {}，已安全禁用对应联动。",
-                modId, installedVersion, supportedVersion);
-            return null;
+        if (!referenceVersion.equals(installedVersion)) {
+            AreashintClient.LOGGER.info("检测到 {} {}（编译参考版本 {}），将检查实际联动接口。",
+                modId, installedVersion, referenceVersion);
         }
         return installedVersion;
     }

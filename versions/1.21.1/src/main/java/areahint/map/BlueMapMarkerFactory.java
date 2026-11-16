@@ -113,29 +113,11 @@ public final class BlueMapMarkerFactory {
     }
 
     private static PolygonData createPolygonData(List<AreaData.Vertex> vertices) {
+        BlueMapPolygonGeometry.Polygon polygon = BlueMapPolygonGeometry.prepare(vertices);
         List<Vector2d> points = new ArrayList<>();
-        double centerX = 0;
-        double centerZ = 0;
-
-        for (AreaData.Vertex vertex : vertices) {
-            if (vertex == null) {
-                continue;
-            }
+        for (AreaData.Vertex vertex : polygon.vertices()) {
             points.add(new Vector2d(vertex.getX(), vertex.getZ()));
-            centerX += vertex.getX();
-            centerZ += vertex.getZ();
         }
-
-        if (points.size() >= 2 && samePoint(points.get(0), points.get(points.size() - 1))) {
-            points.remove(points.size() - 1);
-        }
-
-        if (points.size() < 3) {
-            throw new IllegalArgumentException("有效多边形顶点不足，至少需要 3 个点");
-        }
-
-        centerX /= points.size();
-        centerZ /= points.size();
 
         Shape shape;
         try {
@@ -147,12 +129,7 @@ public final class BlueMapMarkerFactory {
             Areashint.LOGGER.debug("BlueMap 多边形按原顺序构造失败，已使用反向顶点顺序重试。");
         }
 
-        return new PolygonData(shape, centerX, centerZ);
-    }
-
-    private static boolean samePoint(Vector2d first, Vector2d second) {
-        return Double.compare(first.getX(), second.getX()) == 0
-            && Double.compare(first.getY(), second.getY()) == 0;
+        return new PolygonData(shape, polygon.centerX(), polygon.centerZ());
     }
 
     private static HeightRange resolveHeightRange(AreaData area, ServerWorld world) {

@@ -47,6 +47,7 @@ public final class AreaOverlayRepository {
             Map<String, OverlaySnapshot> updated = new HashMap<>(snapshots);
             updated.put(dimensionId, snapshot);
             snapshots = Map.copyOf(updated);
+            AreaOverlayFillResolver.getInstance().invalidateDimension(dimensionId);
             AreashintClient.LOGGER.debug("已刷新 Xaero 域名覆盖层快照: {}，{} 个域名", dimensionId, snapshot.areas().size());
         } catch (Exception e) {
             AreashintClient.LOGGER.warn("刷新 Xaero 域名覆盖层快照失败: {}", dimensionId, e);
@@ -62,6 +63,7 @@ public final class AreaOverlayRepository {
     public synchronized void clear() {
         snapshots = Map.of();
         revisionCounter.incrementAndGet();
+        AreaOverlayFillResolver.getInstance().clear();
     }
 
     public OverlaySnapshot getSnapshot(String dimension) {
@@ -69,7 +71,9 @@ public final class AreaOverlayRepository {
         if (dimensionId == null) {
             return OverlaySnapshot.empty("");
         }
-        return snapshots.getOrDefault(dimensionId, OverlaySnapshot.empty(dimensionId));
+        // 已有快照的每帧查询不再提前构造一个用不到的空快照和基础填充计划。
+        OverlaySnapshot snapshot = snapshots.get(dimensionId);
+        return snapshot == null ? OverlaySnapshot.empty(dimensionId) : snapshot;
     }
 
     public List<OverlayArea> queryPoint(String dimension, double x, double z) {
@@ -272,10 +276,19 @@ public final class AreaOverlayRepository {
     }
 
     public record OverlaySnapshot(String dimensionId, List<OverlayArea> areas,
-                                  Map<String, OverlayArea> byName, long revision) {
+                                  Map<String, OverlayArea> byName, long revision,
+                                  AreaOverlayFillResolver.FillPlan basePlan) {
+        // 原构造入口保持不变，基础填充在数据发布前完成，渲染时只读取这份不可变计划。
+        public OverlaySnapshot(String dimensionId, List<OverlayArea> areas,
+                               Map<String, OverlayArea> byName, long revision) {
+            this(dimensionId, areas, byName, revision,
+                AreaOverlayFillResolver.buildBasePlan(areas == null ? List.of() : areas));
+        }
+
         public OverlaySnapshot {
             areas = List.copyOf(areas == null ? List.of() : areas);
             byName = Map.copyOf(byName == null ? Map.of() : byName);
+            basePlan = basePlan == null ? AreaOverlayFillResolver.buildBasePlan(areas) : basePlan;
         }
 
         public static OverlaySnapshot empty(String dimensionId) {

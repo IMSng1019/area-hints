@@ -3,6 +3,8 @@ package areahint.vizedit.geometry;
 import areahint.data.AreaData.Vertex;
 
 import java.awt.geom.Area;
+import java.awt.geom.Path2D;
+import java.awt.geom.PathIterator;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,6 +21,10 @@ final class BoundaryOptimizer {
     private BoundaryOptimizer() { }
 
     static Area optimize(Area shape, Area preserved) {
+        return optimize(shape, preserved, null);
+    }
+
+    static Area optimize(Area shape, Area preserved, Area forbidden) {
         Area original = VizEditGeometry.copy(shape);
         if (original.isEmpty()) return original;
         try {
@@ -28,9 +34,11 @@ final class BoundaryOptimizer {
             Budget budget = new Budget();
             if (!simple(ring, budget)) return original;
             EdgeTree oldEdges = preserved == null || preserved.isEmpty() ? null : EdgeTree.from(preserved);
-            List<Vertex> result = reduce(ring, oldEdges, budget);
+            Constraint constraint = Constraint.from(forbidden, original, budget);
+            List<Vertex> result = reduce(ring, oldEdges, constraint, budget);
             if (result.size() > ring.size() || !simple(result, budget)
-                    || Math.signum(VizEditGeometry.signedArea(result)) != Math.signum(VizEditGeometry.signedArea(ring))) return original;
+                    || Math.signum(VizEditGeometry.signedArea(result)) != Math.signum(VizEditGeometry.signedArea(ring))
+                    || constraint != null && !constraint.allows(result, budget)) return original;
             return VizEditGeometry.fromVertices(result);
         } catch (BudgetExceeded | VizEditGeometry.GeometryException ignored) {
             // 复杂图形仍能继续编辑或撤销，保存时沿用既有几何错误提示，不因优化失败清空草稿。
@@ -40,6 +48,10 @@ final class BoundaryOptimizer {
 
     // 保存必须返回实际提交的量化顶点，不能再遍历 Area 取点，以免正规化计算重新产生多位小数。
     static List<Vertex> prepareForSave(Area shape) {
+        return prepareForSave(shape, null);
+    }
+
+    static List<Vertex> prepareForSave(Area shape, Area forbidden) {
         if (shape == null || shape.isEmpty()) throw VizEditGeometry.error("geometry_empty");
         List<List<Vertex>> contours = VizEditGeometry.contours(shape);
         if (contours.size() != 1) {
@@ -54,12 +66,16 @@ final class BoundaryOptimizer {
             // 必须先验证原环，不能让量化合并近邻点或简化删除交叉后把无效草稿悄悄变成有效边界。
             if (!simple(ring, budget)) throw VizEditGeometry.error("geometry_self_intersection");
         } catch (BudgetExceeded ignored) { throw VizEditGeometry.error("geometry_limit"); }
+        Constraint constraint;
+        try { constraint = Constraint.from(forbidden, shape, budget); }
+        catch (BudgetExceeded ignored) { throw VizEditGeometry.error("geometry_limit"); }
         double direction = Math.signum(VizEditGeometry.signedArea(ring));
         try {
-            List<Vertex> reduced = reduce(ring, null, budget);
+            List<Vertex> reduced = reduce(ring, null, constraint, budget);
             VizEditGeometry.Validation checked = VizEditGeometry.validate(reduced);
             if (reduced.size() <= ring.size() && checked.valid()
-                    && Math.signum(VizEditGeometry.signedArea(checked.vertices())) == direction) return checked.vertices();
+                    && Math.signum(VizEditGeometry.signedArea(checked.vertices())) == direction
+                    && (constraint == null || constraint.allows(checked.vertices(), budget))) return checked.vertices();
         } catch (BudgetExceeded ignored) {
             // 优化预算耗尽仍可尝试只量化原环；回退结果也必须全部为一位小数，绝不能返回原来的高精度顶点。
         }
@@ -69,11 +85,17 @@ final class BoundaryOptimizer {
         if (!checked.valid()) throw new VizEditGeometry.GeometryException(checked.errorKey());
         if (Math.signum(VizEditGeometry.signedArea(checked.vertices())) != direction)
             throw VizEditGeometry.error("geometry_self_intersection");
+        // 仅量化回退另有一次有界核验额度，不能因为简化预算耗尽就跳过智能边界保护。
+        try {
+            if (constraint != null && !constraint.allows(checked.vertices(), new Budget()))
+                throw new VizEditGeometry.GeometryException("vizedit.boundary.save_conflict");
+        } catch (BudgetExceeded ignored) { throw VizEditGeometry.error("geometry_limit"); }
         return checked.vertices();
     }
 
-    private static List<Vertex> reduce(List<Vertex> ring, EdgeTree oldEdges, Budget budget) {
+    private static List<Vertex> reduce(List<Vertex> ring, EdgeTree oldEdges, Constraint constraint, Budget budget) {
         int count = ring.size(), length = count * 2;
+        double direction = Math.signum(VizEditGeometry.signedArea(ring));
         Vertex[] source = new Vertex[length + 1], rounded = new Vertex[length + 1];
         boolean[] keep = new boolean[length + 1];
         boolean[] sharedEdges = new boolean[count];
@@ -107,19 +129,37 @@ final class BoundaryOptimizer {
             int[] interval = pending.pop();
             int start = interval[0], end = interval[1];
             int worst = -1;
+            int furthest = -1;
+            double furthestDistance = -1;
+            int inward = -1;
+            double inwardDistance = -1;
             double worstDistance = MAX_ERROR_SQUARED;
             for (int i = start + 1; i < end; i++) {
                 budget.use();
                 double distance = segmentDistanceSquared(source[i], rounded[start], rounded[end]);
+                if (distance > furthestDistance || distance == furthestDistance
+                        && Math.abs(i * 2 - start - end) < Math.abs(furthest * 2 - start - end)) {
+                    furthestDistance = distance; furthest = i;
+                }
+                double cross = (rounded[end].getX() - rounded[start].getX()) * (source[i].getZ() - rounded[start].getZ())
+                    - (rounded[end].getZ() - rounded[start].getZ()) * (source[i].getX() - rounded[start].getX());
+                if (cross * direction > 0 && (distance > inwardDistance || distance == inwardDistance
+                        && Math.abs(i * 2 - start - end) < Math.abs(inward * 2 - start - end))) {
+                    inwardDistance = distance; inward = i;
+                }
                 if (distance > worstDistance || worst >= 0 && distance == worstDistance
                         && Math.abs(i * 2 - start - end) < Math.abs(worst * 2 - start - end)) {
                     worstDistance = distance; worst = i;
                 }
             }
-            if (worst < 0) continue;
+            // 每条候选捷径单独核验禁区，局部受限只继续拆分本段，其他安全岸段仍按原算法减点。
+            boolean constrained = worst < 0 && constraint != null
+                && !constraint.allowsShortcut(source, rounded, start, end, budget);
+            if (worst < 0 && (!constrained || furthest < 0)) continue;
             // 优先在最坏点旁的原边中点分段；两侧仍对全部原始点复核，绝不将前一次简化结果继续累计近似。
-            int split = worst;
-            if ((worst & 1) == 0) {
+            // 越界时优先保留凹向域名内部的点，否则绝对最远的安全凸角会让整条阶梯逐点拆回原状。
+            int split = constrained ? inward >= 0 ? inward : furthest : worst;
+            if (!constrained && (worst & 1) == 0) {
                 if (worst + 1 < end && (worst - 1 <= start || worst * 2 < start + end)) split = worst + 1;
                 else if (worst - 1 > start) split = worst - 1;
             }
@@ -130,6 +170,56 @@ final class BoundaryOptimizer {
         List<Vertex> result = new ArrayList<>();
         for (int i = 0; i < length; i++) if (keep[i]) result.add(rounded[i]);
         return VizEditGeometry.simplify(result);
+    }
+
+    // 禁区先扣除用户已明确涂入的面积；后续只阻止简化新增越界，不改变其他工具的绘制语义。
+    private static final class Constraint {
+        private final Area forbidden;
+        private final int vertices;
+
+        private Constraint(Area forbidden, int vertices) { this.forbidden = forbidden; this.vertices = vertices; }
+
+        static Constraint from(Area forbidden, Area original, Budget budget) {
+            if (forbidden == null || forbidden.isEmpty()) return null;
+            int inputSize = size(forbidden, budget) + size(original, budget);
+            budget.use(16L * inputSize);
+            Area effective = new Area(forbidden);
+            effective.subtract(original);
+            return effective.isEmpty() ? null : new Constraint(effective, size(effective, budget));
+        }
+
+        boolean allowsShortcut(Vertex[] source, Vertex[] rounded, int start, int end, Budget budget) {
+            // 原链与新捷径围出的变化带包含端点量化误差；单段越界会继续细分，最终仍核验整环。
+            budget.use(16L * (vertices + end - start + 4));
+            Path2D.Double path = new Path2D.Double(Path2D.WIND_NON_ZERO);
+            path.moveTo(source[start].getX(), source[start].getZ());
+            for (int i = start + 1; i <= end; i++) path.lineTo(source[i].getX(), source[i].getZ());
+            path.lineTo(rounded[end].getX(), rounded[end].getZ());
+            path.lineTo(rounded[start].getX(), rounded[start].getZ());
+            path.closePath();
+            if (!forbidden.getBounds2D().intersects(path.getBounds2D())) return true;
+            Area changed = new Area(path);
+            changed.intersect(forbidden);
+            return changed.isEmpty();
+        }
+
+        boolean allows(List<Vertex> ring, Budget budget) {
+            budget.use(16L * (vertices + ring.size()));
+            Area candidate = VizEditGeometry.fromVertices(ring);
+            candidate.intersect(forbidden);
+            return candidate.isEmpty();
+        }
+
+        private static int size(Area area, Budget budget) {
+            PathIterator iterator = area.getPathIterator(null);
+            int result = 0;
+            while (!iterator.isDone()) {
+                budget.use();
+                if (++result > VizEditGeometry.MAX_DRAFT_VERTICES) throw new BudgetExceeded();
+                iterator.next();
+            }
+            return result;
+        }
     }
 
     // 原始链在新线段半径一格的凸胶囊内，则每条原边都在误差内；链连续且端点误差不超过0.071格，反向覆盖同样成立。
@@ -260,6 +350,10 @@ final class BoundaryOptimizer {
     private static final class Budget {
         private int remaining = MAX_WORK;
         void use() { if (--remaining < 0) throw new BudgetExceeded(); }
+        void use(long amount) {
+            if (amount > remaining) throw new BudgetExceeded();
+            remaining -= (int) amount;
+        }
     }
 
     private static final class BudgetExceeded extends RuntimeException {

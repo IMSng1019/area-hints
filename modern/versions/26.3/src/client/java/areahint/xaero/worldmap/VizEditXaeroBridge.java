@@ -46,6 +46,7 @@ public final class VizEditXaeroBridge {
         } catch (ReflectiveOperationException e) {
             AreashintClient.LOGGER.warn("Xaero 可视化编辑接口不匹配，坐标网格仍可使用", e); return;
         }
+        areahint.vizedit.BoundaryTerrainSource.install(XaeroBoundaryTerrain::open);
         VizEditClientManager.installMap(new VizEditClientManager.MapAccess() {
             @Override public boolean available() {
                 return usable && WorldMapSession.getCurrentSession() != null && WorldMapSession.getCurrentSession().isUsable();

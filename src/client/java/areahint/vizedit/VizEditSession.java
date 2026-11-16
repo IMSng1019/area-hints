@@ -4,6 +4,8 @@ import areahint.data.AreaData;
 import areahint.data.AreaData.Vertex;
 import areahint.util.ColorUtil;
 import areahint.vizedit.geometry.DraftHistory;
+import areahint.vizedit.geometry.BoundaryBrush;
+import areahint.vizedit.geometry.BoundarySaveGuard;
 import areahint.vizedit.geometry.VizEditGeometry;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -129,8 +131,24 @@ public final class VizEditSession {
         return !"delete".equals(operation) && (allows("expandarea") || allows("shrinkarea"));
     }
 
+    // 上级采用当前草稿引用，同级按当前维度与等级筛选，永远不把当前目标当作障碍。
+    public BoundaryBrush.Stroke startBoundaryStroke(BoundaryBrush.Terrain terrain) {
+        int level = Integer.parseInt(draft.level.trim());
+        AreaData parent = find(draft.parent.trim());
+        Area parentShape = parent == null ? null : VizEditGeometry.fromVertices(parent.getVertices());
+        List<Area> peers = new ArrayList<>();
+        for (AreaData area : areas) if (area.getLevel() == level && !Objects.equals(area.getName(), target))
+            peers.add(VizEditGeometry.fromVertices(area.getVertices()));
+        return new BoundaryBrush.Stroke(draft.shape, parentShape, peers, draft.boundaryState, terrain, brushWidth);
+    }
+
+    // 其他工具明确涂入的已有面积照常保留，优化只能禁止额外越过尚未涂入的限制。
+    public boolean keepsBrushBoundary(Area candidate, Area before) {
+        return BoundarySaveGuard.allows(candidate, before, draft.boundaryState.forbidden());
+    }
+
     public boolean dirty() {
-        return draft != null && ("delete".equals(operation) || !draft.same(originalDraft));
+        return draft != null && ("delete".equals(operation) || !draft.sameContent(originalDraft));
     }
 
     // 只在一次完整操作开始前保存历史，连续拖动不会用采样点挤掉撤销额度。
@@ -139,11 +157,11 @@ public final class VizEditSession {
     }
 
     public void undo() {
-        if (draft != null && history.canUndo()) draft = history.undo(draft);
+        if (draft != null && history.canUndo()) { draft = history.undo(draft); status = ""; }
     }
 
     public void redo() {
-        if (draft != null && history.canRedo()) draft = history.redo(draft);
+        if (draft != null && history.canRedo()) { draft = history.redo(draft); status = ""; }
     }
 
     // 提交核对前统一生成最终轮廓；验证失败不替换草稿，成功的整体优化作为独立一步支持撤销。
@@ -197,7 +215,7 @@ public final class VizEditSession {
     }
 
     public enum Tool {
-        BRUSH, LINE, RECTANGLE, ELLIPSE, ERASER, WAND, PAN;
+        BRUSH, BOUNDARY, LINE, RECTANGLE, ELLIPSE, ERASER, WAND, PAN;
         public String key() { return "vizedit.tool." + name().toLowerCase(java.util.Locale.ROOT); }
     }
 
@@ -211,6 +229,8 @@ public final class VizEditSession {
         public String min = "";
         public String max = "";
         public Area shape = new Area();
+        // 自然岸段偏移和保存保护属于草稿，撤销时必须与面积一起恢复。
+        public BoundaryBrush.State boundaryState = new BoundaryBrush.State();
         private boolean altitudeObject;
         private List<Vertex> saveVertices;
         private Area saveShape;
@@ -257,7 +277,7 @@ public final class VizEditSession {
         private Draft preparedForSave() {
             Draft result = copy();
             if (saveVertices == null || saveShape == null || !shape.equals(saveShape)) {
-                result.saveVertices = VizEditGeometry.prepareForSave(shape);
+                result.saveVertices = BoundarySaveGuard.prepare(shape, boundaryState.forbidden());
                 result.shape = VizEditGeometry.fromVertices(result.saveVertices);
                 result.saveShape = new Area(result.shape);
             }
@@ -301,6 +321,7 @@ public final class VizEditSession {
             value.name = name; value.surface = surface; value.color = color; value.level = level;
             value.parent = parent; value.min = min; value.max = max; value.shape = new Area(shape);
             value.altitudeObject = altitudeObject;
+            value.boundaryState = boundaryState.copy();
             // 顶点列表只在准备保存时整体赋值，历史快照可共享只读列表；用于比较的 Area 单独复制。
             value.saveVertices = saveVertices;
             value.saveShape = saveShape == null ? null : new Area(saveShape);
@@ -308,6 +329,11 @@ public final class VizEditSession {
         }
 
         public boolean same(Draft other) {
+            return sameContent(other) && boundaryState.same(other.boundaryState);
+        }
+
+        // 偏移记忆参与撤销，但仅记忆变化不要求玩家保存一份没有数据变更的域名。
+        public boolean sameContent(Draft other) {
             return other != null && Objects.equals(name, other.name) && Objects.equals(surface, other.surface)
                 && Objects.equals(color, other.color) && Objects.equals(level, other.level)
                 && Objects.equals(parent, other.parent) && Objects.equals(min, other.min)

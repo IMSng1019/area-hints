@@ -73,6 +73,11 @@ final class VizEditPropertiesScreen extends Screen {
     }
 
     @Override public void close() {
+        // 更换父引用或等级后旧域名障碍已失效，自然岸线偏移仍可继续使用。
+        if (!Objects.equals(session.draft.parent, before.parent) || !Objects.equals(session.draft.level, before.level)) {
+            session.draft.boundaryState = session.draft.boundaryState.withoutHardConstraints();
+            session.status = "";
+        }
         if (!checkpointed && !session.draft.same(before)) { session.history.push(before); checkpointed = true; }
         VizEditClientManager.show();
     }

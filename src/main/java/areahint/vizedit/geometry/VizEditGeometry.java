@@ -70,8 +70,13 @@ public final class VizEditGeometry {
     // 绘制中的简化可保留旧边，普通布尔运算仍保留原始精度；提交前另走整体量化的保存入口。
     public static Area optimize(Area shape, Area preserved) { return BoundaryOptimizer.optimize(shape, preserved); }
 
+    // 边界笔沿用相同误差预算与旧边保护，仅让越过禁区的候选简化段继续细分。
+    public static Area optimize(Area shape, Area preserved, Area forbidden) { return BoundaryOptimizer.optimize(shape, preserved, forbidden); }
+
     // 保存入口整体简化并强制所有顶点为0.1格精度，返回的确切顶点应与预览一起缓存并直接用于提交。
     public static List<Vertex> prepareForSave(Area shape) { return BoundaryOptimizer.prepareForSave(shape); }
+
+    public static List<Vertex> prepareForSave(Area shape, Area forbidden) { return BoundaryOptimizer.prepareForSave(shape, forbidden); }
 
     public static Delta difference(List<Vertex> before, List<Vertex> after) {
         Area previous = fromVertices(before);

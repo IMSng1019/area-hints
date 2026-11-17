@@ -21,6 +21,31 @@ class BoundaryBrushTest {
     }
 
     @Test
+    void paintingAcrossExistingFractionalEdgeDoesNotCreateMicroscopicHoles() {
+        Area existing = VizEditGeometry.fromVertices(List.of(new Vertex(17.7, 0), new Vertex(-2.8, 4.9), new Vertex(-9.6, -16.6)));
+        var brush = stroke(existing, new BoundaryBrush.State(), null, 8);
+        brush.paint(new Vertex(-7, 4));
+        var result = brush.paint(new Vertex(24, -13));
+        // 旧斜边被拆下再拼回时曾产生约4.55e-16平方格的伪洞，阻止保存和边界简化。
+        var validation = VizEditGeometry.validate(result.shape());
+        assertTrue(validation.valid(), validation.errorKey());
+        assertEquals(1, VizEditGeometry.contours(result.shape()).size());
+        assertTrue(result.shape().contains(0, 0));
+        assertTrue(result.shape().contains(24, -13));
+        assertDoesNotThrow(() -> BoundarySaveGuard.prepare(result.shape(), result.state().forbidden()));
+    }
+
+    @Test
+    void paintingInsideExistingFractionalBoundaryPreservesAreaOutsideParent() {
+        Area existing = VizEditGeometry.fromVertices(List.of(new Vertex(24, 0), new Vertex(-18.2, 24.5), new Vertex(-20.9, -28.1)));
+        var brush = new BoundaryBrush.Stroke(existing, rectangle(-50, -50, -10, 50), List.of(), new BoundaryBrush.State(), null, 1);
+        var result = brush.paint(new Vertex(0, 0));
+        // 完全落在旧域名内部的一笔不应因父域名裁剪重算旧斜边，已有越界部分也须精确保留。
+        assertTrue(existing.equals(result.shape()));
+        assertTrue(VizEditGeometry.validate(result.shape()).valid());
+    }
+
+    @Test
     void closedStrokeFillsItsInteriorWithoutClosingAnOpenStroke() {
         var brush = stroke(new Area(), new BoundaryBrush.State(), null, 1);
         brush.paint(new Vertex(0, 0));

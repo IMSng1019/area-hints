@@ -152,7 +152,8 @@ public final class BoundaryBrush {
             } else guides = List.of();
             // 只保护落笔前面积；同一笔未知地形补齐后重裁原笔迹，不把临时越界当作旧域名永久保留。
             // 闭合填充也只增加当前笔画面积，完整父域名和同级限制需同时覆盖未被笔尖扫过的内部。
-            paint = VizEditGeometry.fillNewlyEnclosed(existing, VizEditGeometry.union(existing, rawPaint));
+            Area complete = VizEditGeometry.fillNewlyEnclosed(existing, VizEditGeometry.union(existing, rawPaint));
+            paint = new Area(complete);
             paint.subtract(existing);
             Area interiorHard = new Area(paint);
             if (parent == null) interiorHard.reset();
@@ -164,6 +165,10 @@ public final class BoundaryBrush {
             paint.subtract(state.hardForbidden);
             paint.subtract(state.naturalForbidden);
             shape = VizEditGeometry.union(existing, paint);
+            // 无实际禁区却在拆分并回后产生洞时，才检查未经拆分的完整选区，正常结果保持原算法。
+            if (state.hardForbidden.isEmpty() && state.naturalForbidden.isEmpty() && !shape.isSingular()
+                    && VizEditGeometry.contours(shape).stream().anyMatch(ring -> VizEditGeometry.signedArea(ring) > 0)
+                    && VizEditGeometry.validate(complete).valid() && keepsExistingArea(complete)) shape = complete;
             // 新获准面积必须从旧自然限制中清除，否则下一次保存会误判自身越界。
             state.naturalForbidden.subtract(shape);
             if (activeField != null) {
@@ -172,6 +177,13 @@ public final class BoundaryBrush {
                 visibleForbidden.intersect(scope);
                 guides = guideLines(visibleForbidden, scope, activeField, offset);
             }
+        }
+
+        private boolean keepsExistingArea(Area candidate) {
+            Area removed = VizEditGeometry.subtract(existing, candidate);
+            // Area.isEmpty可能把往返线段保留为非空；仅用重复点和精确共线清理，不忽略任何非零面积缺失。
+            return removed.isEmpty() || VizEditGeometry.contours(removed).stream()
+                .allMatch(ring -> VizEditGeometry.simplify(ring).size() < 3);
         }
 
         private List<Edge> identify(Vertex point) {

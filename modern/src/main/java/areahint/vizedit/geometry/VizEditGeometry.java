@@ -62,10 +62,29 @@ public final class VizEditGeometry {
 
     // 仅填充本次加笔新围出的空洞，之前用橡皮擦留下的洞和仍有缺口的开放笔迹保持原样。
     public static Area fillNewlyEnclosed(Area before, Area painted) {
-        Area filling = enclosedVoids(painted);
-        if (filling.isEmpty()) return copy(painted);
-        filling.subtract(enclosedVoids(before));
-        return union(painted, filling);
+        List<List<Vertex>> rings = contours(painted);
+        if (rings.stream().noneMatch(ring -> signedArea(ring) > 0)) return copy(painted);
+        Area remaining = enclosedVoids(before);
+        if (!remaining.isEmpty()) remaining.intersect(enclosedVoids(painted));
+        // 新洞直接从重建路径中移除，避免填充面积与同一条小数斜边再次相交而留下浮点伪洞。
+        Path2D.Double path = new Path2D.Double(Path2D.WIND_NON_ZERO);
+        for (List<Vertex> ring : rings) if (signedArea(ring) < 0) appendRing(path, ring, false);
+        Area exterior = new Area(path);
+        if (remaining.isEmpty()) return exterior;
+        // 先规范化外环的绕数，再反向写入仍未涂掉的旧洞，防止嵌套岛的内洞被重复绕数填满。
+        path.reset();
+        path.append(exterior.getPathIterator(null), false);
+        for (List<Vertex> ring : contours(remaining)) appendRing(path, ring, true);
+        return new Area(path);
+    }
+
+    private static void appendRing(Path2D.Double path, List<Vertex> ring, boolean reverse) {
+        for (int i = 0; i < ring.size(); i++) {
+            Vertex point = ring.get(reverse ? ring.size() - 1 - i : i);
+            if (i == 0) path.moveTo(point.getX(), point.getZ());
+            else path.lineTo(point.getX(), point.getZ());
+        }
+        path.closePath();
     }
 
     private static Area enclosedVoids(Area shape) {

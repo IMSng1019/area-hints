@@ -110,6 +110,67 @@ class VizEditGeometryTest {
     }
 
     @Test
+    void fillingAgainstFractionalSlopesDoesNotLeaveMicroscopicHoles() {
+        List<List<Vertex>> originals = List.of(points(0.8, 0.2, 10.3, 3.1, 5, 10),
+            points(0.7, 0.9, 10.3, 3.1, 8.8, 10.7, -2.7, 7.7));
+        List<List<Vertex>> strokes = List.of(points(5, 5, 5, 0, 3, 0), points(9, 4, 5, 0, 9, 6));
+        for (int i = 0; i < originals.size(); i++) {
+            Area before = VizEditGeometry.fromVertices(originals.get(i));
+            Area painted = VizEditGeometry.union(before, VizEditGeometry.stroke(strokes.get(i), 1));
+            assertEquals("vizedit.error.geometry_holes", VizEditGeometry.validate(painted).errorKey());
+            Area filled = VizEditGeometry.fillNewlyEnclosed(before, painted);
+            var checked = VizEditGeometry.validate(filled);
+            assertTrue(checked.valid(), checked.errorKey());
+            assertEquals(1, VizEditGeometry.contours(filled).size());
+            assertTrue(VizEditGeometry.subtract(painted, filled).isEmpty());
+            assertDoesNotThrow(() -> VizEditGeometry.prepareForSave(filled));
+            assertTrue(VizEditGeometry.validate(VizEditGeometry.optimize(filled, null)).valid());
+        }
+    }
+
+    @Test
+    void fillingNewVoidKeepsTheUnpaintedPartOfAnOldHole() {
+        Area before = VizEditGeometry.subtract(VizEditGeometry.rectangle(0, 0, 12, 12, false),
+            VizEditGeometry.rectangle(4, 4, 8, 8, false));
+        Area open = VizEditGeometry.stroke(points(20, 0, 30, 0, 30, 10, 20, 10), 1);
+        before.add(open);
+        Area painted = VizEditGeometry.union(before, VizEditGeometry.rectangle(4, 4, 6, 8, false));
+        painted.add(VizEditGeometry.stroke(points(20, 10, 20, 0), 1));
+        Area filled = VizEditGeometry.fillNewlyEnclosed(before, painted);
+        assertTrue(filled.contains(25.5, 5.5));
+        assertTrue(filled.contains(5, 5));
+        assertFalse(filled.contains(7, 5));
+        assertFalse(before.contains(5, 5));
+        assertEquals("vizedit.error.geometry_holes", VizEditGeometry.validate(filled).errorKey());
+    }
+
+    @Test
+    void fillingDoesNotEraseOldHolesInsideNestedIslands() {
+        Area before = VizEditGeometry.rectangle(0, 0, 100, 100, false);
+        before.subtract(VizEditGeometry.rectangle(10, 10, 90, 90, false));
+        before.add(VizEditGeometry.rectangle(20, 20, 80, 80, false));
+        before.subtract(VizEditGeometry.rectangle(30, 30, 70, 70, false));
+        Area painted = VizEditGeometry.union(before, VizEditGeometry.rectangle(25, 25, 45, 45, false));
+        Area filled = VizEditGeometry.fillNewlyEnclosed(before, painted);
+        assertTrue(filled.equals(painted));
+        assertFalse(filled.contains(15, 15));
+        assertFalse(filled.contains(50, 50));
+        assertTrue(filled.contains(35, 35));
+    }
+
+    @Test
+    void fillingNewVoidPreservesEvenMicroscopicOldHoles() {
+        Area before = VizEditGeometry.rectangle(0, 0, 4, 4, false);
+        before.subtract(VizEditGeometry.fromVertices(points(1, 1, 1.00000001, 1, 1.00000001, 1.00000001, 1, 1.00000001)));
+        before.add(VizEditGeometry.stroke(points(10, 0, 20, 0, 20, 10, 10, 10), 1));
+        Area painted = VizEditGeometry.union(before, VizEditGeometry.stroke(points(10, 10, 10, 0), 1));
+        Area filled = VizEditGeometry.fillNewlyEnclosed(before, painted);
+        assertTrue(filled.contains(15.5, 5.5));
+        assertFalse(filled.contains(1.000000005, 1.000000005));
+        assertEquals("vizedit.error.geometry_holes", VizEditGeometry.validate(filled).errorKey());
+    }
+
+    @Test
     void differenceRequiresBothPermissionsForEqualAreaMove() {
         var delta = VizEditGeometry.difference(points(0, 0, 10, 0, 10, 10, 0, 10), points(5, 0, 15, 0, 15, 10, 5, 10));
         assertTrue(delta.added());

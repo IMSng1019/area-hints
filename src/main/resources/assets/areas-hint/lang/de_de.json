@@ -2544,6 +2544,7 @@
   "vizedit.client.simplified": "Grenze vereinfacht: %s → %s Eckpunkte.",
   "vizedit.client.save_normalized": "Vor dem Speichern optimiert: %s → %s Eckpunkte; Koordinaten mit einer Nachkommastelle.",
   "vizedit.client.simplify_unchanged": "Keine weitere Vereinfachung möglich, ohne die Grenzstruktur oder die maximale Abweichung zu verletzen.",
+  "vizedit.client.geometry_location": "Fehlerstelle: X %s, Z %s (rote Markierung).",
   "vizedit.error.invalid": "Ungültige Änderung. Prüfe Name, Eigenschaften und Datenformat.",
   "vizedit.error.precision": "Die Koordinatengenauigkeit der Eckpunkte dieses Genehmigungsantrags entspricht nicht den aktuellen Speicherregeln. Bitte erneut bearbeiten und einreichen.",
   "vizedit.error.conflict": "Ziel oder betroffene Untergebiete wurden geändert. Öffne den Editor erneut; dein Entwurf bleibt erhalten.",

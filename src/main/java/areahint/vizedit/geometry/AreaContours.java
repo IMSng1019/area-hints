@@ -40,7 +40,25 @@ final class AreaContours {
             }
             iterator.next();
         }
-        return rings.size() < 2 ? rings : joinSeams(rings);
+        // 布尔运算可能留下精确退化的往返线，仅移除无损简化后不足三个点的路径，不按面积或容差删环。
+        rings.removeIf(AreaContours::degenerate);
+        if (rings.size() < 2) return rings;
+        List<List<Vertex>> joined = joinSeams(rings);
+        if (joined != rings) joined.removeIf(AreaContours::degenerate);
+        return joined;
+    }
+
+    private static boolean degenerate(List<Vertex> ring) {
+        if (ring.size() < 3) return true;
+        Vertex first = ring.get(0), second = null;
+        // 正常轮廓发现一个非共线点即可保留，避免每帧为整个大外环分配简化顶点副本。
+        for (Vertex point : ring) {
+            if (second == null) {
+                if (point.getX() != first.getX() || point.getZ() != first.getZ()) second = point;
+            } else if (VizEditGeometry.orientation(first, second, point) != 0) return false;
+        }
+        // 全共线仍沿用原严格简化条件，不额外删除简化后保留三个点以上的复杂折返路径。
+        return VizEditGeometry.simplify(ring).size() < 3;
     }
 
     private static List<List<Vertex>> joinSeams(List<List<Vertex>> rings) {

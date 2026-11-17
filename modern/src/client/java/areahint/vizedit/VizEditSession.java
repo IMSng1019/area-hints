@@ -3,6 +3,8 @@ package areahint.vizedit;
 import areahint.data.AreaData;
 import areahint.data.AreaData.Vertex;
 import areahint.util.ColorUtil;
+import areahint.i18n.I18nManager;
+import areahint.vizedit.geometry.GeometryIssueFocus;
 import areahint.vizedit.geometry.DraftHistory;
 import areahint.vizedit.geometry.BoundaryBrush;
 import areahint.vizedit.geometry.BoundarySaveGuard;
@@ -54,6 +56,7 @@ public final class VizEditSession {
     public boolean invalid;
     public boolean mapMode;
     public boolean focusRequested;
+    public final GeometryIssueFocus geometryFocus = new GeometryIssueFocus();
     public VizEditCanvas.Grid grid = new VizEditCanvas.Grid();
 
     public VizEditSession(JsonObject data, Screen parentScreen, boolean readOnly) {
@@ -88,6 +91,13 @@ public final class VizEditSession {
             originalDraft = draft.copy();
             focusRequested = true;
         }
+    }
+
+    // 错误位置只关联当前草稿形状；网络、权限等没有空间位置的错误不会移动画布。
+    public String reportError(String key) {
+        geometryFocus.report(draft == null ? null : draft.shape, key);
+        status = I18nManager.translate(key);
+        return status;
     }
 
     public AreaData find(String name) {

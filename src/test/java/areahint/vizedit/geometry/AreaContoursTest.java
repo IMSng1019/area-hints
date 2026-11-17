@@ -68,6 +68,45 @@ class AreaContoursTest {
     }
 
     @Test
+    void boundaryBrushDoesNotCountRetracedRoundingLinesAsSeparateIslands() {
+        Area existing = VizEditGeometry.fromVertices(List.of(new Vertex(-4.3, 3.2), new Vertex(-24.2, -17.6), new Vertex(9.2, -28.3)));
+        assertTrue(VizEditGeometry.validate(existing).valid());
+        var brush = new BoundaryBrush.Stroke(existing, null, List.of(), new BoundaryBrush.State(), null, 6);
+        brush.paint(new Vertex(-6, 7));
+        Area result = brush.paint(new Vertex(-9, -2)).shape();
+        // 跨过旧斜边后曾留下从交点到旧顶点再原路返回的线段，零面积路径不能被计为孤岛。
+        var checked = VizEditGeometry.validate(result);
+        assertTrue(checked.valid(), checked.errorKey());
+        assertEquals(1, VizEditGeometry.contours(result).size());
+        assertTrue(result.contains(-9, -2));
+        assertTrue(VizEditGeometry.validate(existing).valid());
+        assertDoesNotThrow(() -> VizEditGeometry.prepareForSave(result));
+        assertTrue(VizEditGeometry.validate(VizEditGeometry.optimize(result, null)).valid());
+    }
+
+    @Test
+    void microscopicRealIslandsRemainSeparate() {
+        Area shape = new Area(new Rectangle2D.Double(0, 0, 4, 4));
+        shape.add(new Area(new Rectangle2D.Double(10, 10, 0.00000001, 0.00000001)));
+        assertEquals(2, VizEditGeometry.contours(shape).size());
+        assertTrue(shape.contains(10.000000005, 10.000000005));
+        assertEquals("vizedit.error.geometry_disconnected", VizEditGeometry.validate(shape).errorKey());
+    }
+
+    @Test
+    void zeroSignedAreaDoesNotDiscardNonCollinearContours() {
+        Area existing = VizEditGeometry.fromVertices(List.of(new Vertex(26.2, 0), new Vertex(-21.5, 15), new Vertex(-15.2, -17.8)));
+        Area parent = new Area(new Rectangle2D.Double(-50, -50, 40, 100));
+        var brush = new BoundaryBrush.Stroke(existing, parent, List.of(), new BoundaryBrush.State(), null, 1);
+        Area result = brush.paint(new Vertex(0, 0)).shape();
+        var rings = VizEditGeometry.contours(result);
+        // 自交或舍入轮廓可能正负面积相消，不能仅因面积求和为零就删除仍有非共线点的环。
+        assertTrue(rings.stream().anyMatch(ring -> VizEditGeometry.signedArea(ring) == 0 && VizEditGeometry.simplify(ring).size() >= 3));
+        assertEquals(2, rings.size());
+        assertEquals("vizedit.error.geometry_disconnected", VizEditGeometry.validate(result).errorKey());
+    }
+
+    @Test
     void fractionalSlopingEdgesKeepTheirExactGeometry() {
         List<Vertex> points = new ArrayList<>();
         points.add(new Vertex(0.125, 0.25));

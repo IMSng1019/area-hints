@@ -2544,6 +2544,7 @@
   "vizedit.client.simplified": "Boundary simplified: %s → %s vertices.",
   "vizedit.client.save_normalized": "Optimized before saving: %s → %s vertices. Coordinates use one decimal place.",
   "vizedit.client.simplify_unchanged": "Cannot simplify further while preserving the boundary structure and deviation limit.",
+  "vizedit.client.geometry_location": "Problem location: X %s, Z %s (red marker).",
   "vizedit.error.invalid": "Invalid edit. Check the name, properties and data format.",
   "vizedit.error.precision": "The vertex precision in this approval request does not meet the current saving rules. Edit and submit it again.",
   "vizedit.error.conflict": "The target or affected descendants changed. Reopen the editor; your draft is preserved.",

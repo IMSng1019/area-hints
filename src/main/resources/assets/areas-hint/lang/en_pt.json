@@ -2544,6 +2544,7 @@
   "vizedit.client.simplified": "BORDR SIMPLIFIED: %s → %s POINTZ.",
   "vizedit.client.save_normalized": "OPTIMIZED BEFORE SAVIN: %s → %s POINTZ. COORDZ KEEP 1 DECIMAL PLACE.",
   "vizedit.client.simplify_unchanged": "CANT SIMPLIFY MOAR AN KEEP BORDR STRUCTUR AN WIGGL LIMIT.",
+  "vizedit.client.geometry_location": "Trouble be at X %s, Z %s (red mark).",
   "vizedit.error.invalid": "BAD EDIT. CHECK TEH NAME, PROPERTIEZ AN DATA FORMAT.",
   "vizedit.error.precision": "DIS APPROVAL REQUEST HAZ POINT PRECISION DAT DONT FIT TEH CURRENT SAVIN RULEZ. EDIT AN SUBMIT AGAIN.",
   "vizedit.error.conflict": "TEH TARGET OR CHILD DOMAINZ CHAYNJD. OPEN TEH EDITOR AGAIN; UR DRAFT IZ SAFE.",

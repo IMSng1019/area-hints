@@ -129,6 +129,45 @@ class VizEditGeometryTest {
     }
 
     @Test
+    void successiveBrushStrokesFillVoidsExposedByRebuildingOptimizedEdges() {
+        Area empty = new Area();
+        Area first = VizEditGeometry.fillNewlyEnclosed(empty,
+            VizEditGeometry.stroke(points(68, 41, 75, 63, 88, 69, 79, 73, 81, 68), 4));
+        Area before = VizEditGeometry.optimize(first, empty);
+        assertTrue(VizEditGeometry.validate(before).valid());
+        List<Vertex> second = points(74, 63, 71, 75, 81, 64);
+        Area filled = before;
+        for (int count = 1; count <= second.size(); count++) {
+            Area painted = VizEditGeometry.union(before, VizEditGeometry.stroke(second.subList(0, count), 1));
+            filled = VizEditGeometry.fillNewlyEnclosed(before, painted);
+        }
+        var checked = VizEditGeometry.validate(filled);
+        assertTrue(checked.valid(), checked.errorKey());
+        assertTrue(filled.contains(78.1, 69.2));
+        Area completed = VizEditGeometry.optimize(filled, before);
+        assertTrue(VizEditGeometry.validate(completed).valid());
+        assertDoesNotThrow(() -> VizEditGeometry.prepareForSave(completed));
+    }
+
+    @Test
+    void closingNewVoidsLeavesAnExistingFractionalHoleExact() {
+        Area empty = new Area();
+        Area first = VizEditGeometry.fillNewlyEnclosed(empty,
+            VizEditGeometry.stroke(points(68, 41, 75, 63, 88, 69, 79, 73, 81, 68), 4));
+        Area before = VizEditGeometry.optimize(first, empty);
+        Area oldDomain = VizEditGeometry.rectangle(100, 40, 110, 80, false);
+        oldDomain.subtract(VizEditGeometry.fromVertices(points(102.25, 45.125, 107.375, 46.25, 105.5, 75.875)));
+        before.add(oldDomain);
+        Area painted = VizEditGeometry.union(before, VizEditGeometry.stroke(points(74, 63, 71, 75, 81, 64), 1));
+        Area filled = VizEditGeometry.fillNewlyEnclosed(before, painted);
+        Area preserved = new Area(filled);
+        preserved.intersect(VizEditGeometry.rectangle(100, 40, 110, 80, false));
+        assertTrue(preserved.equals(oldDomain));
+        assertTrue(filled.contains(78.1, 69.2));
+        assertEquals(1, VizEditGeometry.contours(filled).stream().filter(ring -> VizEditGeometry.signedArea(ring) > 0).count());
+    }
+
+    @Test
     void fillingNewVoidKeepsTheUnpaintedPartOfAnOldHole() {
         Area before = VizEditGeometry.subtract(VizEditGeometry.rectangle(0, 0, 12, 12, false),
             VizEditGeometry.rectangle(4, 4, 8, 8, false));

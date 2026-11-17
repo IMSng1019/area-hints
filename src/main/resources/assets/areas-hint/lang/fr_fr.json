@@ -2544,6 +2544,7 @@
   "vizedit.client.simplified": "Limite simplifiée : %s → %s sommets.",
   "vizedit.client.save_normalized": "Optimisation avant l’enregistrement : %s → %s sommets. Coordonnées avec une décimale.",
   "vizedit.client.simplify_unchanged": "Impossible de simplifier davantage tout en conservant la structure de la limite et l'écart maximal.",
+  "vizedit.client.geometry_location": "Emplacement du problème : X %s, Z %s (repère rouge).",
   "vizedit.error.invalid": "Modification invalide. Vérifiez le nom, les propriétés et le format des données.",
   "vizedit.error.precision": "La précision des sommets de cette demande d’approbation ne respecte pas les règles d’enregistrement actuelles. Modifiez-la et soumettez-la à nouveau.",
   "vizedit.error.conflict": "La cible ou ses descendants ont changé. Rouvrez l'éditeur ; votre brouillon est conservé.",

@@ -5,10 +5,13 @@ import areahint.data.AreaData.Vertex;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
+import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 // 形状布尔运算与工具参考 Province（MIT，Copyright (c) 2026 Shuuki_），许可证随模组放在 META-INF/Province-LICENSE。
 public final class VizEditGeometry {
@@ -70,12 +73,40 @@ public final class VizEditGeometry {
         Path2D.Double path = new Path2D.Double(Path2D.WIND_NON_ZERO);
         for (List<Vertex> ring : rings) if (signedArea(ring) < 0) appendRing(path, ring, false);
         Area exterior = new Area(path);
+        Set<List<Long>> seen = new HashSet<>();
+        while (true) {
+            List<List<Vertex>> exteriorRings = contours(exterior);
+            if (exteriorRings.stream().noneMatch(ring -> signedArea(ring) > 0)) break;
+            // 重建会把斜边与格栅角的近接触继续分成内环，必须填完这些新洞后才恢复旧洞。
+            // 按路径类型及坐标的精确位模式检测循环；无进展时保留整笔原稿，由保存校验报告真实问题。
+            if (!seen.add(pathState(exterior))) return copy(painted);
+            path.reset();
+            for (List<Vertex> ring : exteriorRings) if (signedArea(ring) < 0) appendRing(path, ring, false);
+            exterior = new Area(path);
+        }
         if (remaining.isEmpty()) return exterior;
         // 先规范化外环的绕数，再反向写入仍未涂掉的旧洞，防止嵌套岛的内洞被重复绕数填满。
         path.reset();
         path.append(exterior.getPathIterator(null), false);
         for (List<Vertex> ring : contours(remaining)) appendRing(path, ring, true);
         return new Area(path);
+    }
+
+    private static List<Long> pathState(Area shape) {
+        List<Long> state = new ArrayList<>();
+        PathIterator iterator = shape.getPathIterator(null);
+        double[] coordinates = new double[6];
+        while (!iterator.isDone()) {
+            int kind = iterator.currentSegment(coordinates);
+            state.add((long) kind);
+            // 轮廓提取已拒绝曲线，此处只记录直线端点和闭合标记，不使用布尔差集判断路径相同。
+            if (kind != PathIterator.SEG_CLOSE) {
+                state.add(Double.doubleToLongBits(coordinates[0]));
+                state.add(Double.doubleToLongBits(coordinates[1]));
+            }
+            iterator.next();
+        }
+        return state;
     }
 
     private static void appendRing(Path2D.Double path, List<Vertex> ring, boolean reverse) {

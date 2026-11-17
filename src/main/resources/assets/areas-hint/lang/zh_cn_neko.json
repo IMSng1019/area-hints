@@ -2544,6 +2544,7 @@
   "vizedit.client.simplified": "边界已简化：%s → %s 个顶点喵。",
   "vizedit.client.save_normalized": "保存前已整体优化：%s → %s 个顶点，坐标保留一位小数喵。",
   "vizedit.client.simplify_unchanged": "保留边界结构和偏移限制时，不能再简化啦喵。",
+  "vizedit.client.geometry_location": "问题在 X %s，Z %s 喵（红色标记）。",
   "vizedit.error.invalid": "无效的编辑内容，请检查名称、属性和数据格式喵",
   "vizedit.error.precision": "这份审批申请的顶点精度不符合现在的保存规则，请重新编辑并提交喵。",
   "vizedit.error.conflict": "目标或受影响后代已发生变化，请重新打开编辑器；当前草稿仍保留喵",

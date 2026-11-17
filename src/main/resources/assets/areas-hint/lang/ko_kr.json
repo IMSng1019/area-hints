@@ -2544,6 +2544,7 @@
   "vizedit.client.simplified": "경계를 단순화했습니다: 꼭짓점 %s → %s개.",
   "vizedit.client.save_normalized": "저장 전 전체 최적화: 꼭짓점 %s → %s개. 좌표는 소수점 이하 한 자리로 저장됩니다.",
   "vizedit.client.simplify_unchanged": "경계 구조와 편차 한도를 유지하면서 더 단순화할 수 없습니다.",
+  "vizedit.client.geometry_location": "문제 위치: X %s, Z %s (빨간색 표시).",
   "vizedit.error.invalid": "잘못된 편집 내용입니다. 이름, 속성 및 데이터 형식을 확인하세요.",
   "vizedit.error.precision": "이 승인 신청의 꼭짓점 정밀도가 현재 저장 규칙에 맞지 않습니다. 다시 편집한 후 제출하세요.",
   "vizedit.error.conflict": "대상 또는 영향받는 하위 영역이 변경되었습니다. 편집기를 다시 여세요. 초안은 유지됩니다.",

@@ -5,6 +5,7 @@ import areahint.data.AreaData;
 import areahint.data.AreaData.Vertex;
 import areahint.i18n.I18nManager;
 import areahint.vizedit.geometry.BoundaryBrush;
+import areahint.vizedit.geometry.GeometryIssueLocator;
 import areahint.vizedit.geometry.VizEditGeometry;
 
 import java.awt.geom.Area;
@@ -150,9 +151,19 @@ public final class VizEditScreen extends Screen {
         // Xaero 首帧已建立相机后再定位，避免 init 中被地图自己的重置步骤覆盖。
         // 按住不动时也让异步地图数据继续被识别，两种画布遵守同样的重试节奏。
         if (drawing && boundaryStroke != null && Double.isFinite(sampledX)) updateStroke(sampledX, sampledY);
-        if (session.focusRequested && session.draft != null && !session.draft.shape.isEmpty() && canvas.isCurrentDimension()) {
-            canvas.frame(session.draft.shape.getBounds2D(), panelWidth, canvasTop, width - panelWidth, canvasBottom - canvasTop);
-            session.focusRequested = false;
+        // 定位请求仅在手势结束且维度一致时消费，避免镜头移动改变当前笔画的世界坐标。
+        if (!drawing && !panning && !draggingBrushWidth && session.draft != null && canvas.isCurrentDimension()) {
+            GeometryIssueLocator.Issue focus = session.geometryFocus.consume(session.draft.shape);
+            if (focus == null && session.focusRequested) focus = session.geometryFocus.current(session.draft.shape);
+            if (focus != null) {
+                // Xaero 的取景接口只平移，直接居中实际标记点；网格则缩放到完整问题轮廓。
+                Rectangle2D target = canvas.isTerrain() ? new Rectangle2D.Double(focus.x(), focus.z(), 0, 0) : focus.bounds();
+                canvas.frame(target, panelWidth, canvasTop, width - panelWidth, canvasBottom - canvasTop);
+                session.focusRequested = false;
+            } else if (session.focusRequested && !session.draft.shape.isEmpty()) {
+                canvas.frame(session.draft.shape.getBounds2D(), panelWidth, canvasTop, width - panelWidth, canvasBottom - canvasTop);
+                session.focusRequested = false;
+            }
         }
         if (!canvas.isTerrain()) {
             context.fill(panelWidth, canvasTop, width, canvasBottom, 0xFF151E29);
@@ -182,7 +193,14 @@ public final class VizEditScreen extends Screen {
         label(context, mode, panelWidth + 5, canvasTop - 13, width - panelWidth - 10, 0xFFDD77);
         String status = VizEditClientManager.isBusy() ? t("vizedit.ui.busy") : session.status;
         if (status.isEmpty()) status = t("vizedit.ui.help");
-        label(context, status, 7, height - 20, width - 14, session.invalid ? 0xFF8888 : 0xCFD6DF);
+        GeometryIssueLocator.Issue issue = session.draft == null ? null : session.geometryFocus.current(session.draft.shape);
+        if (issue != null && !VizEditClientManager.isBusy()) {
+            String location = I18nManager.translate("vizedit.client.geometry_location",
+                String.format(Locale.ROOT, "%.2f", issue.x()), String.format(Locale.ROOT, "%.2f", issue.z()));
+            label(context, status, 7, height - 25, width - 14, 0xFF8888);
+            label(context, location, 7, height - 13, width - 14, 0xFFB0B0);
+            status += " " + location;
+        } else label(context, status, 7, height - 20, width - 14, session.invalid ? 0xFF8888 : 0xCFD6DF);
         if (mouseY >= canvasTop && mouseY < canvasBottom && mouseX > panelWidth) {
             String coordinates = String.format(Locale.ROOT, "X %.2f  Z %.2f · %s", canvas.worldX(mouseX), canvas.worldZ(mouseY),
                 I18nManager.translate("vizedit.ui.brush_width", session.brushWidth));
@@ -222,7 +240,7 @@ public final class VizEditScreen extends Screen {
                 List<List<Vertex>> contours = VizEditGeometry.contours(session.draft.shape);
                 drawPolygon(context, contours, "delete".equals(session.operation) ? 0x55FF5666 : 0x5548B9DF,
                     "delete".equals(session.operation) ? 0xFFFF6677 : 0xFFFFD166, true);
-            } catch (VizEditGeometry.GeometryException e) { session.status = t(e.errorKey()); }
+            } catch (VizEditGeometry.GeometryException e) { session.reportError(e.errorKey()); }
         }
         // 使用同一画布投影显示智能限制线，撤销替换草稿后旧预览立即失效。
         if (session.tool == VizEditSession.Tool.BOUNDARY && guideDraft == session.draft) {
@@ -230,7 +248,23 @@ public final class VizEditScreen extends Screen {
                 canvas.screenX(edge[0]), canvas.screenY(edge[1]), canvas.screenX(edge[2]), canvas.screenY(edge[3])
             }, 0xFF70F0A8);
         }
+        drawGeometryIssue(context);
         context.disableScissor();
+    }
+
+    private void drawGeometryIssue(GuiGraphicsExtractor context) {
+        if (session.draft == null || !canvas.isCurrentDimension()) return;
+        GeometryIssueLocator.Issue issue = session.geometryFocus.current(session.draft.shape);
+        if (issue == null) return;
+        double screenX = canvas.screenX(issue.x()), screenY = canvas.screenY(issue.z());
+        if (!Double.isFinite(screenX) || !Double.isFinite(screenY) || screenX < panelWidth || screenX >= width
+                || screenY < canvasTop || screenY >= canvasBottom) return;
+        int x = (int) Math.round(screenX), y = (int) Math.round(screenY);
+        // 标记使用固定屏幕尺寸，即使问题轮廓小于一个像素也能看到具体位置。
+        context.fill(x - 8, y - 2, x + 9, y + 3, 0xFF301018);
+        context.fill(x - 2, y - 8, x + 3, y + 9, 0xFF301018);
+        context.fill(x - 7, y, x + 8, y + 1, 0xFFFF5555);
+        context.fill(x, y - 7, x + 1, y + 8, 0xFFFF5555);
     }
 
     // 以屏幕扫描线填充草稿，孔洞和不连续部分也可预览；最终保存仍交几何内核严格校验。
@@ -384,13 +418,13 @@ public final class VizEditScreen extends Screen {
                     Area optimized = optimizeDrawing(combined, before);
                     if (!before.equals(optimized)) { session.checkpoint(); session.draft.shape = optimized; }
                 }
-            } catch (VizEditGeometry.GeometryException e) { session.status = t(e.errorKey()); }
+            } catch (VizEditGeometry.GeometryException e) { session.reportError(e.errorKey()); }
             return true;
         }
         boundaryStroke = null;
         if (session.tool == VizEditSession.Tool.BOUNDARY) {
             try { boundaryStroke = session.startBoundaryStroke(BoundaryTerrainSource.open(session.dimension)); }
-            catch (VizEditGeometry.GeometryException e) { session.status = t(e.errorKey()); return true; }
+            catch (VizEditGeometry.GeometryException e) { session.reportError(e.errorKey()); return true; }
             catch (IllegalArgumentException e) { session.status = t("vizedit.client.invalid_fields"); return true; }
         }
         drawing = true; stroke.clear(); beforeStroke = new Area(session.draft.shape); beforeDraft = session.draft.copy();
@@ -450,7 +484,7 @@ public final class VizEditScreen extends Screen {
             // 选区笔闭合后立即预览实心内部，填充与本次笔画共用同一撤销记录。
             session.draft.shape = session.tool == VizEditSession.Tool.BRUSH ? VizEditGeometry.fillNewlyEnclosed(beforeStroke, painted) : painted;
             session.status = "";
-        } catch (VizEditGeometry.GeometryException e) { session.status = t(e.errorKey()); }
+        } catch (VizEditGeometry.GeometryException e) { session.reportError(e.errorKey()); }
         catch (IllegalArgumentException e) { session.status = t("vizedit.error.geometry_limit"); }
     }
     @Override public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent clickEvent) {
@@ -489,6 +523,8 @@ public final class VizEditScreen extends Screen {
         if (!session.canDraw() || VizEditClientManager.isBusy() || !canvas.isCurrentDimension()) return;
         try {
             Area before = session.draft.shape;
+            var checked = VizEditGeometry.validate(before);
+            if (!checked.valid()) { session.reportError(checked.errorKey()); return; }
             Area optimized = VizEditGeometry.optimize(before, null, session.draft.boundaryState.forbidden());
             if (before.equals(optimized)) {
                 session.status = t("vizedit.client.simplify_unchanged");
@@ -499,7 +535,7 @@ public final class VizEditScreen extends Screen {
             session.checkpoint();
             session.draft.shape = optimized;
             session.status = I18nManager.translate("vizedit.client.simplified", vertexCount(before), vertexCount(optimized));
-        } catch (VizEditGeometry.GeometryException e) { session.status = t(e.errorKey()); }
+        } catch (VizEditGeometry.GeometryException e) { session.reportError(e.errorKey()); }
     }
 
     private static int vertexCount(Area shape) {

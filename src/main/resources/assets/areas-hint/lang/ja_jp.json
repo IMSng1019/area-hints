@@ -2544,6 +2544,7 @@
   "vizedit.client.simplified": "境界を簡略化しました：頂点数 %s → %s。",
   "vizedit.client.save_normalized": "保存前に全体を最適化しました：頂点数 %s → %s。座標は小数第1位まで保存します。",
   "vizedit.client.simplify_unchanged": "境界の構造と偏差の上限を維持したまま、これ以上簡略化することはできません。",
+  "vizedit.client.geometry_location": "問題の位置：X %s、Z %s（赤いマーカー）。",
   "vizedit.error.invalid": "編集内容が無効です。名前、プロパティ、データ形式を確認してください。",
   "vizedit.error.precision": "この承認申請の頂点精度は現在の保存規則に適合していません。再編集して提出し直してください。",
   "vizedit.error.conflict": "対象または影響する子孫領域が変更されました。エディターを開き直してください。下書きは保持されています。",

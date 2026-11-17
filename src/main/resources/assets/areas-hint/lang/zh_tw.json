@@ -2544,6 +2544,7 @@
   "vizedit.client.simplified": "邊界已簡化：%s → %s 個頂點。",
   "vizedit.client.save_normalized": "儲存前已整體最佳化：%s → %s 個頂點，座標保留一位小數。",
   "vizedit.client.simplify_unchanged": "在保留邊界結構和偏移限制的條件下，無法進一步簡化。",
+  "vizedit.client.geometry_location": "問題位置：X %s，Z %s（紅色標記）。",
   "vizedit.error.invalid": "編輯內容無效，請檢查名稱、屬性和資料格式。",
   "vizedit.error.precision": "此審批申請的頂點精度不符合目前的儲存規則，請重新編輯並提交。",
   "vizedit.error.conflict": "目標或受影響後代已變更，請重新開啟編輯器；目前草稿仍保留。",

@@ -2544,6 +2544,7 @@
   "vizedit.client.simplified": "Límite simplificado: %s → %s vértices.",
   "vizedit.client.save_normalized": "Optimizado antes de guardar: %s → %s vértices. Coordenadas con un decimal.",
   "vizedit.client.simplify_unchanged": "No se puede simplificar más conservando la estructura del límite y la desviación máxima.",
+  "vizedit.client.geometry_location": "Ubicación del problema: X %s, Z %s (marca roja).",
   "vizedit.error.invalid": "Edición no válida. Comprueba el nombre, las propiedades y el formato de los datos.",
   "vizedit.error.precision": "La precisión de los vértices de esta solicitud de aprobación no cumple las reglas de guardado actuales. Vuelve a editarla y enviarla.",
   "vizedit.error.conflict": "El objetivo o sus descendientes han cambiado. Vuelve a abrir el editor; tu borrador se conserva.",

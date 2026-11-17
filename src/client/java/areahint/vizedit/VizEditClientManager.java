@@ -369,7 +369,7 @@ public final class VizEditClientManager {
     }
     public static void report(String key) {
         String text = I18nManager.translate(key);
-        if (session != null) session.status = text;
+        if (session != null) text = session.reportError(key);
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player != null) client.player.sendMessage(Text.literal(text), false);
     }

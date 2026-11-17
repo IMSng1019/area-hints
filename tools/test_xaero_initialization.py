@@ -82,12 +82,12 @@ import net.fabricmc.loader.api.FabricLoader;
 public final class XaeroInitializationTest {
     private static final String MINI = "xaerominimap";
     private static final String WORLD = "xaeroworldmap";
-    private static String implementation;
+    private static String factory;
     private static String miniVersion;
     private static String worldVersion;
     private static int failures;
     public static void main(String[] args) throws Exception {
-        implementation = args[0]; miniVersion = args[1]; worldVersion = args[2];
+        factory = args[0]; miniVersion = args[1]; worldVersion = args[2];
         test("both absent", () -> {
             initialize(); expectCalls(0, 0);
         });
@@ -138,7 +138,7 @@ public final class XaeroInitializationTest {
     }
     private static void installBoth() { install(MINI, miniVersion); install(WORLD, worldVersion); }
     private static void initialize() throws Exception {
-        ((XaeroBridgeHost) Class.forName(implementation).getConstructor().newInstance()).initialize();
+        ((XaeroBridgeHost) Class.forName(factory).getMethod("create").invoke(null)).initialize();
     }
     private static void expectCalls(int mini, int world) {
         require(XaeroMinimapBridge.calls == mini, "minimap calls: expected " + mini + ", got " + XaeroMinimapBridge.calls);
@@ -165,6 +165,24 @@ public final class XaeroInitializationTest {
 """
 
 
+UNSUPPORTED_HARNESS = """
+import areahint.AreashintClient;
+import areahint.xaero.XaeroCompatFactory;
+public final class XaeroUnsupportedVersionTest {
+    public static void main(String[] args) {
+        XaeroCompatFactory.create().initialize();
+        if (AreashintClient.LOGGER.info.isEmpty()) throw new AssertionError("应说明本版本未提供地图联动");
+        if (!AreashintClient.LOGGER.warn.isEmpty()) throw new AssertionError("可选依赖缺失不应记录运行错误");
+        if (AreashintClient.LOGGER.enabled("xaerominimap") != 0
+                || AreashintClient.LOGGER.enabled("xaeroworldmap") != 0) {
+            throw new AssertionError("未提供的地图联动不能记录为已启用");
+        }
+        System.out.println("1/1 passed (without Fabric Loader or Xaero classes)");
+    }
+}
+"""
+
+
 def run(command: list[str]) -> subprocess.CompletedProcess:
     return subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace")
 
@@ -174,45 +192,62 @@ def main() -> int:
     if not javac or not java:
         raise SystemExit("需要 PATH 中的 Java 17 或更高版本 JDK（java 与 javac）。")
     properties = dict(re.findall(r"^([^#\s][^=]*)=(.*)$", (ROOT / "gradle.properties").read_text(encoding="utf-8"), re.M))
-    implementations = sorted(ROOT.glob("versions/*/src/client/java/areahint/xaero/XaeroCompatImpl*.java"))
-    implementations += sorted(ROOT.glob("modern/versions/*/src/client/java/areahint/xaero/XaeroCompatImpl*.java"))
-    if len(implementations) != 12:
-        raise SystemExit(f"预期 12 个版本的装配实现，实际 {len(implementations)}；请更新测试矩阵。")
+    versions = sorted(re.findall(r"^deps\.([^\s=]+)\.minecraft=", (ROOT / "gradle.properties").read_text(encoding="utf-8"), re.M))
+    if not versions:
+        raise SystemExit("依赖矩阵没有 Minecraft 构建目标。")
     failed = 0
     with tempfile.TemporaryDirectory(prefix="areas-hint-xaero-init-") as temporary:
         temporary = Path(temporary).resolve()
-        for implementation in implementations:
-            version = implementation.parents[5].name
-            branch = ROOT / "modern" if "modern" in implementation.relative_to(ROOT).parts else ROOT
+        for version in versions:
+            candidates = [branch for branch in (ROOT, ROOT / "modern")
+                          if (branch / f"versions/{version}/src/client/java/areahint/xaero/XaeroCompatFactory.java").is_file()]
+            if len(candidates) != 1:
+                raise SystemExit(f"{version}: 必须有且仅有一个有效的 Xaero 工厂，实际 {len(candidates)}。")
+            branch = candidates[0]
+            factory = branch / f"versions/{version}/src/client/java/areahint/xaero/XaeroCompatFactory.java"
+            implementations = list(factory.parent.glob("XaeroCompatImpl*.java"))
+            dependencies = [properties.get(f"deps.{version}.{name}") for name in ("xaero_minimap", "xaero_world_map")]
+            supported = any(dependencies)
+            if supported and (not all(dependencies) or len(implementations) != 1):
+                raise SystemExit(f"{version}: 地图依赖及装配实现必须完整。")
             directory = temporary / version
             directory.mkdir()
-            sources = dict(SOURCES)
-            for package, name in [("minimap", "XaeroMinimapBridge"), ("worldmap", "XaeroWorldMapBridge")]:
-                sources[f"areahint/xaero/{package}/{name}.java"] = BRIDGE.replace("PACKAGE", package).replace("CLASS", name)
-            sources["XaeroInitializationTest.java"] = HARNESS
+            if supported:
+                sources = dict(SOURCES)
+                for package, name in [("minimap", "XaeroMinimapBridge"), ("worldmap", "XaeroWorldMapBridge")]:
+                    sources[f"areahint/xaero/{package}/{name}.java"] = BRIDGE.replace("PACKAGE", package).replace("CLASS", name)
+                sources["XaeroInitializationTest.java"] = HARNESS
+            else:
+                # 无官方依赖的版本只提供日志宿主，编译与运行类路径都不放入任何地图或加载器类型。
+                sources = {"areahint/AreashintClient.java": SOURCES["areahint/AreashintClient.java"],
+                           "XaeroUnsupportedVersionTest.java": UNSUPPORTED_HARNESS}
             for relative, source in sources.items():
                 target = directory / relative
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text(source, encoding="utf-8")
             host = branch / "src/client/java/areahint/xaero/XaeroBridgeHost.java"
             compilation = run([javac, "--release", "17", "-encoding", "UTF-8", "-d", str(directory),
-                               str(implementation), str(host), *map(str, directory.rglob("*.java"))])
+                               str(factory), str(host), *map(str, implementations if supported else []),
+                               *map(str, directory.rglob("*.java"))])
             if compilation.returncode:
                 print(f"{version}: compile FAILED\n{compilation.stderr}")
                 failed += 1
                 continue
-            versions = []
-            for dependency in ["xaero_minimap", "xaero_world_map"]:
-                key = f"deps.{version}.{dependency}"
-                versions.append(properties.get(f"{key}_suggest", properties[key].split("_", 1)[0]))
-            result = run([java, "-cp", str(directory), "XaeroInitializationTest",
-                          f"areahint.xaero.{implementation.stem}", *versions])
+            if supported:
+                dependency_versions = []
+                for dependency in ["xaero_minimap", "xaero_world_map"]:
+                    key = f"deps.{version}.{dependency}"
+                    dependency_versions.append(properties.get(f"{key}_suggest", properties[key].split("_", 1)[0]))
+                result = run([java, "-cp", str(directory), "XaeroInitializationTest",
+                              "areahint.xaero.XaeroCompatFactory", *dependency_versions])
+            else:
+                result = run([java, "-cp", str(directory), "XaeroUnsupportedVersionTest"])
             print(f"{version}: {result.stdout.strip()}")
             if result.returncode:
                 failed += 1
                 if result.stderr:
                     print(result.stderr)
-    print(f"Xaero initialization: {len(implementations) - failed}/{len(implementations)} versions passed")
+    print(f"Xaero initialization: {len(versions) - failed}/{len(versions)} versions passed")
     return int(failed != 0)
 
 

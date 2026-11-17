@@ -212,6 +212,21 @@ processResources {
 	}
 }
 
+tasks.named('processClientResources') {
+	// 1.21.9 的 Fabric 尚无世界渲染事件，只为此节点注册对应的原版注入桥接。
+	def extraClientMixins = mcVersion == '1.21.9' ? ['WorldRenderer1219Mixin'] : []
+	inputs.property 'extraClientMixins', extraClientMixins
+	doLast {
+		if (!extraClientMixins.isEmpty()) {
+			def outputDir = outputs.files.files.find { it.isDirectory() }
+			def mixinFile = new File(outputDir, 'areas-hint.client.mixins.json')
+			def mixinConfig = new groovy.json.JsonSlurper().parse(mixinFile, 'UTF-8')
+			mixinConfig.client = (mixinConfig.client + extraClientMixins).unique()
+			mixinFile.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(mixinConfig)) + '\n', 'UTF-8')
+		}
+	}
+}
+
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = Integer.parseInt(javaDep)
 }

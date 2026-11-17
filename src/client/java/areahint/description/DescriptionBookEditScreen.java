@@ -201,8 +201,8 @@ public final class DescriptionBookEditScreen extends Screen {
         int textX = bookX + PAGE_TEXT_X_OFFSET;
         int textY = PAGE_TEXT_Y_OFFSET;
         String page = getCurrentPageContent();
-        // 1.21.2 起 drawTextWrapped 改名为 drawWrappedText 并新增阴影参数（原方法无阴影，传 false）
-        //? if <=1.21.1 {
+        // 1.21.4 起 drawTextWrapped 改名为 drawWrappedText 并新增阴影参数（原方法无阴影，传 false）。
+        //? if <1.21.4 {
         context.drawTextWrapped(textRenderer, Text.literal(page), textX, textY, MAX_TEXT_WIDTH, 0xFF000000);
         //?} else {
         /*context.drawWrappedText(textRenderer, Text.literal(page), textX, textY, MAX_TEXT_WIDTH, 0xFF000000, false);*/

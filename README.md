@@ -11,10 +11,10 @@
 <h1 align="center">Areas Hint</h1>
 
 <p align="center">
-  <img alt="Minecraft build targets" src="https://img.shields.io/badge/Minecraft-1.20.1%20%7C%201.20.4%20%7C%201.20.6%20%7C%201.21.1%20%7C%201.21.4%20%7C%201.21.5%20%7C%201.21.8%20%7C%201.21.10%20%7C%201.21.11%20%7C%2026.1.2%20%7C%2026.2%20%7C%2026.3-3C8527?style=flat-square">
+  <img alt="Minecraft build targets" src="https://img.shields.io/badge/Minecraft-1.20.1%20%7C%201.20.2%20%7C%201.20.4%20%7C%201.20.6%20%7C%201.21.1%20%7C%201.21.2%20%7C%201.21.3%20%7C%201.21.4%20%7C%201.21.5%20%7C%201.21.8%20%7C%201.21.9%20%7C%201.21.10%20%7C%201.21.11%20%7C%2026.1.2%20%7C%2026.2%20%7C%2026.3-3C8527?style=flat-square">
   <img alt="Fabric" src="https://img.shields.io/badge/Loader-Fabric-DBD0B4?style=flat-square">
   <img alt="Java" src="https://img.shields.io/badge/Java-17%20%2F%2021-ED8B00?style=flat-square&logo=openjdk&logoColor=white">
-  <img alt="Source version" src="https://img.shields.io/badge/Mod-4.8.0-8A2BE2?style=flat-square">
+  <img alt="Source version" src="https://img.shields.io/badge/Mod-4.8.5-8A2BE2?style=flat-square">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-blue?style=flat-square">
 </p>
 
@@ -46,7 +46,7 @@
 
 ## Overview
 
-Areas Hint is a **Minecraft Fabric** mod for naming places in your world. The current source version is **4.8.0**. A region can be a polygon with an altitude range, and regions can form a hierarchy such as **Kingdom → Capital → Throne Room**.
+Areas Hint is a **Minecraft Fabric** mod for naming places in your world. The current source version is **4.8.5**. A region can be a polygon with an altitude range, and regions can form a hierarchy such as **Kingdom → Capital → Throne Room**.
 
 Use it for RPG servers, adventure maps, building showcases, or landmarks in a survival world. Players can create and edit areas through commands, clickable chat prompts, and an in-game command panel.
 
@@ -90,19 +90,23 @@ These are the targets currently enabled in `settings.gradle`, with dependencies 
 | Minecraft build target | Minimum Java | Minimum Fabric Loader | Fabric API used by the build |
 |---|---|---|---|
 | `1.20.1` | `17` | `0.16.14` | `0.92.12+1.20.1` |
+| `1.20.2` | `17` | `0.19.5` | `0.91.6+1.20.2` |
 | `1.20.4` (development baseline) | `17` | `0.16.14` | `0.97.2+1.20.4` |
 | `1.20.6` | `21` | `0.16.14` | `0.100.8+1.20.6` |
 | `1.21.1` | `21` | `0.16.14` | `0.116.17+1.21.1` |
+| `1.21.2` | `21` | `0.19.5` | `0.106.1+1.21.2` |
+| `1.21.3` | `21` | `0.19.5` | `0.114.1+1.21.3` |
 | `1.21.4` | `21` | `0.19.5` | `0.119.4+1.21.4` |
 | `1.21.5` | `21` | `0.19.5` | `0.128.2+1.21.5` |
 | `1.21.8` | `21` | `0.19.5` | `0.136.1+1.21.8` |
+| `1.21.9` | `21` | `0.19.5` | `0.134.1+1.21.9` |
 | `1.21.10` | `21` | `0.19.5` | `0.138.4+1.21.10` |
 | `1.21.11` | `21` | `0.19.5` | `0.141.6+1.21.11` |
 | `26.1.2` | `25` | `0.19.5` | `0.155.3+26.1.2` |
 | `26.2` | `25` | `0.19.5` | `0.161.0+26.2` |
 | `26.3` | `25` | `0.19.5` | `0.166.2+26.3` |
 
-Each JAR targets one Minecraft version. Install the matching JAR and Fabric API. All twelve targets pass the build and automated tests. Builds from `1.21.5` use version-specific GPU rendering backends; in-game rendering and multiplayer verification are still pending.
+Each JAR targets one Minecraft version. Install the matching JAR and Fabric API. All sixteen targets pass the build and automated tests (3,270 tests across the targets). Builds from `1.21.5` use version-specific GPU rendering backends; in-game rendering and multiplayer verification are still pending.
 
 LuckPerms, BlueMap, Mod Menu, Xaero's Minimap, Xaero's World Map, and VulkanMod are optional. See [Optional integrations](#compatibility) for their roles and the Xaero compatibility baselines.
 
@@ -828,12 +832,16 @@ Xaero integrations check the installed interfaces instead of requiring an exact 
 | Minecraft | Xaero's Minimap | Xaero's World Map |
 |---|---|---|
 | `1.20.1` | `25.3.2` | `1.39.2` |
+| `1.20.2` | `25.2.0` | `1.39.2` |
 | `1.20.4` | `25.2.0` | `1.39.2` |
 | `1.20.6` | `25.2.10` | `1.39.12` |
 | `1.21.1` | `25.3.2` | `1.39.2` |
+| `1.21.2` | No upstream Fabric release | No upstream Fabric release |
+| `1.21.3` | `25.2.0` | `1.39.2` |
 | `1.21.4` | `25.3.2` | `1.39.2` |
 | `1.21.5` | `25.3.2` | `1.39.5` |
 | `1.21.8` | `25.3.2` | `1.40.2` |
+| `1.21.9` | `25.2.15` | `1.39.17` |
 | `1.21.10` | `25.3.2` | `1.40.2` |
 | `1.21.11` | `25.3.2` | `1.40.2` |
 | `26.1.2` | `26.6.2` | `1.47.2` |
@@ -841,6 +849,8 @@ Xaero integrations check the installed interfaces instead of requiring an exact 
 | `26.3` | `26.6.2` | `1.47.2` |
 
 Sodium is listed as a suggested mod in the metadata. Compatibility with other rendering, performance, and map mods depends on the Minecraft version and modpack. Optional integrations are not bundled with Areas Hint.
+
+Minecraft `1.21.2` runs the core area features and standalone editor without Xaero integration: neither map has an official Fabric file for this target, and the `1.21.3` files explicitly exclude it. The other new targets use the corresponding map versions listed above. See the [intermediate-version adaptation record](docs/plans/2026-11-18-intermediate-fabric-support.md).
 
 <a id="development"></a>
 
@@ -877,9 +887,9 @@ In Windows PowerShell, replace `./gradlew` with `.\gradlew.bat`:
 Stonecutter places legacy outputs under `versions/<Minecraft-version>/build/libs/` and modern outputs under `modern/versions/<Minecraft-version>/build/libs/`. Filenames follow `mod-name-loader-Minecraft-version-mod-version`:
 
 ```text
-versions/1.20.4/build/libs/areas-hint-fabric-1.20.4-4.8.0.jar
-versions/1.21.4/build/libs/areas-hint-fabric-1.21.4-4.8.0.jar
-modern/versions/26.3/build/libs/areas-hint-fabric-26.3-4.8.0.jar
+versions/1.20.4/build/libs/areas-hint-fabric-1.20.4-4.8.5.jar
+versions/1.21.4/build/libs/areas-hint-fabric-1.21.4-4.8.5.jar
+modern/versions/26.3/build/libs/areas-hint-fabric-26.3-4.8.5.jar
 ```
 
 Install the regular JAR, not the `-sources.jar` or `-dev.jar`. The `mod_loader` property only affects artifact naming; changing it does not convert the Fabric mod into a Forge or NeoForge mod.

@@ -150,8 +150,8 @@ public class WizardLongTextInputScreen extends CommandWizardScreen {
         int boxHeight = Math.max(70, this.height - 118);
         context.fill(x - 2, boxY - 2, x + contentWidth + 2, boxY + boxHeight + 2, 0x99202020);
         areahint.util.GuiDrawCompat.drawBorder(context, x - 2, boxY - 2, contentWidth + 4, boxHeight + 4, 0xCCAAAAAA);
-        // 1.21.2 起 drawTextWrapped 改名为 drawWrappedText 并新增阴影参数（原方法无阴影，传 false）
-        //? if <=1.21.1 {
+        // 1.21.4 起 drawTextWrapped 改名为 drawWrappedText 并新增阴影参数（原方法无阴影，传 false）。
+        //? if <1.21.4 {
         context.drawTextWrapped(this.textRenderer, Text.literal(this.text), x + 4, boxY + 4, contentWidth - 8, 0xFFFFFFFF);
         //?} else {
         /*context.drawWrappedText(this.textRenderer, Text.literal(this.text), x + 4, boxY + 4, contentWidth - 8, 0xFFFFFFFF, false);*/

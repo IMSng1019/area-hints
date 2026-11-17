@@ -9,17 +9,17 @@ import net.minecraft.client.gui.widget.ElementListWidget;
  */
 public abstract class CompatEntryListWidget<E extends ElementListWidget.Entry<E>> extends ElementListWidget<E> {
     protected CompatEntryListWidget(MinecraftClient client, int width, int height, int y, int itemHeight) {
-        // 1.20.2 起构造器只收一个 y，1.20.1 需要 top/bottom 两个绝对坐标，分支收敛在此处
-        //? if >=1.20.2 {
+        // 1.20.3 起构造器只收一个 y，旧版需要 top/bottom 两个绝对坐标，分支收敛在此处。
+        //? if >=1.20.3 {
         super(client, width, height, y, itemHeight);
         //?} else {
         /*super(client, width, height, y, y + height, itemHeight);*/
         //?}
     }
 
-    // 新版滚动控件将 Amount 改为 Y，页面更新列表时通过统一入口保留滚动位置。
+    // 1.21.4 起滚动控件将 Amount 改为 Y，页面更新列表时通过统一入口保留滚动位置。
     public double getScrollOffset() {
-        //? if <=1.21.1 {
+        //? if <1.21.4 {
         return getScrollAmount();
         //?} else {
         /*return getScrollY();*/
@@ -27,7 +27,7 @@ public abstract class CompatEntryListWidget<E extends ElementListWidget.Entry<E>
     }
 
     public void setScrollOffset(double offset) {
-        //? if <=1.21.1 {
+        //? if <1.21.4 {
         setScrollAmount(offset);
         //?} else {
         /*setScrollY(offset);*/

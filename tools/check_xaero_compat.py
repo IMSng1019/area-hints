@@ -50,6 +50,7 @@ class JavaClass:
             index += 1
         utf = lambda i: pool[i][1]
         cls = lambda i: utf(pool[i][1]) if i else None
+        self.class_references = [cls(i) for i, entry in enumerate(pool) if entry and entry[0] == 7]
         self.access = u2()
         self.name = cls(u2())
         self.parent = cls(u2())
@@ -211,6 +212,32 @@ def main():
         project = root / ('modern/versions' if version.startswith('26.') else 'versions') / version
         artifact = project / 'build/libs' / f"areas-hint-fabric-{version}-{props['mod_version']}.jar"
         try:
+            configured = [f'deps.{version}.{name}' in props for name in ('xaero_minimap', 'xaero_world_map')]
+            if not any(configured):
+                # 上游没有对应版本时仍检查真实成品，确保核心代码不残留第三方硬链接。
+                compiled = classes_from_jar(artifact, prefix='areahint/')
+                if not compiled:
+                    raise ValueError('成品没有域名实现类，不能作为无依赖目标通过检查')
+                problems = []
+                for cls in compiled.values():
+                    # 类常量覆盖继承、类型转换和类字面量，描述符另覆盖未在方法体中使用的字段与参数。
+                    referenced_types = set(cls.class_references)
+                    descriptors = [descriptor for _, descriptor in list(cls.fields) + list(cls.methods)]
+                    descriptors.extend(reference[3] for reference in cls.references)
+                    for descriptor in descriptors:
+                        referenced_types.update(re.findall(r'L([^;]+);', descriptor))
+                    for reference in referenced_types:
+                        name = reference.lstrip('[')
+                        if name.startswith('L') and name.endswith(';'):
+                            name = name[1:-1]
+                        if name.startswith(('xaero/', 'xaerolib/')):
+                            problems.append((cls.name, name))
+                checks += 1
+                failures += bool(problems)
+                print(f'{version} without Xaero: {len(problems)} hard dependency references')
+                for issue in problems:
+                    print(f'  FAIL {issue}')
+                continue
             baseline = []
             for name, slug in (('xaero_minimap', 'xaeros-minimap'), ('xaero_world_map', 'xaeros-world-map')):
                 dep = props[f'deps.{version}.{name}']

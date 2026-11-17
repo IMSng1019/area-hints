@@ -4,12 +4,13 @@ import areahint.data.AreaData.Vertex;
 import java.awt.geom.Area;
 import java.util.List;
 
-// 保存仍遵守原有精度和拓扑要求，智能边界只增加一道针对实际新增面积的保护。
+// 主动保存只检查原有精度和拓扑要求，边界笔禁区仅保护绘制过程中的自动优化。
 public final class BoundarySaveGuard {
     private BoundarySaveGuard() { }
 
-    public static List<Vertex> prepare(Area shape, Area forbidden) {
-        return VizEditGeometry.prepareForSave(shape, forbidden);
+    public static List<Vertex> prepare(Area shape, Area ignoredForbidden) {
+        // 保留原入口参数以兼容草稿调用，主动保存不再因量化后的边界越过辅助限制而拒绝。
+        return VizEditGeometry.prepareForSave(shape);
     }
 
     public static boolean allows(Area candidate, Area before, Area forbidden) {

@@ -356,16 +356,17 @@ class BoundaryBrushTest {
     }
 
     @Test
-    void negativeFractionalOffsetDoesNotCauseFalseSaveViolation() {
+    void negativeFractionalOffsetKeepsDrawingWithinGuideAndAllowsSaving() {
         BoundaryBrush.Terrain coast = (x, z) -> x < -5 ? BoundaryBrush.LAND : BoundaryBrush.WATER;
         var brush = stroke(rectangle(-12, -4, -6, 4), new BoundaryBrush.State(), coast, 4);
         brush.paint(new Vertex(-5.2, -0.2));
         var result = brush.paint(new Vertex(-3.7, -0.2));
         assertEquals(1.3, result.offset(), 0.00001);
-        var saved = assertDoesNotThrow(() -> BoundarySaveGuard.prepare(result.shape(), result.state().forbidden()));
-        Area overlap = VizEditGeometry.fromVertices(saved);
+        Area overlap = new Area(result.shape());
         overlap.intersect(result.state().forbidden());
         assertTrue(overlap.isEmpty());
+        var saved = assertDoesNotThrow(() -> BoundarySaveGuard.prepare(result.shape(), result.state().forbidden()));
+        assertTrue(VizEditGeometry.validate(saved).valid());
     }
 
     @Test

@@ -551,13 +551,12 @@ public final class VizEditScreen extends Screen {
             Area before = session.draft.shape;
             var checked = VizEditGeometry.validate(before);
             if (!checked.valid()) { session.reportError(checked.errorKey()); return; }
-            Area optimized = VizEditGeometry.optimize(before, null, session.draft.boundaryState.forbidden());
+            Area optimized = VizEditGeometry.optimize(before, null);
             if (before.equals(optimized)) {
                 session.status = t("vizedit.client.simplify_unchanged");
                 return;
             }
             if (!session.permitsBoundary(optimized)) { session.status = t("vizedit.client.denied"); return; }
-            if (!session.keepsBrushBoundary(optimized, before)) { session.status = t("vizedit.boundary.save_conflict"); return; }
             session.checkpoint();
             session.draft.shape = optimized;
             session.status = I18nManager.translate("vizedit.client.simplified", vertexCount(before), vertexCount(optimized));

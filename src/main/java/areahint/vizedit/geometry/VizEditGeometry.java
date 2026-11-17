@@ -5,7 +5,6 @@ import areahint.data.AreaData.Vertex;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
-import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -13,10 +12,8 @@ import java.util.List;
 
 // 形状布尔运算与工具参考 Province（MIT，Copyright (c) 2026 Shuuki_），许可证随模组放在 META-INF/Province-LICENSE。
 public final class VizEditGeometry {
-    public static final int MAX_VERTICES = 4096;
     public static final double MAX_COORDINATE = 30_000_000;
     public static final int MAX_BRUSH_WIDTH = 256;
-    public static final int MAX_DRAFT_VERTICES = 65_536;
 
     private VizEditGeometry() { }
 
@@ -38,7 +35,6 @@ public final class VizEditGeometry {
     // 原域名只做矢量转换，绝不对已有小数顶点、斜边或整个布尔运算结果重新方块化。
     public static Area fromVertices(List<Vertex> vertices) {
         if (vertices == null || vertices.isEmpty()) return new Area();
-        if (vertices.size() > MAX_DRAFT_VERTICES) throw error("geometry_vertices");
         Path2D.Double path = new Path2D.Double(Path2D.WIND_NON_ZERO);
         for (int i = 0; i < vertices.size(); i++) {
             Vertex v = vertices.get(i);
@@ -53,14 +49,12 @@ public final class VizEditGeometry {
     public static Area union(Area first, Area second) {
         Area result = copy(first);
         if (second != null) result.add(second);
-        checkDraftComplexity(result);
         return result;
     }
 
     public static Area subtract(Area first, Area second) {
         Area result = copy(first);
         if (second != null) result.subtract(second);
-        checkDraftComplexity(result);
         return result;
     }
 
@@ -109,7 +103,6 @@ public final class VizEditGeometry {
     public static Area stroke(List<Vertex> points, double width) {
         if (!Double.isFinite(width) || width < 1 || width > MAX_BRUSH_WIDTH) throw error("geometry_limit");
         if (points == null || points.isEmpty()) return new Area();
-        if (points.size() > 8192) throw error("geometry_limit");
         for (Vertex point : points) checkCoordinate(point);
         Area result = BlockSnap.brushStroke(points, width);
         checkBounds(result);
@@ -155,20 +148,12 @@ public final class VizEditGeometry {
     // 原始顶点必须在创建 Area 之前校验，否则 Area 会把自交路径悄悄分割为看似正常的多个环。
     public static Validation validate(List<Vertex> input) {
         if (input == null || input.size() < 3) return invalid("geometry_empty");
-        if (input.size() > MAX_DRAFT_VERTICES) return invalid("geometry_vertices");
         for (Vertex v : input) if (!validCoordinate(v)) return invalid("geometry_coordinates");
         List<Vertex> points = simplify(input);
         int n = points.size();
         if (n < 3) return invalid("geometry_empty");
-        if (n > MAX_VERTICES) return invalid("geometry_vertices");
-        for (int i = 0; i < n; i++) {
-            Vertex a = points.get(i), b = points.get((i + 1) % n), c = points.get((i + 2) % n);
-            if (orientation(a, b, c) == 0) return invalid("geometry_self_intersection");
-            for (int j = i + 2; j < n; j++) {
-                if (i == 0 && j == n - 1) continue;
-                if (intersects(a, b, points.get(j), points.get((j + 1) % n))) return invalid("geometry_self_intersection");
-            }
-        }
+        // 顶点数量不决定是否合法，空间索引只排除不相交的边对，仍完整核验自交和折返。
+        if (!BoundaryOptimizer.isSimple(points)) return invalid("geometry_self_intersection");
         if (signedArea(points) == 0) return invalid("geometry_empty");
         return new Validation(true, null, List.copyOf(points));
     }
@@ -194,27 +179,7 @@ public final class VizEditGeometry {
 
     // 原有边界的路径遍历使用原始直线端点；仅新椭圆在 BlockSnap 内按扫描线离散。
     public static List<List<Vertex>> contours(Area shape) {
-        List<List<Vertex>> rings = new ArrayList<>();
-        if (shape == null) return rings;
-        PathIterator iterator = shape.getPathIterator(null);
-        double[] xy = new double[6];
-        List<Vertex> ring = null;
-        int count = 0;
-        while (!iterator.isDone()) {
-            int kind = iterator.currentSegment(xy);
-            if (kind == PathIterator.SEG_MOVETO) {
-                ring = new ArrayList<>();
-                rings.add(ring);
-                ring.add(new Vertex(xy[0], xy[1]));
-            } else if (kind == PathIterator.SEG_LINETO && ring != null) {
-                ring.add(new Vertex(xy[0], xy[1]));
-            } else if (kind != PathIterator.SEG_CLOSE) {
-                throw error("geometry_self_intersection");
-            }
-            if (++count > MAX_DRAFT_VERTICES) throw error("geometry_vertices");
-            iterator.next();
-        }
-        return rings;
+        return AreaContours.read(shape);
     }
 
     public static List<double[]> segments(Area shape) {
@@ -309,16 +274,6 @@ public final class VizEditGeometry {
         Rectangle2D bounds = shape.getBounds2D();
         checkCoordinate(new Vertex(bounds.getMinX(), bounds.getMinY()));
         checkCoordinate(new Vertex(bounds.getMaxX(), bounds.getMaxY()));
-    }
-
-    // 布尔运算必须在把结果交还界面之前检查预览预算，超限时旧草稿仍然可以安全渲染和撤销。
-    private static void checkDraftComplexity(Area shape) {
-        PathIterator iterator = shape.getPathIterator(null);
-        int count = 0;
-        while (!iterator.isDone()) {
-            if (++count > MAX_DRAFT_VERTICES) throw error("geometry_vertices");
-            iterator.next();
-        }
     }
 
     static void checkCoordinate(Vertex vertex) { if (!validCoordinate(vertex)) throw error("geometry_coordinates"); }

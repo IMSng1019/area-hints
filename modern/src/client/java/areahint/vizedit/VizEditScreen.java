@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.Set;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -31,6 +32,7 @@ public final class VizEditScreen extends Screen {
     private final List<Row> rows = new ArrayList<>();
     private final List<Vertex> stroke = new ArrayList<>();
     private EditBox search;
+    private BrushWidthSlider brushWidthSlider;
     private Button undo;
     private Button redo;
     private Button simplify;
@@ -46,6 +48,7 @@ public final class VizEditScreen extends Screen {
     private int treeBottom;
     private boolean drawing;
     private boolean panning;
+    private boolean draggingBrushWidth;
     private boolean spaceDown;
     private double dragX;
     private double dragY;
@@ -70,7 +73,7 @@ public final class VizEditScreen extends Screen {
         editingButtons.clear();
         panelWidth = Math.min(184, Math.max(104, width / 4));
         int columns = width - panelWidth < 420 ? 4 : 8;
-        canvasTop = 48 + ((VizEditSession.Tool.values().length + columns - 1) / columns) * 22;
+        canvasTop = 68 + ((VizEditSession.Tool.values().length + columns - 1) / columns) * 22;
         canvasBottom = Math.max(canvasTop + 20, height - 28);
         treeBottom = Math.max(92, height - (session.approvalId != null ? 112 : 88));
         if (canvas instanceof VizEditCanvas.Grid grid) grid.viewport(panelWidth + 4, canvasTop, Math.max(20, width - panelWidth - 8), canvasBottom - canvasTop);
@@ -104,8 +107,8 @@ public final class VizEditScreen extends Screen {
         simplify = button("vizedit.ui.simplify", 6, height - (session.approvalId != null ? 94 : 70), panelWidth - 12, this::simplifyBoundary);
         if (session.approvalId != null) saveDraft = button("vizedit.ui.draft", 6, height - 70, panelWidth - 12,
             () -> VizEditClientManager.review(true, null));
-        button("−", left, canvasTop - 18, 18, () -> session.brushWidth = Math.max(1, session.brushWidth - 1));
-        button("+", left + 22, canvasTop - 18, 18, () -> session.brushWidth = Math.min(256, session.brushWidth + 1));
+        // 笔宽与当前工具各占一行，窄窗口也不会让滑块盖住域名和工具名称。
+        brushWidthSlider = addRenderableWidget(new BrushWidthSlider(left, canvasTop - 38, Math.min(260, available)));
         refreshState();
     }
 
@@ -125,6 +128,7 @@ public final class VizEditScreen extends Screen {
         undo.active = editable && session.history.canUndo(); redo.active = editable && session.history.canRedo();
         simplify.active = editable && session.canDraw() && canvas.isCurrentDimension() && !session.draft.shape.isEmpty();
         switchCanvas.active = !VizEditClientManager.isBusy() && (canvas.isTerrain() || VizEditClientManager.mapAvailable());
+        brushWidthSlider.active = editable;
         for (int i = 0; i < editingButtons.size(); i++) editingButtons.get(i).active = editable
             && session.canDraw() && canvas.isCurrentDimension()
             && session.allows(VizEditSession.Tool.values()[i] == VizEditSession.Tool.ERASER ? "shrinkarea" : "expandarea");
@@ -175,7 +179,7 @@ public final class VizEditScreen extends Screen {
         context.disableScissor();
         String mode = session.readOnly ? t("vizedit.ui.readonly") : session.draft == null ? t("vizedit.ui.empty")
             : session.draft.name + (session.dirty() ? " *" : "") + " · " + t(session.tool.key());
-        label(context, mode, panelWidth + 52, canvasTop - 13, width - panelWidth - 58, 0xFFDD77);
+        label(context, mode, panelWidth + 5, canvasTop - 13, width - panelWidth - 10, 0xFFDD77);
         String status = VizEditClientManager.isBusy() ? t("vizedit.ui.busy") : session.status;
         if (status.isEmpty()) status = t("vizedit.ui.help");
         label(context, status, 7, height - 20, width - 14, session.invalid ? 0xFF8888 : 0xCFD6DF);
@@ -243,15 +247,21 @@ public final class VizEditScreen extends Screen {
                 edges.add(new double[] {x0, y0, x1, y1});
             }
         }
-        if (filled && edges.size() <= 20000) {
+        if (filled) {
+            // 只扫描穿过当前屏幕行的边，复杂轮廓仍显示填充且无需每行重扫全部边。
+            List<double[]> pending = new ArrayList<>();
+            for (double[] edge : edges) if (edge[1] != edge[3]
+                    && Math.min(edge[1], edge[3]) < canvasBottom && Math.max(edge[1], edge[3]) > canvasTop + 0.5) pending.add(edge);
+            pending.sort(Comparator.comparingDouble(edge -> Math.min(edge[1], edge[3])));
+            List<double[]> active = new ArrayList<>();
             List<Double> intersections = new ArrayList<>();
+            int next = 0;
             for (int y = canvasTop; y < canvasBottom; y += 2) {
+                double scan = y + 0.5;
+                while (next < pending.size() && Math.min(pending.get(next)[1], pending.get(next)[3]) <= scan) active.add(pending.get(next++));
+                active.removeIf(edge -> Math.max(edge[1], edge[3]) <= scan);
                 intersections.clear();
-                for (double[] edge : edges) {
-                    double scan = y + 0.5;
-                    if ((edge[1] <= scan && edge[3] > scan) || (edge[3] <= scan && edge[1] > scan))
-                        intersections.add(edge[0] + (scan - edge[1]) * (edge[2] - edge[0]) / (edge[3] - edge[1]));
-                }
+                for (double[] edge : active) intersections.add(edge[0] + (scan - edge[1]) * (edge[2] - edge[0]) / (edge[3] - edge[1]));
                 intersections.sort(Double::compare);
                 for (int i = 0; i + 1 < intersections.size(); i += 2) {
                     int x0 = (int) Math.max(panelWidth, Math.min(width, intersections.get(i)));
@@ -323,9 +333,11 @@ public final class VizEditScreen extends Screen {
     /*@Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
     */
         finishStroke();
-        if (super.mouseClicked(clickEvent, doubled)) return true;
-        /*if (super.mouseClicked(mouseX, mouseY, button)) return true;
-        */
+        boolean handled = super.mouseClicked(clickEvent, doubled);
+        if (handled) {
+            draggingBrushWidth = button == InputConstants.MOUSE_BUTTON_LEFT && brushWidthSlider.active && brushWidthSlider.isMouseOver(mouseX, mouseY);
+            return true;
+        }
         if (button != com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) return true;
         if (mouseX < panelWidth) {
             if (mouseY >= 92 && mouseY < treeBottom) {
@@ -391,9 +403,15 @@ public final class VizEditScreen extends Screen {
         double x = clickEvent.x(), y = clickEvent.y(); int button = clickEvent.button();
     /*@Override public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
     */
+        if (!drawing && !panning) super.mouseDragged(clickEvent, dx, dy);
         samplePointer(x, y); return true;
     }
     public void samplePointer(double x, double y) {
+        // Xaero 浮层只转发点击和逐帧指针采样，因此滑块拖动也在此更新并独占本次手势。
+        if (draggingBrushWidth) {
+            if (brushWidthSlider.active) brushWidthSlider.dragTo(x);
+            return;
+        }
         if (panning) { canvas.pan(x - dragX, y - dragY); dragX = x; dragY = y; }
         if (drawing && inCanvas(x, y)) updateStroke(x, y);
     }
@@ -426,7 +444,6 @@ public final class VizEditScreen extends Screen {
             } else {
                 Vertex last = stroke.get(stroke.size() - 1);
                 if (Math.abs(point.getX() - last.getX()) + Math.abs(point.getZ() - last.getZ()) >= 0.5) stroke.add(point);
-                if (stroke.size() > 8192) throw new IllegalArgumentException();
                 paint = VizEditGeometry.stroke(stroke, session.brushWidth);
             }
             Area painted = session.tool == VizEditSession.Tool.ERASER ? VizEditGeometry.subtract(beforeStroke, paint) : VizEditGeometry.union(beforeStroke, paint);
@@ -441,7 +458,9 @@ public final class VizEditScreen extends Screen {
     /*@Override public boolean mouseReleased(double x, double y, int button) {
     */
         // 释放事件可能携带尚未收到拖动事件的最终落点，先采样再收尾才能识别最后一次主动越界。
+        if (button == InputConstants.MOUSE_BUTTON_LEFT && draggingBrushWidth && brushWidthSlider.active) brushWidthSlider.dragTo(x);
         if (button == 0 && drawing && inCanvas(x, y)) updateStroke(x, y);
+        super.mouseReleased(clickEvent);
         finishStroke(); return true;
     }
     private void finishStroke() {
@@ -450,7 +469,9 @@ public final class VizEditScreen extends Screen {
             session.draft.shape = optimizeDrawing(session.draft.shape, beforeStroke);
             if (!session.draft.same(beforeDraft)) session.history.push(beforeDraft);
         }
-        drawing = false; panning = false; beforeStroke = null; beforeDraft = null; drawingDraft = null; boundaryStroke = null; stroke.clear();
+        // 快捷键或界面切换结束手势时也清除原生拖动状态，避免后续拖动继续修改已结束的滑块。
+        setDragging(false);
+        drawing = false; panning = false; draggingBrushWidth = false; beforeStroke = null; beforeDraft = null; drawingDraft = null; boundaryStroke = null; stroke.clear();
     }
 
     private Area optimizeDrawing(Area shape, Area preserved) {
@@ -488,7 +509,7 @@ public final class VizEditScreen extends Screen {
     // Fabric 事件的滚轮参数在所有活跃版本均有横纵两轴，原版 Screen 签名由预处理适配。
     public boolean scroll(double x, double y, double amount) {
         if (x < panelWidth) session.treeOffset = Math.max(0, session.treeOffset - (int) Math.signum(amount) * 3);
-        else if (inCanvas(x, y) && !drawing && !panning) canvas.zoom(amount, x, y);
+        else if (inCanvas(x, y) && !drawing && !panning && !draggingBrushWidth) canvas.zoom(amount, x, y);
         return true;
     }
     @Override public boolean mouseScrolled(double x, double y, double horizontal, double vertical) { return scroll(x, y, vertical); }
@@ -502,6 +523,10 @@ public final class VizEditScreen extends Screen {
             return field.keyPressed(inputEvent);
             /*return field.keyPressed(key, scan, modifiers);
             */
+        }
+        if (getFocused() == brushWidthSlider && brushWidthSlider.active && (key == InputConstants.KEY_LEFT || key == InputConstants.KEY_RIGHT)) {
+            brushWidthSlider.setWidthValue(session.brushWidth + (key == InputConstants.KEY_LEFT ? -1 : 1));
+            return true;
         }
         if (key == InputConstants.KEY_ESCAPE) { onClose(); return true; }
         if (key == InputConstants.KEY_SPACE) { spaceDown = true; return true; }
@@ -529,5 +554,25 @@ public final class VizEditScreen extends Screen {
         context.text(font, Component.literal(font.plainSubstrByWidth(text, Math.max(1, maxWidth))), x, y, color);
     }
     private static String t(String key) { return I18nManager.translate(key); }
+    // 沿用原生滑块的外观、焦点与无障碍标签，数值按整格归一化后存回会话。
+    private final class BrushWidthSlider extends AbstractSliderButton {
+        BrushWidthSlider(int x, int y, int width) {
+            super(x, y, width, 18, Component.empty(), (session.brushWidth - 1) / 255.0);
+            updateMessage();
+        }
+        @Override protected void updateMessage() {
+            setMessage(Component.literal(I18nManager.translate("vizedit.ui.brush_width", session.brushWidth)));
+        }
+        @Override protected void applyValue() { setWidthValue(1 + (int) Math.round(value * 255)); }
+        private void setWidthValue(int width) {
+            session.brushWidth = Math.max(1, Math.min(256, width));
+            value = (session.brushWidth - 1) / 255.0;
+            updateMessage();
+        }
+        private void dragTo(double mouseX) {
+            double position = Math.max(0, Math.min(1, (mouseX - getX() - 4) / Math.max(1.0, getWidth() - 8)));
+            setWidthValue(1 + (int) Math.round(position * 255));
+        }
+    }
     private record Row(AreaData area, int depth, boolean children) { }
 }

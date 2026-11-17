@@ -210,7 +210,8 @@ public final class VizEditChangeService {
                 : GSON.toJsonTree(new AreaData.AltitudeData(max, min)));
         }
         JsonElement vertices = object.get("vertices");
-        if (vertices == null || !vertices.isJsonArray() || vertices.getAsJsonArray().size() > 16384) throw error("geometry_vertices");
+        // 顶点数量不设固定上限，后续仍逐点验证坐标并检查完整多边形的合法性。
+        if (vertices == null || !vertices.isJsonArray()) throw error("geometry_vertices");
         List<AreaData.Vertex> points = new ArrayList<>();
         for (JsonElement item : vertices.getAsJsonArray()) {
             if (!item.isJsonObject()) throw error("geometry_coordinates");

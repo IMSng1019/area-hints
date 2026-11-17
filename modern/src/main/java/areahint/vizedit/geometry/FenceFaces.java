@@ -13,8 +13,6 @@ import java.util.Set;
 
 // 改编自 Province core/FenceFaces.java（MIT）；交点切边后按有向半边找面，不替开放路径添加闭合边。
 final class FenceFaces {
-    private static final int MAX_SEGMENTS = 4096;
-    private static final int MAX_SPLIT_SEGMENTS = 16_384;
     private FenceFaces() { }
 
     // 精确节点身份不使用参考实现的近邻吸附，真正存在的小缺口必须保持开放。
@@ -27,7 +25,6 @@ final class FenceFaces {
 
     static Area faceAt(List<double[]> source, double x, double z) {
         if (source == null || source.size() < 3) return null;
-        if (source.size() > MAX_SEGMENTS) throw VizEditGeometry.error("geometry_limit");
         List<Edge> segments = new ArrayList<>();
         for (double[] edge : source) {
             if (edge == null || edge.length != 4) throw VizEditGeometry.error("geometry_coordinates");
@@ -50,31 +47,32 @@ final class FenceFaces {
     }
 
     private static List<Edge> split(List<Edge> edges) {
+        // 按横向包围盒排序后只比较可能相交的边，附近其他域名不再消耗固定边数额度。
+        edges.sort(Comparator.comparingDouble(edge -> Math.min(edge.from.x, edge.to.x)));
         List<List<Cut>> cuts = new ArrayList<>();
         for (Edge edge : edges) cuts.add(new ArrayList<>(List.of(new Cut(0, edge.from), new Cut(1, edge.to))));
-        int count = edges.size() * 2;
         for (int i = 0; i < edges.size(); i++) {
             Edge a = edges.get(i);
             for (int j = i + 1; j < edges.size(); j++) {
                 Edge b = edges.get(j);
+                if (Math.min(b.from.x, b.to.x) > Math.max(a.from.x, a.to.x)) break;
                 if (!boxesIntersect(a, b)) continue;
                 double ax = a.to.x - a.from.x, az = a.to.z - a.from.z;
                 double bx = b.to.x - b.from.x, bz = b.to.z - b.from.z;
                 double denominator = ax * bz - az * bx;
                 if (denominator == 0) {
                     // 重叠共线边也在已有端点处切开，否则相同围栏被重复画过后会丢失面。
-                    count += endpointCut(a, b.from, cuts.get(i)) + endpointCut(a, b.to, cuts.get(i));
-                    count += endpointCut(b, a.from, cuts.get(j)) + endpointCut(b, a.to, cuts.get(j));
+                    endpointCut(a, b.from, cuts.get(i)); endpointCut(a, b.to, cuts.get(i));
+                    endpointCut(b, a.from, cuts.get(j)); endpointCut(b, a.to, cuts.get(j));
                 } else {
                     double dx = b.from.x - a.from.x, dz = b.from.z - a.from.z;
                     double t = (dx * bz - dz * bx) / denominator, u = (dx * az - dz * ax) / denominator;
                     if (t < 0 || t > 1 || u < 0 || u > 1) continue;
                     Point hit = t == 0 ? a.from : t == 1 ? a.to : u == 0 ? b.from : u == 1 ? b.to
                         : new Point(a.from.x + ax * t, a.from.z + az * t);
-                    if (t > 0 && t < 1) { cuts.get(i).add(new Cut(t, hit)); count++; }
-                    if (u > 0 && u < 1) { cuts.get(j).add(new Cut(u, hit)); count++; }
+                    if (t > 0 && t < 1) cuts.get(i).add(new Cut(t, hit));
+                    if (u > 0 && u < 1) cuts.get(j).add(new Cut(u, hit));
                 }
-                if (count > MAX_SPLIT_SEGMENTS * 2) throw VizEditGeometry.error("geometry_limit");
             }
         }
         List<Edge> result = new ArrayList<>();
@@ -83,7 +81,6 @@ final class FenceFaces {
             for (int i = 0; i + 1 < list.size(); i++) {
                 Point a = list.get(i).point, b = list.get(i + 1).point;
                 if (!a.equals(b)) result.add(new Edge(a, b));
-                if (result.size() > MAX_SPLIT_SEGMENTS) throw VizEditGeometry.error("geometry_limit");
             }
         }
         return result;

@@ -18,9 +18,9 @@ import java.util.Set;
 // 边界笔只约束新涂面积；地形接口、岸线记忆和几何计算均不依赖游戏或地图实现。
 public final class BoundaryBrush {
     public static final int UNKNOWN = 0, LAND = 1, WATER = 2;
-    private static final int TILE_SIZE = 16, MAX_TILES = 1024, MAX_EDGES = 32768;
-    private static final int MAX_KNOWN_CELLS = MAX_TILES * TILE_SIZE * TILE_SIZE;
-    private static final int MAX_NEW_SAMPLES = 32768, MAX_LOCAL_EDGES = 2048, MAX_MEMORIES = 16384;
+    private static final int TILE_SIZE = 16;
+    // 每次采样预算只分摊地形读取，后续采样继续补齐，不限制累计笔画、岸线或偏移数量。
+    private static final int MAX_NEW_SAMPLES = 32768;
     private static final double CROSSING_THRESHOLD = 1, EPSILON = 0.0000001;
 
     private BoundaryBrush() { }
@@ -262,8 +262,6 @@ public final class BoundaryBrush {
                 double along = edge.along(point.getX(), point.getZ());
                 if (along < -half || along > 1 + half) continue;
                 if (edge.squaredDistance(point.getX(), point.getZ()) > Math.pow(half + offset + 2, 2)) continue;
-                if (!state.memories.containsKey(edge) && state.memories.size() >= MAX_MEMORIES)
-                    throw VizEditGeometry.error("geometry_limit");
                 state.memories.put(edge, Math.max(offset, state.memories.getOrDefault(edge, 0.0)));
             }
         }
@@ -274,7 +272,7 @@ public final class BoundaryBrush {
             ArrayDeque<Edge> queue = new ArrayDeque<>();
             Map<Edge, Integer> depth = new HashMap<>();
             queue.add(first); visited.add(first); depth.put(first, 0);
-            while (!queue.isEmpty() && result.size() < MAX_LOCAL_EDGES) {
+            while (!queue.isEmpty()) {
                 Edge current = queue.removeFirst();
                 result.add(current);
                 int nextDepth = depth.get(current) + 1;
@@ -306,7 +304,6 @@ public final class BoundaryBrush {
         private void tile(int tileX, int tileZ) {
             long tileKey = key(tileX, tileZ);
             if (completeTiles.contains(tileKey)) return;
-            if (completeTiles.size() >= MAX_TILES) throw VizEditGeometry.error("geometry_limit");
             boolean complete = true;
             int originX = tileX * TILE_SIZE, originZ = tileZ * TILE_SIZE;
             for (int z = originZ; z < originZ + TILE_SIZE; z++) for (int x = originX; x < originX + TILE_SIZE; x++) {
@@ -334,7 +331,6 @@ public final class BoundaryBrush {
             samples++;
             int result = terrain.sample(x, z);
             if (result == LAND || result == WATER) {
-                if (known.size() >= MAX_KNOWN_CELLS) throw VizEditGeometry.error("geometry_limit");
                 known.put(cellKey, result);
             }
             else { missing.add(cellKey); result = UNKNOWN; }
@@ -343,7 +339,6 @@ public final class BoundaryBrush {
 
         private void add(Edge edge) {
             if (edges.putIfAbsent(edge, edge) != null) return;
-            if (edges.size() > MAX_EDGES) throw VizEditGeometry.error("geometry_limit");
             junctions.computeIfAbsent(key(edge.x1, edge.z1), ignored -> new ArrayList<>()).add(edge);
             junctions.computeIfAbsent(key(edge.x2, edge.z2), ignored -> new ArrayList<>()).add(edge);
         }
@@ -475,7 +470,6 @@ public final class BoundaryBrush {
         Rectangle2D bounds = scope.getBounds2D();
         int x0 = (int) Math.floor(bounds.getMinX()), x1 = (int) Math.ceil(bounds.getMaxX());
         int z0 = (int) Math.floor(bounds.getMinY()), z1 = (int) Math.ceil(bounds.getMaxY());
-        if ((long) (x1 - x0) * (z1 - z0) > 131072) throw VizEditGeometry.error("geometry_limit");
         Path2D.Double blocked = new Path2D.Double(Path2D.WIND_NON_ZERO);
         for (int z = z0; z < z1; z++) {
             int run = Integer.MIN_VALUE;

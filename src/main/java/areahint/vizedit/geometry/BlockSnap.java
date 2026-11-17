@@ -14,8 +14,6 @@ import java.util.Map;
 
 // 改编自 Province core/BlockSnap.java（MIT），只用于新笔画；扫描线取方块中心，细笔用四连通阶梯补齐。
 final class BlockSnap {
-    private static final int MAX_PATH_CELLS = 65_536;
-    private static final int MAX_SPANS = 1_000_000;
     private BlockSnap() { }
 
     static Area snap(Area area) {
@@ -90,7 +88,6 @@ final class BlockSnap {
                 case PathIterator.SEG_CLOSE -> { addEdge(edges, previousX, previousZ, startX, startZ); previousX = startX; previousZ = startZ; }
                 default -> throw VizEditGeometry.error("geometry_self_intersection");
             }
-            if (edges.size() > VizEditGeometry.MAX_DRAFT_VERTICES) throw VizEditGeometry.error("geometry_limit");
             iterator.next();
         }
         return edges;
@@ -103,7 +100,6 @@ final class BlockSnap {
     static Area brushStroke(List<Vertex> points, double width) {
         List<int[]> path = pathCells(points);
         int radius = (int) Math.round((Math.max(1, width) - 1) / 2);
-        if ((long) path.size() * (radius * 2 + 1) > MAX_SPANS) throw VizEditGeometry.error("geometry_limit");
         Map<Integer, List<int[]>> spans = new HashMap<>();
         int rowFrom = Integer.MAX_VALUE, rowTo = Integer.MIN_VALUE;
         for (int[] cell : path) {
@@ -135,7 +131,7 @@ final class BlockSnap {
         return runs;
     }
 
-    // 不抽稀用户笔画，以免绕行笔画被捷径截断；过长笔画明确报错，保留已完成的草稿。
+    // 不按长度截断或抽稀用户笔画，避免绕行路径被捷径改变。
     private static List<int[]> pathCells(List<Vertex> points) {
         List<int[]> cells = new ArrayList<>();
         int[] previous = null;
@@ -151,7 +147,6 @@ final class BlockSnap {
     // 每一步只移动一个轴，避免单格宽斜线仅在角点相接而变成多个不连续区域。
     private static void connect(List<int[]> cells, int[] from, int[] to) {
         int dx = Math.abs(to[0] - from[0]), dz = Math.abs(to[1] - from[1]);
-        if ((long) cells.size() + dx + dz > MAX_PATH_CELLS) throw VizEditGeometry.error("geometry_limit");
         int sx = from[0] < to[0] ? 1 : -1, sz = from[1] < to[1] ? 1 : -1;
         int error = dx - dz, x = from[0], z = from[1];
         while (x != to[0] || z != to[1]) {
@@ -177,7 +172,6 @@ final class BlockSnap {
         void flush() {
             if (current == null) return;
             for (int[] run : current) {
-                if (rectangles.size() >= VizEditGeometry.MAX_DRAFT_VERTICES / 4) throw VizEditGeometry.error("geometry_limit");
                 rectangles.add(new double[]{run[0], firstRow, run[1] + 1.0, lastRow + 1.0});
             }
             current = null;

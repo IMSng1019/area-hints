@@ -41,7 +41,7 @@ final class BoundaryOptimizer {
                     || constraint != null && !constraint.allows(result, budget)) return original;
             return VizEditGeometry.fromVertices(result);
         } catch (BudgetExceeded | VizEditGeometry.GeometryException ignored) {
-            // 复杂图形仍能继续编辑或撤销，保存时沿用既有几何错误提示，不因优化失败清空草稿。
+            // 自动简化只是一项可选优化，预算耗尽保留完整草稿，不把复杂度转成几何错误。
             return original;
         }
     }
@@ -61,14 +61,10 @@ final class BoundaryOptimizer {
         }
         List<Vertex> ring = VizEditGeometry.simplify(contours.get(0));
         if (ring.size() < 3 || VizEditGeometry.signedArea(ring) == 0) throw VizEditGeometry.error("geometry_empty");
+        // 原环及禁区的合法性必须完整核验，不能因可选简化的工作预算耗尽而拒绝保存。
+        if (!isSimple(ring)) throw VizEditGeometry.error("geometry_self_intersection");
+        Constraint constraint = Constraint.from(forbidden, shape, Budget.unlimited());
         Budget budget = new Budget();
-        try {
-            // 必须先验证原环，不能让量化合并近邻点或简化删除交叉后把无效草稿悄悄变成有效边界。
-            if (!simple(ring, budget)) throw VizEditGeometry.error("geometry_self_intersection");
-        } catch (BudgetExceeded ignored) { throw VizEditGeometry.error("geometry_limit"); }
-        Constraint constraint;
-        try { constraint = Constraint.from(forbidden, shape, budget); }
-        catch (BudgetExceeded ignored) { throw VizEditGeometry.error("geometry_limit"); }
         double direction = Math.signum(VizEditGeometry.signedArea(ring));
         try {
             List<Vertex> reduced = reduce(ring, null, constraint, budget);
@@ -85,11 +81,9 @@ final class BoundaryOptimizer {
         if (!checked.valid()) throw new VizEditGeometry.GeometryException(checked.errorKey());
         if (Math.signum(VizEditGeometry.signedArea(checked.vertices())) != direction)
             throw VizEditGeometry.error("geometry_self_intersection");
-        // 仅量化回退另有一次有界核验额度，不能因为简化预算耗尽就跳过智能边界保护。
-        try {
-            if (constraint != null && !constraint.allows(checked.vertices(), new Budget()))
-                throw new VizEditGeometry.GeometryException("vizedit.boundary.save_conflict");
-        } catch (BudgetExceeded ignored) { throw VizEditGeometry.error("geometry_limit"); }
+        // 量化回退仍完整检查禁区；预算只决定是否继续减点，不决定合法轮廓是否允许保存。
+        if (constraint != null && !constraint.allows(checked.vertices(), Budget.unlimited()))
+            throw new VizEditGeometry.GeometryException("vizedit.boundary.save_conflict");
         return checked.vertices();
     }
 
@@ -175,13 +169,13 @@ final class BoundaryOptimizer {
     // 禁区先扣除用户已明确涂入的面积；后续只阻止简化新增越界，不改变其他工具的绘制语义。
     private static final class Constraint {
         private final Area forbidden;
-        private final int vertices;
+        private final long vertices;
 
-        private Constraint(Area forbidden, int vertices) { this.forbidden = forbidden; this.vertices = vertices; }
+        private Constraint(Area forbidden, long vertices) { this.forbidden = forbidden; this.vertices = vertices; }
 
         static Constraint from(Area forbidden, Area original, Budget budget) {
             if (forbidden == null || forbidden.isEmpty()) return null;
-            int inputSize = size(forbidden, budget) + size(original, budget);
+            long inputSize = size(forbidden, budget) + size(original, budget);
             budget.use(16L * inputSize);
             Area effective = new Area(forbidden);
             effective.subtract(original);
@@ -210,12 +204,12 @@ final class BoundaryOptimizer {
             return candidate.isEmpty();
         }
 
-        private static int size(Area area, Budget budget) {
+        private static long size(Area area, Budget budget) {
             PathIterator iterator = area.getPathIterator(null);
-            int result = 0;
+            long result = 0;
             while (!iterator.isDone()) {
                 budget.use();
-                if (++result > VizEditGeometry.MAX_DRAFT_VERTICES) throw new BudgetExceeded();
+                result++;
                 iterator.next();
             }
             return result;
@@ -250,10 +244,15 @@ final class BoundaryOptimizer {
         return a > 1 && b > 1 && ax * bx + az * bz < 0.5 * Math.sqrt(a * b);
     }
 
-    // 扫描边的横向包围盒，避免对超长草稿无条件执行平方级检查；预算耗尽时安全退出而非跳过交叉校验。
+    // 正式校验不设点数或工作量上限，空间索引只跳过包围盒互不相交的边对。
+    static boolean isSimple(List<Vertex> ring) {
+        return simple(ring, Budget.unlimited());
+    }
+
+    // 交互简化可使用工作预算，但保存和输入验证始终检查全部可能相交的边。
     private static boolean simple(List<Vertex> ring, Budget budget) {
         int count = ring.size();
-        if (count < 3 || count > VizEditGeometry.MAX_DRAFT_VERTICES || VizEditGeometry.signedArea(ring) == 0) return false;
+        if (count < 3 || VizEditGeometry.signedArea(ring) == 0) return false;
         Edge[] edges = new Edge[count];
         for (int i = 0; i < count; i++) {
             Vertex a = ring.get(i), b = ring.get((i + 1) % count), c = ring.get((i + 2) % count);
@@ -263,14 +262,8 @@ final class BoundaryOptimizer {
             if (VizEditGeometry.orientation(a, b, c) == 0) return false;
             edges[i] = new Edge(a, b, i);
         }
-        Arrays.sort(edges, Comparator.comparingDouble(edge -> edge.minX));
-        for (int i = 0; i < count; i++) for (int j = i + 1; j < count && edges[j].minX <= edges[i].maxX; j++) {
-            budget.use();
-            Edge a = edges[i], b = edges[j];
-            int separation = Math.abs(a.index - b.index);
-            if (separation == 1 || separation == count - 1 || a.maxZ < b.minZ || b.maxZ < a.minZ) continue;
-            if (VizEditGeometry.intersects(a.start, a.end, b.start, b.end)) return false;
-        }
+        EdgeTree tree = new EdgeTree(edges, 0, count);
+        for (Edge edge : edges) if (tree.crosses(edge, count, budget)) return false;
         return true;
     }
 
@@ -315,6 +308,22 @@ final class BoundaryOptimizer {
             left = new EdgeTree(edges, from, middle); right = new EdgeTree(edges, middle, to);
         }
 
+        // 每对非相邻边只验证一次，两轴包围盒剪枝避免竖向锯齿或长横边退化成全量两两检查。
+        boolean crosses(Edge edge, int count, Budget budget) {
+            budget.use();
+            if (edge.maxX < minX || edge.minX > maxX || edge.maxZ < minZ || edge.minZ > maxZ) return false;
+            if (left != null) return left.crosses(edge, count, budget) || right.crosses(edge, count, budget);
+            for (int i = from; i < to; i++) {
+                budget.use();
+                Edge other = edges[i];
+                int separation = other.index - edge.index;
+                if (separation <= 1 || separation == count - 1 || edge.maxX < other.minX || other.maxX < edge.minX
+                        || edge.maxZ < other.minZ || other.maxZ < edge.minZ) continue;
+                if (VizEditGeometry.intersects(edge.start, edge.end, other.start, other.end)) return true;
+            }
+            return false;
+        }
+
         boolean contains(Vertex point, Budget budget) {
             budget.use();
             if (point.getX() < minX - OLD_EDGE_EPSILON || point.getX() > maxX + OLD_EDGE_EPSILON
@@ -349,8 +358,13 @@ final class BoundaryOptimizer {
 
     private static final class Budget {
         private int remaining = MAX_WORK;
-        void use() { if (--remaining < 0) throw new BudgetExceeded(); }
+        private final boolean limited;
+        Budget() { this(true); }
+        private Budget(boolean limited) { this.limited = limited; }
+        static Budget unlimited() { return new Budget(false); }
+        void use() { if (limited && --remaining < 0) throw new BudgetExceeded(); }
         void use(long amount) {
+            if (!limited) return;
             if (amount > remaining) throw new BudgetExceeded();
             remaining -= (int) amount;
         }

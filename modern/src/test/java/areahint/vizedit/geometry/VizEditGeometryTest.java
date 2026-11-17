@@ -136,24 +136,52 @@ class VizEditGeometryTest {
     }
 
     @Test
-    void collinearInputCanBeReducedBelowVertexLimitWithoutLoss() {
+    void arbitrarilyLongCollinearInputIsReducedWithoutLoss() {
         List<Vertex> border = new ArrayList<>();
-        for (int i = 0; i < 5000; i++) border.add(new Vertex(i, 0));
-        border.add(new Vertex(4999, 2));
+        for (int i = 0; i < 70000; i++) border.add(new Vertex(i, 0));
+        border.add(new Vertex(69999, 2));
         border.add(new Vertex(0, 2));
         var result = VizEditGeometry.validate(border);
         assertTrue(result.valid());
         assertEquals(4, result.vertices().size());
+        assertEquals(139998, VizEditGeometry.measure(VizEditGeometry.fromVertices(border)));
     }
 
     @Test
-    void rejectsExcessiveVerticesNonfiniteCoordinatesAndWorldOverflow() {
-        List<Vertex> circle = new ArrayList<>();
-        for (int i = 0; i < 4097; i++) circle.add(new Vertex(Math.cos(i * 2 * Math.PI / 4097), Math.sin(i * 2 * Math.PI / 4097)));
-        assertEquals("vizedit.error.geometry_vertices", VizEditGeometry.validate(circle).errorKey());
+    void rejectsNonfiniteCoordinatesWorldOverflowAndInvalidBrushWidth() {
         assertEquals("vizedit.error.geometry_coordinates", VizEditGeometry.validate(points(0, 0, Double.NaN, 0, 0, 1)).errorKey());
         assertEquals("vizedit.error.geometry_coordinates", VizEditGeometry.validate(points(0, 0, 30000001, 0, 0, 1)).errorKey());
-        assertThrows(VizEditGeometry.GeometryException.class, () -> VizEditGeometry.stroke(points(0, 0, 10000000, 0), 1));
+        assertThrows(VizEditGeometry.GeometryException.class, () -> VizEditGeometry.stroke(points(0, 0), 257));
+        assertThrows(VizEditGeometry.GeometryException.class, () -> VizEditGeometry.stroke(points(0, 0), Double.NaN));
+    }
+
+    @Test
+    void detailedBoundaryCanBeValidatedAndSavedAboveTheFormerVertexLimit() {
+        List<Vertex> border = teeth(5000);
+        assertTrue(VizEditGeometry.validate(border).valid());
+        List<Vertex> saved = VizEditGeometry.prepareForSave(VizEditGeometry.fromVertices(border));
+        assertTrue(saved.size() > 4096);
+        assertTrue(VizEditGeometry.validate(saved).valid());
+        assertTrue(saved.stream().anyMatch(point -> point.getX() == 2500 && point.getZ() == 0));
+        assertTrue(saved.stream().anyMatch(point -> point.getX() == 2501 && point.getZ() == 5));
+    }
+
+    @Test
+    void longAndDenselySampledStrokesHaveNoFixedPathLimit() {
+        Area longStroke = VizEditGeometry.stroke(points(0, 0, 70000, 0), 1);
+        assertTrue(longStroke.contains(69999.5, 0.5));
+        assertEquals(70001, VizEditGeometry.measure(longStroke));
+        List<Vertex> samples = new ArrayList<>();
+        for (int i = 0; i < 8193; i++) samples.add(new Vertex(0, 0));
+        assertEquals(1, VizEditGeometry.measure(VizEditGeometry.stroke(samples, 1)));
+    }
+
+    @Test
+    void wideStrokeCanExceedTheFormerSpanBudget() {
+        Area stroke = VizEditGeometry.stroke(points(0, 0, 4100, 0), 256);
+        assertTrue(stroke.contains(4099.5, 0.5));
+        assertTrue(stroke.contains(2000.5, 127.5));
+        assertFalse(stroke.contains(2000.5, 129.5));
     }
 
     @Test
@@ -190,15 +218,34 @@ class VizEditGeometryTest {
     }
 
     @Test
-    void magicWandRejectsExcessiveFenceButAcceptsLargeSimpleFace() {
-        List<double[]> excessive = new ArrayList<>();
-        for (int i = 0; i < 4097; i++) excessive.add(new double[]{i, 0, i, 1});
-        assertEquals("vizedit.error.geometry_limit", assertThrows(VizEditGeometry.GeometryException.class,
-            () -> VizEditGeometry.magicWand(excessive, 1, 1)).errorKey());
+    void magicWandAcceptsManyFenceEdgesAndLargeSimpleFaces() {
+        List<double[]> many = new ArrayList<>(VizEditGeometry.segments(VizEditGeometry.rectangle(0, 0, 10, 10, false)));
+        for (int i = 0; i < 4097; i++) many.add(new double[]{100 + i, 0, 100 + i, 1});
+        assertEquals(100, VizEditGeometry.measure(VizEditGeometry.magicWand(many, 1, 1)));
         List<double[]> huge = List.of(new double[]{0, 0, 1000000, 0}, new double[]{1000000, 0, 1000000, 1000000},
             new double[]{1000000, 1000000, 0, 1000000}, new double[]{0, 1000000, 0, 0});
         Area selected = assertTimeout(Duration.ofSeconds(5), () -> VizEditGeometry.magicWand(huge, 1, 1));
         assertEquals(1000000000000d, VizEditGeometry.measure(selected));
+        assertTrue(VizEditGeometry.validate(selected).valid());
+    }
+
+    @Test
+    void magicWandSplitsDenseFenceIntersectionsWithoutAComplexityLimit() {
+        List<double[]> grid = new ArrayList<>();
+        for (int i = 0; i <= 100; i++) {
+            grid.add(new double[]{i, 0, i, 100});
+            grid.add(new double[]{0, i, 100, i});
+        }
+        assertEquals(1, VizEditGeometry.measure(VizEditGeometry.magicWand(grid, 50, 50)));
+    }
+
+    @Test
+    void magicWandRasterizesLargeSlopingFacesWithoutARowLimit() {
+        List<double[]> triangle = List.of(new double[]{0, 0, 40000, 0}, new double[]{40000, 0, 0, 40000}, new double[]{0, 40000, 0, 0});
+        Area selected = VizEditGeometry.magicWand(triangle, 1, 1);
+        assertEquals(40000d * 39999 / 2, VizEditGeometry.measure(selected));
+        assertEquals(1, VizEditGeometry.contours(selected).size());
+        assertTrue(VizEditGeometry.contours(selected).get(0).size() > 65536);
         assertTrue(VizEditGeometry.validate(selected).valid());
     }
 
@@ -226,7 +273,7 @@ class VizEditGeometryTest {
     }
 
     @Test
-    void oversizedBooleanResultIsRejectedBeforeReplacingDraft() {
+    void largeBooleanDraftsRetainAllContoursAndTheOriginalSnapshot() {
         Path2D.Double many = new Path2D.Double();
         for (int i = 0; i < 14000; i++) {
             double x = i * 2;
@@ -234,9 +281,29 @@ class VizEditGeometryTest {
         }
         Area large = new Area(many);
         Area original = VizEditGeometry.rectangle(0, 0, 1, 1, false);
-        assertEquals("vizedit.error.geometry_vertices", assertThrows(VizEditGeometry.GeometryException.class,
-            () -> VizEditGeometry.union(original, large)).errorKey());
+        Area combined = VizEditGeometry.union(original, large);
+        assertEquals(14000, VizEditGeometry.measure(combined));
+        assertEquals(14000, VizEditGeometry.contours(combined).size());
+        assertEquals("vizedit.error.geometry_disconnected", VizEditGeometry.validate(combined).errorKey());
         assertEquals(1, VizEditGeometry.measure(original));
+    }
+
+    @Test
+    void savingWithComplexForbiddenAreasCanFallBackToTheRoundedBoundary() {
+        Path2D.Double restrictions = new Path2D.Double();
+        for (int i = 0; i < 14000; i++) {
+            double x = i * 2;
+            restrictions.moveTo(x, 20); restrictions.lineTo(x + 1, 20);
+            restrictions.lineTo(x + 1, 21); restrictions.lineTo(x, 21); restrictions.closePath();
+        }
+        List<Vertex> original = teeth(5000);
+        List<Vertex> saved = VizEditGeometry.prepareForSave(VizEditGeometry.fromVertices(original), new Area(restrictions));
+        assertEquals(original.size(), saved.size());
+        assertTrue(VizEditGeometry.validate(saved).valid());
+        for (Vertex point : saved) {
+            assertEquals(Math.rint(point.getX() * 10), point.getX() * 10);
+            assertEquals(Math.rint(point.getZ() * 10), point.getZ() * 10);
+        }
     }
 
     @Test
@@ -252,5 +319,13 @@ class VizEditGeometryTest {
         List<Vertex> points = new ArrayList<>();
         for (int i = 0; i < coordinates.length; i += 2) points.add(new Vertex(coordinates[i], coordinates[i + 1]));
         return points;
+    }
+
+    private static List<Vertex> teeth(int count) {
+        List<Vertex> result = new ArrayList<>();
+        for (int i = 0; i < count; i++) result.add(new Vertex(i, i % 2 == 0 ? 0 : 5));
+        result.add(new Vertex(count - 1, -10));
+        result.add(new Vertex(0, -10));
+        return result;
     }
 }

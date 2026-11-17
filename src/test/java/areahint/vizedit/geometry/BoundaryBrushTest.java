@@ -72,6 +72,19 @@ class BoundaryBrushTest {
     }
 
     @Test
+    void longStrokeKeepsDiscoveringTerrainBeyondFormerTileLimit() {
+        var brush = stroke(new Area(), new BoundaryBrush.State(), (x, z) -> BoundaryBrush.LAND, 1);
+        brush.paint(new Vertex(0, 0));
+        // 连续沿陆地绘制并跨过原来的累计瓦片上限，末端仍应可绘制且地形可识别。
+        BoundaryBrush.Result result = null;
+        for (int x = 16; x <= 6000; x += 16) result = brush.paint(new Vertex(x, 0));
+        assertNotNull(result);
+        assertTrue(result.terrainAvailable());
+        assertTrue(result.shape().contains(5999.5, 0.5));
+        assertTrue(result.guides().isEmpty());
+    }
+
+    @Test
     void clipsNewPaintAtParentAndPeersWithoutRemovingExistingOverlap() {
         Area existing = rectangle(-8, -4, 3, 4);
         Area parent = rectangle(-10, -10, 0, 10);

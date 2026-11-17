@@ -30,6 +30,27 @@ class VizEditChangeServiceTest {
             "creator", (action, original) -> !denied.contains(action + ":" + (original == null ? "" : original.getName())));
     }
 
+    @Test void savesDetailedBoundaryBeyondFormerInputAndVertexLimits() {
+        JsonObject fields = VizEditChangeService.fields(area("Detailed", 1, null));
+        JsonArray vertices = new JsonArray();
+        // 每个锯齿转折均为有效顶点，确保服务端不能靠无损合并共线点退回旧上限以内。
+        for (int x = 0; x <= 17000; x++) {
+            JsonObject point = new JsonObject();
+            point.addProperty("x", x);
+            point.addProperty("z", x % 2 == 0 ? 0.0 : 0.1);
+            vertices.add(point);
+        }
+        vertices.add(JsonParser.parseString("{\"x\":17000,\"z\":10}"));
+        vertices.add(JsonParser.parseString("{\"x\":0,\"z\":10}"));
+        fields.add("vertices", vertices);
+        var result = change(new JsonArray(), new JsonArray(), "create", null, fields, Set.of());
+        JsonObject saved = result.document().get(0).getAsJsonObject();
+        assertEquals(17003, saved.getAsJsonArray("vertices").size());
+        assertEquals(4, saved.getAsJsonArray("second-vertices").size());
+        assertEquals(17000.0, saved.getAsJsonArray("second-vertices").get(1).getAsJsonObject().get("x").getAsDouble());
+        assertEquals("0.1", saved.getAsJsonArray("vertices").get(1).getAsJsonObject().get("z").toString());
+    }
+
     @Test void renamePreservesUneditableAttributesAndRepairsChildren() {
         JsonObject root = area("A", 1, null);
         JsonArray baseline = list(root, area("B", 2, "A"));

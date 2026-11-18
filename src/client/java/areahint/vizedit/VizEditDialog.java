@@ -43,6 +43,7 @@ final class VizEditDialog extends Screen {
                 () -> VizEditClientManager.review(false, continuation));
             save.active = !session.invalid;
             button("vizedit.ui.discard", left + w + 6, height - 32, w, () -> {
+                session.pen.cancel();
                 if (session.originalDraft != null) session.draft = session.originalDraft.copy();
                 if (session.approvalId == null) session.operation = "update";
                 session.history.clear(); continuation.run();

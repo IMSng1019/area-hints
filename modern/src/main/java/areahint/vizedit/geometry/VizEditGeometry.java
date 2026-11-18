@@ -327,7 +327,7 @@ public final class VizEditGeometry {
     }
 
     static void checkCoordinate(Vertex vertex) { if (!validCoordinate(vertex)) throw error("geometry_coordinates"); }
-    private static boolean validCoordinate(Vertex vertex) {
+    static boolean validCoordinate(Vertex vertex) {
         return vertex != null && Double.isFinite(vertex.getX()) && Double.isFinite(vertex.getZ())
             && Math.abs(vertex.getX()) <= MAX_COORDINATE && Math.abs(vertex.getZ()) <= MAX_COORDINATE;
     }

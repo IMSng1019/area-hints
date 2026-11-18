@@ -5,6 +5,15 @@ public final class GuiInputCompat {
     private GuiInputCompat() {
     }
 
+    // 鼠标落点与逐帧预览都实时读取修饰键，允许在一笔中切换吸附和方向柄模式。
+    public static boolean isAltPressed() {
+        return net.minecraft.client.Minecraft.getInstance().hasAltDown();
+    }
+
+    public static boolean isControlPressed() {
+        return net.minecraft.client.Minecraft.getInstance().hasControlDown();
+    }
+
     public static boolean isSelectAll(int key, int scan, int modifiers) {
         return new net.minecraft.client.input.KeyEvent(key, scan, modifiers).isSelectAll();
         /*return Screen.isSelectAll(key);

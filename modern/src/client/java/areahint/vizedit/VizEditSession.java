@@ -51,7 +51,9 @@ public final class VizEditSession {
     public String search = "";
     public int treeOffset;
     public int brushWidth = 4;
-    public Tool tool = Tool.BRUSH;
+    public Tool tool = Tool.BOUNDARY;
+    // 路径属于当前编辑会话，切换网格、地图或属性页时保留未完成的锚点。
+    final PenController pen = new PenController(this);
     public String status = "";
     public boolean invalid;
     public boolean mapMode;
@@ -112,6 +114,7 @@ public final class VizEditSession {
         try { next = draftFrom(area); }
         catch (VizEditGeometry.GeometryException e) { VizEditClientManager.report(e.errorKey()); return; }
         target = name;
+        pen.cancel();
         operation = "update";
         originalArea = area;
         draft = next;
@@ -161,6 +164,7 @@ public final class VizEditSession {
     public void create() {
         if (!canCreate || readOnly || approvalId != null) return;
         AreaData selected = find(target);
+        pen.cancel();
         target = null;
         operation = "create";
         originalArea = null;
@@ -204,7 +208,7 @@ public final class VizEditSession {
     }
 
     public boolean dirty() {
-        return draft != null && ("delete".equals(operation) || !draft.sameContent(originalDraft));
+        return draft != null && ("delete".equals(operation) || pen.path().size() > 0 || !draft.sameContent(originalDraft));
     }
 
     // 只在一次完整操作开始前保存历史，连续拖动不会用采样点挤掉撤销额度。
@@ -223,6 +227,7 @@ public final class VizEditSession {
     // 提交核对前统一生成最终轮廓；验证失败不替换草稿，成功的整体优化作为独立一步支持撤销。
     public JsonObject prepareSave() {
         if ("delete".equals(operation)) return draft.fields(true);
+        if (pen.path().size() > 0) throw new VizEditGeometry.GeometryException("vizedit.pen.unfinished");
         Draft prepared = draft.preparedForSave();
         JsonObject fields = prepared.fields(false);
         if (!permitsBoundary(prepared.shape)) throw new VizEditGeometry.GeometryException("vizedit.client.denied");
@@ -271,7 +276,7 @@ public final class VizEditSession {
     }
 
     public enum Tool {
-        BRUSH, BOUNDARY, LINE, RECTANGLE, ELLIPSE, ERASER, WAND, PAN;
+        BOUNDARY, PEN, RECTANGLE, ELLIPSE, ERASER, WAND, PAN;
         public String key() { return "vizedit.tool." + name().toLowerCase(java.util.Locale.ROOT); }
     }
 

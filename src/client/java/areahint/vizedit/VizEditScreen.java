@@ -4,6 +4,7 @@ import areahint.data.AreaData;
 import areahint.data.AreaData.Vertex;
 import areahint.i18n.I18nManager;
 import areahint.vizedit.geometry.BoundaryBrush;
+import areahint.util.GuiInputCompat;
 import areahint.vizedit.geometry.GeometryIssueLocator;
 import areahint.vizedit.geometry.VizEditGeometry;
 import net.minecraft.client.MinecraftClient;
@@ -65,7 +66,6 @@ public final class VizEditScreen extends Screen {
     private List<double[]> boundaryGuides = List.of();
     private List<double[]> brushOutline = List.of();
     private int outlineWidth;
-    private Vertex lineTip;
     private VizEditSession.Draft guideDraft;
 
     public VizEditScreen(VizEditSession session, VizEditCanvas canvas, Screen terrainScreen) {
@@ -77,7 +77,7 @@ public final class VizEditScreen extends Screen {
         finishStroke();
         editingButtons.clear();
         panelWidth = Math.min(184, Math.max(104, width / 4));
-        int columns = width - panelWidth < 420 ? 4 : 8;
+        int columns = width - panelWidth < 420 ? 4 : VizEditSession.Tool.values().length;
         canvasTop = 68 + ((VizEditSession.Tool.values().length + columns - 1) / columns) * 22;
         canvasBottom = Math.max(canvasTop + 20, height - 28);
         treeBottom = Math.max(92, height - (session.approvalId != null ? 112 : 88));
@@ -92,7 +92,7 @@ public final class VizEditScreen extends Screen {
         int toolW = Math.max(16, (available - (columns - 1) * 3) / columns);
         for (VizEditSession.Tool tool : VizEditSession.Tool.values()) {
             int index = tool.ordinal();
-            ButtonWidget button = button(tool.key(), left + index % columns * (toolW + 3), 30 + index / columns * 22, toolW, () -> session.tool = tool);
+            ButtonWidget button = button(tool.key(), left + index % columns * (toolW + 3), 30 + index / columns * 22, toolW, () -> selectTool(tool));
             if (tool != VizEditSession.Tool.PAN) editingButtons.add(button);
         }
         search = new TextFieldWidget(textRenderer, 6, 26, panelWidth - 12, 18, Text.literal(t("vizedit.ui.search")));
@@ -107,8 +107,8 @@ public final class VizEditScreen extends Screen {
             session.operation = "delete";
             VizEditClientManager.review(false, () -> {});
         });
-        undo = button("vizedit.ui.undo", 6, height - 46, half, () -> { session.undo(); refreshState(); });
-        redo = button("vizedit.ui.redo", 10 + half, height - 46, half, () -> { session.redo(); refreshState(); });
+        undo = button("vizedit.ui.undo", 6, height - 46, half, () -> undoOrRedo(false));
+        redo = button("vizedit.ui.redo", 10 + half, height - 46, half, () -> undoOrRedo(true));
         simplify = button("vizedit.ui.simplify", 6, height - (session.approvalId != null ? 94 : 70), panelWidth - 12, this::simplifyBoundary);
         if (session.approvalId != null) saveDraft = button("vizedit.ui.draft", 6, height - 70, panelWidth - 12,
             () -> VizEditClientManager.review(true, null));
@@ -130,7 +130,8 @@ public final class VizEditScreen extends Screen {
         newArea.active = editable && session.canCreate && session.approvalId == null;
         delete.active = editable && session.allows("delete") && !session.hasChildren() && session.originalArea != null
             && (session.approvalId == null || "delete".equals(session.operation));
-        undo.active = editable && session.history.canUndo(); redo.active = editable && session.history.canRedo();
+        undo.active = editable && (editingPath() ? session.pen.canUndo() : session.history.canUndo());
+        redo.active = editable && (editingPath() ? session.pen.canRedo() : session.history.canRedo());
         simplify.active = editable && session.canDraw() && canvas.isCurrentDimension() && !session.draft.shape.isEmpty();
         switchCanvas.active = !VizEditClientManager.isBusy() && (canvas.isTerrain() || VizEditClientManager.mapAvailable());
         brushWidthSlider.active = editable;
@@ -142,7 +143,7 @@ public final class VizEditScreen extends Screen {
     @Override public boolean shouldPause() { return false; }
     @Override public void close() { finishStroke(); VizEditClientManager.requestClose(); }
     // 外部切换界面和窗口重建也必须结束笔画；Xaero 浮层由桥接层转发相同生命周期。
-    @Override public void removed() { finishStroke(); super.removed(); }
+    @Override public void removed() { session.pen.abortGesture(); finishStroke(); super.removed(); }
 
     // 新版 Screen.render 会自动绘制整屏遮罩或模糊，地图浮层必须覆盖此入口以免地形被再次压暗。
     //? if >=1.20.2 {
@@ -199,7 +200,8 @@ public final class VizEditScreen extends Screen {
             : session.draft.name + (session.dirty() ? " *" : "") + " · " + t(session.tool.key());
         label(context, mode, panelWidth + 5, canvasTop - 13, width - panelWidth - 10, 0xFFDD77);
         String status = VizEditClientManager.isBusy() ? t("vizedit.ui.busy") : session.status;
-        if (status.isEmpty()) status = t("vizedit.ui.help");
+        if (status.isEmpty()) status = session.tool == VizEditSession.Tool.PEN
+            ? t("vizedit.pen.hint") + " " + t("vizedit.pen.edit_hint") : t("vizedit.ui.help");
         GeometryIssueLocator.Issue issue = session.draft == null ? null : session.geometryFocus.current(session.draft.shape);
         if (issue != null && !VizEditClientManager.isBusy()) {
             String location = I18nManager.translate("vizedit.client.geometry_location",
@@ -256,22 +258,72 @@ public final class VizEditScreen extends Screen {
             }, 0xFF70F0A8);
         }
         drawBrushOutline(context);
+        if (session.tool == VizEditSession.Tool.PEN && canvas.isCurrentDimension()) drawPen(context);
         drawGeometryIssue(context);
         context.disableScissor();
     }
 
+    // 锚点和手柄以界面像素绘制，吸附与命中使用同一比例换算到世界坐标。
+    private double penRadius() { return 5.0 / canvas.pixelsPerBlock(); }
+
+    private Vertex worldPoint(double x, double y) { return new Vertex(canvas.worldX(x), canvas.worldZ(y)); }
+
+    private void drawPen(DrawContext context) {
+        if (!editingButtons.get(VizEditSession.Tool.PEN.ordinal()).active) return;
+        PenController pen = session.pen;
+        var path = pen.path();
+        double mouseX = client.mouse.getX() * width / client.getWindow().getWidth();
+        double mouseY = client.mouse.getY() * height / client.getWindow().getHeight();
+        boolean hovering = inCanvas(mouseX, mouseY) && !pen.dragging() && !panning && !spaceDown;
+        Vertex preview = hovering ? pen.preview(worldPoint(mouseX, mouseY), penRadius(),
+            GuiInputCompat.isShiftPressed(), GuiInputCompat.isAltPressed()) : null;
+        boolean closing = pen.closing();
+        if (preview != null && path.size() > 1) {
+            Vertex first = path.anchors().get(0).point();
+            closing |= preview.getX() == first.getX() && preview.getZ() == first.getZ();
+        }
+        var points = path.flatten(closing, preview);
+        for (int i = 1; i < points.size(); i++) penLine(context, points.get(i - 1), points.get(i), 0xFF7DE2FF);
+        var anchors = path.anchors();
+        for (int i = 0; i < anchors.size(); i++) {
+            var anchor = anchors.get(i);
+            Vertex point = anchor.point();
+            drawHandle(context, point, anchor.in());
+            drawHandle(context, point, anchor.out());
+            penMarker(context, point, i == 0 ? 4 : 3, i == pen.selected() ? 0xFFFFD166 : 0xFF7DE2FF);
+        }
+        if (preview != null) penMarker(context, preview, closing ? 3 : 2, 0xFFFFFFFF);
+    }
+
+    private void drawHandle(DrawContext context, Vertex point, Vertex handle) {
+        if (point.getX() == handle.getX() && point.getZ() == handle.getZ()) return;
+        penLine(context, point, handle, 0xFF8CA8BB);
+        penMarker(context, handle, 2, 0xFFD6EAF6);
+    }
+
+    private void penLine(DrawContext context, Vertex a, Vertex b, int color) {
+        drawLine(context, new double[]{canvas.screenX(a.getX()), canvas.screenY(a.getZ()),
+            canvas.screenX(b.getX()), canvas.screenY(b.getZ())}, color);
+    }
+
+    private void penMarker(DrawContext context, Vertex point, int size, int color) {
+        double sx = canvas.screenX(point.getX()), sy = canvas.screenY(point.getZ());
+        if (!(sx >= panelWidth - size && sx <= width + size && sy >= canvasTop - size && sy <= canvasBottom + size)) return;
+        int x = (int) Math.round(sx), y = (int) Math.round(sy);
+        context.fill(x - size, y - size, x + size + 1, y + size + 1, 0xFF203042);
+        context.fill(x - size + 1, y - size + 1, x + size, y + size, color);
+    }
+
     private void drawBrushOutline(DrawContext context) {
         VizEditSession.Tool tool = session.tool;
-        if (tool != VizEditSession.Tool.BRUSH && tool != VizEditSession.Tool.BOUNDARY
-                && tool != VizEditSession.Tool.ERASER && tool != VizEditSession.Tool.LINE) return;
+        if (tool != VizEditSession.Tool.BOUNDARY && tool != VizEditSession.Tool.ERASER) return;
         if (panning || spaceDown || draggingBrushWidth || !editingButtons.get(tool.ordinal()).active) return;
 
         // 与落笔事件使用相同精度的指针坐标，缩小地图时也能选中同一方块。
         double mouseX = client.mouse.getX() * width / client.getWindow().getWidth();
         double mouseY = client.mouse.getY() * height / client.getWindow().getHeight();
         if (!inCanvas(mouseX, mouseY)) return;
-        // 直线拖动时沿用实际笔画的端点，Shift 吸附后笔尖仍与线段对齐。
-        Vertex tip = tool == VizEditSession.Tool.LINE && drawing ? lineTip : new Vertex(canvas.worldX(mouseX), canvas.worldZ(mouseY));
+        Vertex tip = worldPoint(mouseX, mouseY);
         if (tip == null || !Double.isFinite(tip.getX()) || !Double.isFinite(tip.getZ())) return;
 
         // 只在笔宽变化时提取原点处的真实笔尖外缘，移动时把它平移到光标所在方块。
@@ -439,6 +491,11 @@ public final class VizEditScreen extends Screen {
         if (spaceDown || session.tool == VizEditSession.Tool.PAN) { panning = true; return true; }
         if (!session.canDraw() || !canvas.isCurrentDimension()
                 || !session.allows(session.tool == VizEditSession.Tool.ERASER ? "shrinkarea" : "expandarea")) return true;
+        if (session.tool == VizEditSession.Tool.PEN) {
+            session.pen.press(worldPoint(mouseX, mouseY), penRadius(), GuiInputCompat.isShiftPressed(),
+                GuiInputCompat.isAltPressed(), GuiInputCompat.isControlPressed());
+            return true;
+        }
         if (session.tool == VizEditSession.Tool.WAND) {
             try {
                 List<double[]> edges = new ArrayList<>(VizEditGeometry.segments(session.draft.shape));
@@ -503,6 +560,8 @@ public final class VizEditScreen extends Screen {
         }
         if (panning) { canvas.pan(x - dragX, y - dragY); dragX = x; dragY = y; }
         if (drawing && inCanvas(x, y)) updateStroke(x, y);
+        if (session.pen.dragging() && canvas.isCurrentDimension() && inCanvas(x, y))
+            session.pen.drag(worldPoint(x, y), GuiInputCompat.isShiftPressed(), GuiInputCompat.isAltPressed());
     }
     private void updateStroke(double x, double y) {
         if (session.draft == null || session.draft != drawingDraft || beforeStroke == null) return;
@@ -527,19 +586,12 @@ public final class VizEditScreen extends Screen {
             Area paint;
             if (session.tool == VizEditSession.Tool.RECTANGLE) paint = VizEditGeometry.rectangle(start.getX(), start.getZ(), point.getX(), point.getZ(), constrain);
             else if (session.tool == VizEditSession.Tool.ELLIPSE) paint = VizEditGeometry.ellipse(start.getX(), start.getZ(), point.getX(), point.getZ(), constrain);
-            else if (session.tool == VizEditSession.Tool.LINE) {
-                lineTip = null;
-                if (constrain) point = VizEditGeometry.constrainLine(start, point);
-                paint = VizEditGeometry.stroke(List.of(start, point), session.brushWidth);
-                lineTip = point;
-            } else {
+            else {
                 Vertex last = stroke.get(stroke.size() - 1);
                 if (Math.abs(point.getX() - last.getX()) + Math.abs(point.getZ() - last.getZ()) >= 0.5) stroke.add(point);
                 paint = VizEditGeometry.stroke(stroke, session.brushWidth);
             }
-            Area painted = session.tool == VizEditSession.Tool.ERASER ? VizEditGeometry.subtract(beforeStroke, paint) : VizEditGeometry.union(beforeStroke, paint);
-            // 选区笔闭合后立即预览实心内部，填充与本次笔画共用同一撤销记录。
-            session.draft.shape = session.tool == VizEditSession.Tool.BRUSH ? VizEditGeometry.fillNewlyEnclosed(beforeStroke, painted) : painted;
+            session.draft.shape = session.tool == VizEditSession.Tool.ERASER ? VizEditGeometry.subtract(beforeStroke, paint) : VizEditGeometry.union(beforeStroke, paint);
             session.status = "";
         } catch (VizEditGeometry.GeometryException e) { session.reportError(e.errorKey()); }
         catch (IllegalArgumentException e) { session.status = t("vizedit.error.geometry_limit"); }
@@ -553,6 +605,12 @@ public final class VizEditScreen extends Screen {
         // 释放事件可能携带尚未收到拖动事件的最终落点，先采样再收尾才能识别最后一次主动越界。
         if (button == 0 && draggingBrushWidth && brushWidthSlider.active) brushWidthSlider.dragTo(x);
         if (button == 0 && drawing && inCanvas(x, y)) updateStroke(x, y);
+        if (button == 0 && session.pen.dragging()) {
+            if (canvas.isCurrentDimension()) {
+                samplePointer(x, y);
+                session.pen.release();
+            } else session.pen.abortGesture();
+        }
         //? if >=1.21.9 {
         /*super.mouseReleased(clickEvent);*/
         //?} else {
@@ -607,7 +665,7 @@ public final class VizEditScreen extends Screen {
     // Fabric 事件的滚轮参数在所有活跃版本均有横纵两轴，原版 Screen 签名由预处理适配。
     public boolean scroll(double x, double y, double amount) {
         if (x < panelWidth) session.treeOffset = Math.max(0, session.treeOffset - (int) Math.signum(amount) * 3);
-        else if (inCanvas(x, y) && !drawing && !panning && !draggingBrushWidth) canvas.zoom(amount, x, y);
+        else if (inCanvas(x, y) && !drawing && !session.pen.dragging() && !panning && !draggingBrushWidth) canvas.zoom(amount, x, y);
         return true;
     }
     //? if >=1.20.2 {
@@ -634,11 +692,24 @@ public final class VizEditScreen extends Screen {
             brushWidthSlider.setWidthValue(session.brushWidth + (key == GLFW.GLFW_KEY_LEFT ? -1 : 1));
             return true;
         }
+        if (key == GLFW.GLFW_KEY_P && !GuiInputCompat.hasControl(key, scan, modifiers)
+                && editingButtons.get(VizEditSession.Tool.PEN.ordinal()).active) {
+            finishStroke();
+            selectTool(VizEditSession.Tool.PEN);
+            return true;
+        }
+        if (editingPath() && !VizEditClientManager.isBusy()) {
+            if (key == GLFW.GLFW_KEY_ESCAPE) { session.pen.cancel(); session.status = ""; return true; }
+            if (canvas.isCurrentDimension()) {
+                if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) { session.pen.finishOpen(); return true; }
+                if (key == GLFW.GLFW_KEY_DELETE || key == GLFW.GLFW_KEY_BACKSPACE) { session.pen.delete(); return true; }
+            }
+        }
         if (key == GLFW.GLFW_KEY_ESCAPE) { close(); return true; }
         if (key == GLFW.GLFW_KEY_SPACE) { spaceDown = true; return true; }
         if (areahint.util.GuiInputCompat.hasControl(key, scan, modifiers) && !VizEditClientManager.isBusy() && !VizEditClientManager.isDraftLocked() && !session.readOnly && !session.invalid) {
-            if (key == GLFW.GLFW_KEY_Z) { finishStroke(); if (areahint.util.GuiInputCompat.hasShift(modifiers)) session.redo(); else session.undo(); return true; }
-            if (key == GLFW.GLFW_KEY_Y) { finishStroke(); session.redo(); return true; }
+            if (key == GLFW.GLFW_KEY_Z) { finishStroke(); undoOrRedo(GuiInputCompat.hasShift(modifiers)); return true; }
+            if (key == GLFW.GLFW_KEY_Y) { finishStroke(); undoOrRedo(true); return true; }
         }
         //? if >=1.21.9 {
         /*return super.keyPressed(inputEvent);*/
@@ -659,6 +730,23 @@ public final class VizEditScreen extends Screen {
         return super.keyReleased(key, scan, modifiers);
         //?}
     }
+    private void selectTool(VizEditSession.Tool tool) {
+        if (session.tool != tool) {
+            session.pen.abortGesture();
+            session.tool = tool;
+            session.status = "";
+        }
+    }
+
+    private boolean editingPath() { return session.tool == VizEditSession.Tool.PEN && session.pen.active(); }
+
+    private void undoOrRedo(boolean forward) {
+        if (editingPath()) {
+            if (forward) session.pen.redo(); else session.pen.undo();
+        } else if (forward) session.redo(); else session.undo();
+        refreshState();
+    }
+
     private boolean inCanvas(double x, double y) { return x > panelWidth && x < width && y >= canvasTop && y < canvasBottom; }
     private void label(DrawContext context, String text, int x, int y, int maxWidth, int color) {
         // 编辑器标签沿用 RGB 配色，补全不透明 alpha；多边形填充与边线的实际透明度不经过这里。

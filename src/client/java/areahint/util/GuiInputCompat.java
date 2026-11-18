@@ -7,6 +7,23 @@ public final class GuiInputCompat {
     private GuiInputCompat() {
     }
 
+    // 鼠标落点与逐帧预览都实时读取修饰键，允许在一笔中切换吸附和方向柄模式。
+    public static boolean isAltPressed() {
+        //? if >=1.21.9 {
+        /*return net.minecraft.client.MinecraftClient.getInstance().isAltPressed();*/
+        //?} else {
+        return Screen.hasAltDown();
+        //?}
+    }
+
+    public static boolean isControlPressed() {
+        //? if >=1.21.9 {
+        /*return net.minecraft.client.MinecraftClient.getInstance().isCtrlPressed();*/
+        //?} else {
+        return Screen.hasControlDown();
+        //?}
+    }
+
     public static boolean isSelectAll(int key, int scan, int modifiers) {
         //? if >=1.21.9 {
         /*return new net.minecraft.client.input.KeyInput(key, scan, modifiers).isSelectAll();*/

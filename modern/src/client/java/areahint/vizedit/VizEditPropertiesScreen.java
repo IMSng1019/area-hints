@@ -41,7 +41,7 @@ final class VizEditPropertiesScreen extends Screen {
         category("vizedit.properties.names", session.draft.name + " / " + display(session.draft.surface), x, 52, column,
             editable("rename"), () -> showNames(null, session.draft.name, session.draft.surface));
         category("vizedit.properties.hierarchy", session.draft.level + " / " + display(session.draft.parent), x + column + 16, 52, column,
-            editable("rename"), this::showHierarchy);
+            session.canEditHierarchy(), this::showHierarchy);
         category("vizedit.ui.color", session.draft.color, x, 52 + row, column,
             editable("recolor"), () -> showColor(false));
         category("vizedit.properties.altitude", display(session.draft.min) + " ~ " + display(session.draft.max), x + column + 16, 52 + row, column,
@@ -113,7 +113,9 @@ final class VizEditPropertiesScreen extends Screen {
         // 等级与上级共同确认，取消选择时不留下失配的半成品层级。
         nested(new WizardSelectionListScreen<>(this, "vizedit.properties.hierarchy",
             candidates.isEmpty() ? "vizedit.error.parent" : "commandui.easyadd.base.prompt", candidates,
-            parent -> apply("rename", () -> { session.draft.level = Integer.toString(level); session.draft.parent = parent; }), null));
+            parent -> {
+                if (session.setHierarchy(level, parent)) showHub(); else deny();
+            }, null));
     }
 
     private boolean isDescendant(AreaData area) {

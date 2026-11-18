@@ -44,6 +44,8 @@ public final class VizEditSession {
     public final int approvalRevision;
     public final String dimensionalName;
     public String target;
+    // 新建子域名时保存树中选定的上级，提交新建操作的目标仍为空。
+    private String creationParent;
     public String operation = "update";
     public Draft draft;
     public Draft originalDraft;
@@ -115,6 +117,7 @@ public final class VizEditSession {
         try { next = draftFrom(area); }
         catch (VizEditGeometry.GeometryException e) { VizEditClientManager.report(e.errorKey()); return; }
         target = name;
+        creationParent = null;
         pen.cancel();
         operation = "update";
         originalArea = area;
@@ -164,19 +167,39 @@ public final class VizEditSession {
 
     public void create() {
         if (!canCreate || readOnly || approvalId != null) return;
-        AreaData selected = find(target);
+        AreaData selected = find(selectedAreaName());
+        if (selected != null && selected.getLevel() == Integer.MAX_VALUE) {
+            VizEditClientManager.report("vizedit.error.level");
+            return;
+        }
         pen.cancel();
         target = null;
         operation = "create";
         originalArea = null;
         draft = new Draft();
-        if (selected != null && selected.getLevel() < Integer.MAX_VALUE) {
-            draft.parent = selected.getName();
+        creationParent = selected == null ? null : selected.getName();
+        if (selected != null) {
+            draft.parent = creationParent;
             draft.level = Integer.toString(selected.getLevel() + 1);
         }
         originalDraft = draft.copy();
         history.clear();
         status = "";
+    }
+
+    String selectedAreaName() {
+        return creationParent == null ? target : creationParent;
+    }
+
+    boolean canEditHierarchy() {
+        return creationParent == null && !"delete".equals(operation) && allows("rename");
+    }
+
+    boolean setHierarchy(int level, String parent) {
+        if (!canEditHierarchy()) return false;
+        draft.level = Integer.toString(level);
+        draft.parent = parent;
+        return true;
     }
 
     public boolean allows(String action) {

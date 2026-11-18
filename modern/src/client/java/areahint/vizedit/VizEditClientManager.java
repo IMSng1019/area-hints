@@ -82,21 +82,21 @@ public final class VizEditClientManager {
     public static void open(Screen parent) {
         if (session != null && !session.invalid) { show(); return; }
         if (session != null && session.dirty() && !session.readOnly) {
-            areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), VizEditDialog.unsaved(session, () -> requestOpen(parent, null, null)));
+            areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), VizEditDialog.unsaved(session, () -> requestOpen(parent, null, null, false)));
             return;
         }
-        requestOpen(parent, null, null);
+        requestOpen(parent, null, null, false);
     }
 
     public static void openApproval(ApprovalRequest request, Screen parent) {
         if (session != null && session.dirty()) {
-            areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), VizEditDialog.unsaved(session, () -> requestOpen(parent, request.id, null)));
+            areahint.util.ClientScreenCompat.setScreen(Minecraft.getInstance(), VizEditDialog.unsaved(session, () -> requestOpen(parent, request.id, null, false)));
             return;
         }
-        requestOpen(parent, request.id, null);
+        requestOpen(parent, request.id, null, false);
     }
 
-    private static void requestOpen(Screen parent, String approvalId, String selected) {
+    private static void requestOpen(Screen parent, String approvalId, String selected, boolean create) {
         Minecraft client = Minecraft.getInstance();
         if (busy || client.level == null || client.player == null) return;
         if (!ClientNetworkCompat.get().canSend(Channel.C2S_VIZEDIT_ACTION)) { report("vizedit.client.unavailable"); return; }
@@ -107,6 +107,7 @@ public final class VizEditClientManager {
         if (approvalId != null) action.addProperty("approvalId", approvalId);
         requestedParent = parent;
         selectAfterOpen = selected;
+        createAfterOpen = create;
         connection = client.getConnection();
         worldDimension = client.level.dimension().identifier().toString();
         if (send(action)) { clearWaiting(); await(id, "open"); }
@@ -173,8 +174,12 @@ public final class VizEditClientManager {
             if (incoming.id.isEmpty()) throw new IllegalArgumentException("sessionId");
             session = incoming;
             clearWaiting();
-            if (createAfterOpen) session.create();
-            else if (selectAfterOpen != null) session.select(selectAfterOpen);
+            if (selectAfterOpen != null) session.select(selectAfterOpen);
+            if (createAfterOpen) {
+                // 上级已在其他会话中消失时提示重新选择，避免意外创建一级域名。
+                if (Objects.equals(selectAfterOpen, session.selectedAreaName())) session.create();
+                else report("vizedit.error.parent");
+            }
             createAfterOpen = false;
             selectAfterOpen = null;
             session.mapMode = mapAvailable();
@@ -292,6 +297,8 @@ public final class VizEditClientManager {
         if (!List.of("saved", "submitted", "draft", "resubmitted").contains(outcome)) return;
         VizEditSession completed = session;
         Runnable continuation = afterSave;
+        String previousTarget = completed.target;
+        String savedName = completed.draft.name.trim();
         completed.originalDraft = completed.draft.copy();
         completed.history.clear();
         // 只有匹配请求和会话的成功响应才结束草稿，失败或超时仍然可以继续编辑。
@@ -303,10 +310,12 @@ public final class VizEditClientManager {
             completed.invalid = true;
             continuation.run();
             if (session == completed && !"open".equals(awaitingAction)) {
-                String selected = completed.target;
-                createAfterOpen = "create".equals(completed.operation);
+                String selected = completed.selectedAreaName();
+                boolean create = "create".equals(completed.operation);
+                // 上级改名已落盘时使用新名重新选择，待审批的改名仍使用正式域名。
+                if (create && previousTarget != null && previousTarget.equals(selected) && "saved".equals(outcome)) selected = savedName;
                 session = null;
-                requestOpen(completed.parentScreen, null, selected);
+                requestOpen(completed.parentScreen, null, selected, create);
             }
         } else {
             session = null;

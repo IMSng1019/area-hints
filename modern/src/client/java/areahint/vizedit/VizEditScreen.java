@@ -163,8 +163,14 @@ public final class VizEditScreen extends Screen {
                 Rectangle2D target = canvas.isTerrain() ? new Rectangle2D.Double(focus.x(), focus.z(), 0, 0) : focus.bounds();
                 canvas.frame(target, panelWidth, canvasTop, width - panelWidth, canvasBottom - canvasTop);
                 session.focusRequested = false;
-            } else if (session.focusRequested && !session.draft.shape.isEmpty()) {
-                canvas.frame(session.draft.shape.getBounds2D(), panelWidth, canvasTop, width - panelWidth, canvasBottom - canvasTop);
+            } else if (session.focusRequested) {
+                Area shape = session.draft.shape;
+                // 新增草稿尚无轮廓时定位到所选上级，避免第一笔画完才跳转镜头。
+                if (shape.isEmpty() && "create".equals(session.operation)) {
+                    AreaData selected = session.find(session.selectedAreaName());
+                    if (selected != null) shape = VizEditGeometry.fromVertices(selected.getVertices());
+                }
+                if (!shape.isEmpty()) canvas.frame(shape.getBounds2D(), panelWidth, canvasTop, width - panelWidth, canvasBottom - canvasTop);
                 session.focusRequested = false;
             }
         }
@@ -177,7 +183,8 @@ public final class VizEditScreen extends Screen {
         context.fill(panelWidth, 0, width, canvasTop, 0xF0171B22);
         context.fill(panelWidth, canvasBottom, width, height, 0xF0171B22);
         label(context, t("vizedit.ui.title"), 6, 8, panelWidth - 12, 0xFFFFFF);
-        label(context, session.dimensionalName + " [0.5]", 8, 77, panelWidth - 16, 0x9BDCF3);
+        label(context, session.dimensionalName + " [0.5]", 8, 77, panelWidth - 16, 0xCFD6DF);
+        String selectedName = session.selectedAreaName();
         var rows = session.tree.rows(session.search);
         context.enableScissor(4, 92, panelWidth - 4, treeBottom);
         int visibleRows = Math.max(1, (treeBottom - 92) / 17);
@@ -185,10 +192,11 @@ public final class VizEditScreen extends Screen {
         for (int i = session.treeOffset; i < Math.min(rows.size(), session.treeOffset + visibleRows); i++) {
             var row = rows.get(i);
             int y = 92 + (i - session.treeOffset) * 17;
-            if (Objects.equals(row.area().getName(), session.target)) context.fill(4, y - 1, panelWidth - 4, y + 15, 0xFF25465F);
+            boolean selected = row.area().getName().equals(selectedName);
+            if (selected) context.fill(4, y - 1, panelWidth - 4, y + 15, 0xFF25465F);
             int indent = Math.min(panelWidth / 3, row.depth() * 9);
             String prefix = row.children() ? session.tree.isCollapsed(row.area().getName()) ? "+ " : "− " : "  ";
-            label(context, prefix + row.area().getName() + " [" + row.area().getLevel() + "]", 7 + indent, y + 3, panelWidth - 15 - indent, 0xE7ECF3);
+            label(context, prefix + row.area().getName() + " [" + row.area().getLevel() + "]", 7 + indent, y + 3, panelWidth - 15 - indent, selected ? 0x9BDCF3 : 0xE7ECF3);
         }
         context.disableScissor();
         String mode = session.readOnly ? t("vizedit.ui.readonly") : session.draft == null ? t("vizedit.ui.empty")
@@ -234,15 +242,22 @@ public final class VizEditScreen extends Screen {
 
     private void drawAreas(GuiGraphicsExtractor context) {
         context.enableScissor(panelWidth + 1, canvasTop, width, canvasBottom);
+        AreaData selectedParent = "create".equals(session.operation) ? session.find(session.selectedAreaName()) : null;
         for (AreaData area : session.areas) {
-            if (Objects.equals(area.getName(), session.target)) continue;
-            boolean parent = session.draft != null && Objects.equals(area.getName(), session.draft.parent);
-            drawPolygon(context, List.of(area.getVertices()), parent ? 0x609BDCF3 : 0x357A8DA4, parent ? 0xAA9BDCF3 : 0x886F829A, false);
+            if (area == selectedParent || Objects.equals(area.getName(), session.target)) continue;
+            drawPolygon(context, List.of(area.getVertices()), 0, 0x886F829A, false);
         }
+        // 上级的蓝色选区位于普通边界之上，新建草稿再叠加金色预览。
+        if (selectedParent != null) drawPolygon(context, List.of(selectedParent.getVertices()), 0x5548B9DF, 0xFF9BDCF3, true);
         if (session.draft != null) {
             try {
                 List<List<Vertex>> contours = VizEditGeometry.contours(session.draft.shape);
-                drawPolygon(context, contours, "delete".equals(session.operation) ? 0x55FF5666 : 0x5548B9DF,
+                int fill = switch (session.operation) {
+                    case "delete" -> 0x55FF5666;
+                    case "create" -> 0x55FFD166;
+                    default -> 0x5548B9DF;
+                };
+                drawPolygon(context, contours, fill,
                     "delete".equals(session.operation) ? 0xFFFF6677 : 0xFFFFD166, true);
             } catch (VizEditGeometry.GeometryException e) { session.reportError(e.errorKey()); }
         }

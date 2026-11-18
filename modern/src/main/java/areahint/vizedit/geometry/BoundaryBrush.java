@@ -165,10 +165,12 @@ public final class BoundaryBrush {
             paint.subtract(state.hardForbidden);
             paint.subtract(state.naturalForbidden);
             shape = VizEditGeometry.union(existing, paint);
-            // 无实际禁区却在拆分并回后产生洞时，才检查未经拆分的完整选区，正常结果保持原算法。
-            if (state.hardForbidden.isEmpty() && state.naturalForbidden.isEmpty() && !shape.isSingular()
-                    && VizEditGeometry.contours(shape).stream().anyMatch(ring -> VizEditGeometry.signedArea(ring) > 0)
-                    && VizEditGeometry.validate(complete).valid() && keepsExistingArea(complete)) shape = complete;
+            // 拆分旧斜边再并回可能产生伪洞或伪孤岛；仅对非法多环尝试直接裁剪完整选区，正常结果保持原算法。
+            if (!shape.isSingular() && !VizEditGeometry.validate(shape).valid()) {
+                Area candidate = clipComplete(complete);
+                if (VizEditGeometry.validate(candidate).valid() && keepsExistingArea(candidate)
+                        && BoundarySaveGuard.allows(candidate, existing, state.forbidden())) shape = candidate;
+            }
             // 新获准面积必须从旧自然限制中清除，否则下一次保存会误判自身越界。
             state.naturalForbidden.subtract(shape);
             if (activeField != null) {
@@ -177,6 +179,26 @@ public final class BoundaryBrush {
                 visibleForbidden.intersect(scope);
                 guides = guideLines(visibleForbidden, scope, activeField, offset);
             }
+        }
+
+        private Area clipComplete(Area complete) {
+            if (state.hardForbidden.isEmpty() && state.naturalForbidden.isEmpty()) return complete;
+            // 全部原始笔迹被挡住且没有闭合填充时，这是一笔空操作，直接保留旧边的精确坐标。
+            if (clipToCurrentLimits(rawPaint).isEmpty()
+                    && VizEditGeometry.contours(VizEditGeometry.union(existing, rawPaint)).stream()
+                        .noneMatch(ring -> VizEditGeometry.signedArea(ring) > 0)) return new Area(existing);
+            Area candidate = clipToCurrentLimits(complete);
+            // 最后并回落笔前面积；历史硬禁区由调用方完整核验，不追溯裁剪旧域名，也不按面积忽略真实小洞。
+            return VizEditGeometry.union(existing, candidate);
+        }
+
+        private Area clipToCurrentLimits(Area source) {
+            Area candidate = new Area(source);
+            // 直接使用完整父域名和同级域名，避免与已扣除旧域名的硬禁区再次沿同一条小数边求交。
+            if (parent != null) candidate.intersect(parent);
+            if (!peers.isEmpty()) candidate.subtract(peers);
+            if (!state.naturalForbidden.isEmpty()) candidate.subtract(state.naturalForbidden);
+            return candidate;
         }
 
         private boolean keepsExistingArea(Area candidate) {

@@ -36,6 +36,42 @@ class BoundaryBrushTest {
     }
 
     @Test
+    void fastStrokeClippedByParentDoesNotCreateMicroscopicHoles() {
+        assertFastClippedStroke(false);
+    }
+
+    @Test
+    void fastStrokeClippedByPeerDoesNotCreateMicroscopicHoles() {
+        assertFastClippedStroke(true);
+    }
+
+    private static void assertFastClippedStroke(boolean peerBoundary) {
+        Area existing = VizEditGeometry.fromVertices(List.of(new Vertex(-18.8, 26.3), new Vertex(-10.3, 14.3), new Vertex(-4.2, 0.7)));
+        var brush = new BoundaryBrush.Stroke(existing, peerBoundary ? null : rectangle(-50, -50, 0, 50),
+            peerBoundary ? List.of(rectangle(0, -50, 50, 50)) : List.of(), new BoundaryBrush.State(), null, 5);
+        brush.paint(new Vertex(-16, 7));
+        var result = brush.paint(new Vertex(16, -7));
+        // 大步拖动跨越父域名边界时，拆分旧斜边曾留下约1e-30平方格的伪洞。
+        var validation = VizEditGeometry.validate(result.shape());
+        assertTrue(validation.valid(), validation.errorKey());
+        assertEquals(1, VizEditGeometry.contours(result.shape()).size());
+        assertTrue(result.shape().contains(-10.5, 5.5));
+        assertFalse(result.shape().contains(0.5, -0.5));
+        assertDoesNotThrow(() -> BoundarySaveGuard.prepare(result.shape(), result.state().forbidden()));
+    }
+
+    @Test
+    void fullyBlockedStrokePreservesExistingFractionalBoundary() {
+        Area existing = VizEditGeometry.fromVertices(List.of(new Vertex(4.8, -8.5), new Vertex(-22, 3.4), new Vertex(14.8, -14.8)));
+        var brush = new BoundaryBrush.Stroke(existing, rectangle(-50, -50, -9, 50), List.of(), new BoundaryBrush.State(), null, 10);
+        var result = brush.paint(new Vertex(0, -6));
+        // 笔迹全部落在父域名外，不能把未编辑的旧顶点切成伪洞或伪孤岛。
+        var validation = VizEditGeometry.validate(result.shape());
+        assertTrue(validation.valid(), validation.errorKey());
+        assertTrue(existing.equals(result.shape()));
+    }
+
+    @Test
     void paintingInsideExistingFractionalBoundaryPreservesAreaOutsideParent() {
         Area existing = VizEditGeometry.fromVertices(List.of(new Vertex(24, 0), new Vertex(-18.2, 24.5), new Vertex(-20.9, -28.1)));
         var brush = new BoundaryBrush.Stroke(existing, rectangle(-50, -50, -10, 50), List.of(), new BoundaryBrush.State(), null, 1);
@@ -71,6 +107,35 @@ class BoundaryBrushTest {
         assertFalse(closed.shape().contains(5.5, 5.5));
         assertTrue(closed.shape().contains(2.5, 5.5));
         assertTrue(closed.state().forbidden().contains(5.5, 5.5));
+    }
+
+    @Test
+    void strokeOutsideParentStillFillsItsNewlyEnclosedInterior() {
+        var brush = new BoundaryBrush.Stroke(new Area(), rectangle(-2, -2, 2, 2),
+            List.of(), new BoundaryBrush.State(), null, 1);
+        brush.paint(new Vertex(-5, -5));
+        brush.paint(new Vertex(5, -5));
+        brush.paint(new Vertex(5, 5));
+        brush.paint(new Vertex(-5, 5));
+        var result = brush.paint(new Vertex(-5, -5));
+        // 笔尖全部在父域名外仍可能圈住其内部，不能把这种闭合填充误当作被完全挡住的空操作。
+        assertTrue(result.shape().equals(rectangle(-2, -2, 2, 2)));
+    }
+
+    @Test
+    void microscopicPeerExclusionRemainsAHole() {
+        Area peer = VizEditGeometry.fromVertices(List.of(new Vertex(4.2, 4.2), new Vertex(4.200001, 4.2),
+            new Vertex(4.200001, 4.200001), new Vertex(4.2, 4.200001)));
+        var brush = new BoundaryBrush.Stroke(new Area(), rectangle(-1, -1, 11, 11),
+            List.of(peer), new BoundaryBrush.State(), null, 1);
+        brush.paint(new Vertex(0, 0));
+        brush.paint(new Vertex(10, 0));
+        brush.paint(new Vertex(10, 10));
+        brush.paint(new Vertex(0, 10));
+        var result = brush.paint(new Vertex(0, 0));
+        // 同级域名留下的真实微小洞必须继续禁止保存，不能按洞面积阈值掩盖几何问题。
+        assertEquals("vizedit.error.geometry_holes", VizEditGeometry.validate(result.shape()).errorKey());
+        assertFalse(result.shape().contains(4.2000005, 4.2000005));
     }
 
     @Test

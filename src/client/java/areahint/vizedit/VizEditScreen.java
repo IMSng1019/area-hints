@@ -63,6 +63,9 @@ public final class VizEditScreen extends Screen {
     private VizEditSession.Draft drawingDraft;
     private BoundaryBrush.Stroke boundaryStroke;
     private List<double[]> boundaryGuides = List.of();
+    private List<double[]> brushOutline = List.of();
+    private int outlineWidth;
+    private Vertex lineTip;
     private VizEditSession.Draft guideDraft;
 
     public VizEditScreen(VizEditSession session, VizEditCanvas canvas, Screen terrainScreen) {
@@ -252,8 +255,40 @@ public final class VizEditScreen extends Screen {
                 canvas.screenX(edge[0]), canvas.screenY(edge[1]), canvas.screenX(edge[2]), canvas.screenY(edge[3])
             }, 0xFF70F0A8);
         }
+        drawBrushOutline(context);
         drawGeometryIssue(context);
         context.disableScissor();
+    }
+
+    private void drawBrushOutline(DrawContext context) {
+        VizEditSession.Tool tool = session.tool;
+        if (tool != VizEditSession.Tool.BRUSH && tool != VizEditSession.Tool.BOUNDARY
+                && tool != VizEditSession.Tool.ERASER && tool != VizEditSession.Tool.LINE) return;
+        if (panning || spaceDown || draggingBrushWidth || !editingButtons.get(tool.ordinal()).active) return;
+
+        // 与落笔事件使用相同精度的指针坐标，缩小地图时也能选中同一方块。
+        double mouseX = client.mouse.getX() * width / client.getWindow().getWidth();
+        double mouseY = client.mouse.getY() * height / client.getWindow().getHeight();
+        if (!inCanvas(mouseX, mouseY)) return;
+        // 直线拖动时沿用实际笔画的端点，Shift 吸附后笔尖仍与线段对齐。
+        Vertex tip = tool == VizEditSession.Tool.LINE && drawing ? lineTip : new Vertex(canvas.worldX(mouseX), canvas.worldZ(mouseY));
+        if (tip == null || !Double.isFinite(tip.getX()) || !Double.isFinite(tip.getZ())) return;
+
+        // 只在笔宽变化时提取原点处的真实笔尖外缘，移动时把它平移到光标所在方块。
+        if (outlineWidth != session.brushWidth) {
+            brushOutline = VizEditGeometry.segments(VizEditGeometry.stroke(List.of(new Vertex(0, 0)), session.brushWidth));
+            outlineWidth = session.brushWidth;
+        }
+        double originX = canvas.screenX(Math.floor(tip.getX()));
+        double originY = canvas.screenY(Math.floor(tip.getZ()));
+        double scale = canvas.pixelsPerBlock();
+        int color = tool == VizEditSession.Tool.ERASER ? 0xFFFF8899 : 0xFFFFFFFF;
+        // 方块轮廓只有水平边和竖直边，每条边一次绘制，线宽始终为一个界面像素。
+        for (double[] edge : brushOutline) {
+            int x0 = (int) Math.round(originX + edge[0] * scale), x1 = (int) Math.round(originX + edge[2] * scale);
+            int y0 = (int) Math.round(originY + edge[1] * scale), y1 = (int) Math.round(originY + edge[3] * scale);
+            context.fill(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1) + 1, Math.max(y0, y1) + 1, color);
+        }
     }
 
     private void drawGeometryIssue(DrawContext context) {
@@ -493,8 +528,10 @@ public final class VizEditScreen extends Screen {
             if (session.tool == VizEditSession.Tool.RECTANGLE) paint = VizEditGeometry.rectangle(start.getX(), start.getZ(), point.getX(), point.getZ(), constrain);
             else if (session.tool == VizEditSession.Tool.ELLIPSE) paint = VizEditGeometry.ellipse(start.getX(), start.getZ(), point.getX(), point.getZ(), constrain);
             else if (session.tool == VizEditSession.Tool.LINE) {
+                lineTip = null;
                 if (constrain) point = VizEditGeometry.constrainLine(start, point);
                 paint = VizEditGeometry.stroke(List.of(start, point), session.brushWidth);
+                lineTip = point;
             } else {
                 Vertex last = stroke.get(stroke.size() - 1);
                 if (Math.abs(point.getX() - last.getX()) + Math.abs(point.getZ() - last.getZ()) >= 0.5) stroke.add(point);

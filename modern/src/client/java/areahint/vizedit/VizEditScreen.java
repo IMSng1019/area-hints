@@ -5,6 +5,7 @@ import areahint.data.AreaData;
 import areahint.data.AreaData.Vertex;
 import areahint.i18n.I18nManager;
 import areahint.vizedit.geometry.BoundaryBrush;
+import areahint.vizedit.geometry.EraserStroke;
 import areahint.util.GuiInputCompat;
 import areahint.vizedit.geometry.GeometryIssueLocator;
 import areahint.vizedit.geometry.VizEditGeometry;
@@ -13,11 +14,9 @@ import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Set;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.AbstractSliderButton;
@@ -31,8 +30,8 @@ public final class VizEditScreen extends Screen {
     private final VizEditCanvas canvas;
     private final Screen terrainScreen;
     private final List<Button> editingButtons = new ArrayList<>();
-    private final List<Row> rows = new ArrayList<>();
-    private final List<Vertex> stroke = new ArrayList<>();
+    private Vertex strokeStart;
+    private EraserStroke eraserStroke;
     private EditBox search;
     private BrushWidthSlider brushWidthSlider;
     private Button undo;
@@ -179,17 +178,17 @@ public final class VizEditScreen extends Screen {
         context.fill(panelWidth, canvasBottom, width, height, 0xF0171B22);
         label(context, t("vizedit.ui.title"), 6, 8, panelWidth - 12, 0xFFFFFF);
         label(context, session.dimensionalName + " [0.5]", 8, 77, panelWidth - 16, 0x9BDCF3);
-        rebuildRows();
+        var rows = session.tree.rows(session.search);
         context.enableScissor(4, 92, panelWidth - 4, treeBottom);
         int visibleRows = Math.max(1, (treeBottom - 92) / 17);
         session.treeOffset = Math.max(0, Math.min(session.treeOffset, Math.max(0, rows.size() - visibleRows)));
         for (int i = session.treeOffset; i < Math.min(rows.size(), session.treeOffset + visibleRows); i++) {
-            Row row = rows.get(i);
+            var row = rows.get(i);
             int y = 92 + (i - session.treeOffset) * 17;
-            if (Objects.equals(row.area.getName(), session.target)) context.fill(4, y - 1, panelWidth - 4, y + 15, 0xFF25465F);
-            int indent = Math.min(panelWidth / 3, row.depth * 9);
-            String prefix = row.children ? session.collapsed.contains(row.area.getName()) ? "+ " : "− " : "  ";
-            label(context, prefix + row.area.getName() + " [" + row.area.getLevel() + "]", 7 + indent, y + 3, panelWidth - 15 - indent, 0xE7ECF3);
+            if (Objects.equals(row.area().getName(), session.target)) context.fill(4, y - 1, panelWidth - 4, y + 15, 0xFF25465F);
+            int indent = Math.min(panelWidth / 3, row.depth() * 9);
+            String prefix = row.children() ? session.tree.isCollapsed(row.area().getName()) ? "+ " : "− " : "  ";
+            label(context, prefix + row.area().getName() + " [" + row.area().getLevel() + "]", 7 + indent, y + 3, panelWidth - 15 - indent, 0xE7ECF3);
         }
         context.disableScissor();
         String mode = session.readOnly ? t("vizedit.ui.readonly") : session.draft == null ? t("vizedit.ui.empty")
@@ -414,41 +413,6 @@ public final class VizEditScreen extends Screen {
         }
     }
 
-    private void rebuildRows() {
-        rows.clear();
-        String query = session.search.trim().toLowerCase(Locale.ROOT);
-        List<AreaData> sorted = session.areas.stream().sorted(Comparator.comparingInt(AreaData::getLevel).thenComparing(AreaData::getName)).toList();
-        Set<String> visited = new HashSet<>();
-        if (!query.isEmpty()) {
-            for (AreaData area : sorted) if (area.getName().toLowerCase(Locale.ROOT).contains(query)) rows.add(new Row(area, 0, hasChildren(area)));
-            return;
-        }
-        for (AreaData area : sorted) if (area.getBaseName() == null || session.find(area.getBaseName()) == null) addRows(area, 0, sorted, visited);
-        // 旧文件即使带环或失联引用也必须仍能选择查看，树遍历不递归进入已经访问的名字。
-        for (AreaData area : sorted) if (!visited.contains(area.getName())) addRows(area, 0, sorted, visited);
-    }
-    private void addRows(AreaData area, int depth, List<AreaData> sorted, Set<String> visited) {
-        if (!visited.add(area.getName())) return;
-        rows.add(new Row(area, depth, hasChildren(area)));
-        if (session.collapsed.contains(area.getName())) { markDescendants(area.getName(), sorted, visited); return; }
-        // 显式栈防止任意正整数等级形成很深的调用栈。
-        List<Row> pending = new ArrayList<>();
-        for (int i = sorted.size() - 1; i >= 0; i--) if (Objects.equals(sorted.get(i).getBaseName(), area.getName())) pending.add(new Row(sorted.get(i), depth + 1, hasChildren(sorted.get(i))));
-        while (!pending.isEmpty()) {
-            Row row = pending.remove(pending.size() - 1);
-            if (!visited.add(row.area.getName())) continue;
-            rows.add(row);
-            if (session.collapsed.contains(row.area.getName())) { markDescendants(row.area.getName(), sorted, visited); continue; }
-            for (int i = sorted.size() - 1; i >= 0; i--) if (Objects.equals(sorted.get(i).getBaseName(), row.area.getName()))
-                pending.add(new Row(sorted.get(i), row.depth + 1, hasChildren(sorted.get(i))));
-        }
-    }
-    private static void markDescendants(String root, List<AreaData> sorted, Set<String> visited) {
-        List<String> pending = new ArrayList<>(); pending.add(root);
-        for (int i = 0; i < pending.size(); i++) for (AreaData area : sorted)
-            if (Objects.equals(area.getBaseName(), pending.get(i)) && visited.add(area.getName())) pending.add(area.getName());
-    }
-    private boolean hasChildren(AreaData area) { return session.areas.stream().anyMatch(child -> Objects.equals(child.getBaseName(), area.getName())); }
     @Override public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent clickEvent, boolean doubled) {
         double mouseX = clickEvent.x(), mouseY = clickEvent.y(); int button = clickEvent.button();
     /*@Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -463,11 +427,12 @@ public final class VizEditScreen extends Screen {
         if (mouseX < panelWidth) {
             if (mouseY >= 92 && mouseY < treeBottom) {
                 int index = session.treeOffset + (int) ((mouseY - 92) / 17);
+                var rows = session.tree.rows(session.search);
                 if (index < rows.size()) {
-                    Row row = rows.get(index);
-                    if (row.children && mouseX < 22 + Math.min(panelWidth / 3, row.depth * 9)) {
-                        if (!session.collapsed.remove(row.area.getName())) session.collapsed.add(row.area.getName());
-                    } else if (!Objects.equals(session.target, row.area.getName())) VizEditClientManager.changeTarget(row.area.getName());
+                    var row = rows.get(index);
+                    if (row.children() && mouseX < 22 + Math.min(panelWidth / 3, row.depth() * 9)) {
+                        session.tree.toggleCollapsed(row.area().getName());
+                    } else if (!Objects.equals(session.target, row.area().getName())) VizEditClientManager.changeTarget(row.area().getName());
                     else if (session.draft != null && !session.draft.shape.isEmpty())
                         canvas.frame(session.draft.shape.getBounds2D(), panelWidth, canvasTop, width - panelWidth, canvasBottom - canvasTop);
                 }
@@ -519,10 +484,11 @@ public final class VizEditScreen extends Screen {
             catch (VizEditGeometry.GeometryException e) { session.reportError(e.errorKey()); return true; }
             catch (IllegalArgumentException e) { session.status = t("vizedit.client.invalid_fields"); return true; }
         }
-        drawing = true; stroke.clear(); beforeStroke = new Area(session.draft.shape); beforeDraft = session.draft.copy();
+        drawing = true; beforeStroke = new Area(session.draft.shape); beforeDraft = session.draft.copy();
         drawingDraft = session.draft;
         sampledX = Double.NaN; sampledY = Double.NaN;
-        stroke.add(new Vertex(canvas.worldX(mouseX), canvas.worldZ(mouseY)));
+        strokeStart = new Vertex(canvas.worldX(mouseX), canvas.worldZ(mouseY));
+        if (session.tool == VizEditSession.Tool.ERASER) eraserStroke = new EraserStroke(beforeStroke);
         updateStroke(mouseX, mouseY); return true;
     }
     @Override public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent clickEvent, double dx, double dy) {
@@ -551,7 +517,7 @@ public final class VizEditScreen extends Screen {
                 && (boundaryStroke == null || now - sampledAt < 250_000_000L)) return;
         sampledAt = now;
         sampledX = x; sampledY = y; sampledShift = constrain;
-        Vertex start = stroke.get(0), point = new Vertex(canvas.worldX(x), canvas.worldZ(y));
+        Vertex point = new Vertex(canvas.worldX(x), canvas.worldZ(y));
         try {
             if (boundaryStroke != null) {
                 BoundaryBrush.Result result = boundaryStroke.paint(point);
@@ -563,15 +529,14 @@ public final class VizEditScreen extends Screen {
                     : t("vizedit.boundary.no_terrain");
                 return;
             }
-            Area paint;
-            if (session.tool == VizEditSession.Tool.RECTANGLE) paint = VizEditGeometry.rectangle(start.getX(), start.getZ(), point.getX(), point.getZ(), constrain);
-            else if (session.tool == VizEditSession.Tool.ELLIPSE) paint = VizEditGeometry.ellipse(start.getX(), start.getZ(), point.getX(), point.getZ(), constrain);
-            else {
-                Vertex last = stroke.get(stroke.size() - 1);
-                if (Math.abs(point.getX() - last.getX()) + Math.abs(point.getZ() - last.getZ()) >= 0.5) stroke.add(point);
-                paint = VizEditGeometry.stroke(stroke, session.brushWidth);
+            if (eraserStroke != null) {
+                session.draft.shape = eraserStroke.sample(point, session.brushWidth);
+            } else {
+                Area paint = session.tool == VizEditSession.Tool.RECTANGLE
+                    ? VizEditGeometry.rectangle(strokeStart.getX(), strokeStart.getZ(), point.getX(), point.getZ(), constrain)
+                    : VizEditGeometry.ellipse(strokeStart.getX(), strokeStart.getZ(), point.getX(), point.getZ(), constrain);
+                session.draft.shape = VizEditGeometry.union(beforeStroke, paint);
             }
-            session.draft.shape = session.tool == VizEditSession.Tool.ERASER ? VizEditGeometry.subtract(beforeStroke, paint) : VizEditGeometry.union(beforeStroke, paint);
             session.status = "";
         } catch (VizEditGeometry.GeometryException e) { session.reportError(e.errorKey()); }
         catch (IllegalArgumentException e) { session.status = t("vizedit.error.geometry_limit"); }
@@ -600,7 +565,8 @@ public final class VizEditScreen extends Screen {
         }
         // 快捷键或界面切换结束手势时也清除原生拖动状态，避免后续拖动继续修改已结束的滑块。
         setDragging(false);
-        drawing = false; panning = false; draggingBrushWidth = false; beforeStroke = null; beforeDraft = null; drawingDraft = null; boundaryStroke = null; stroke.clear();
+        drawing = false; panning = false; draggingBrushWidth = false; beforeStroke = null; beforeDraft = null; drawingDraft = null; boundaryStroke = null;
+        strokeStart = null; eraserStroke = null;
     }
 
     private Area optimizeDrawing(Area shape, Area preserved) {
@@ -725,7 +691,9 @@ public final class VizEditScreen extends Screen {
         }
         @Override protected void applyValue() { setWidthValue(1 + (int) Math.round(value * 255)); }
         private void setWidthValue(int width) {
-            session.brushWidth = Math.max(1, Math.min(256, width));
+            int nextWidth = Math.max(1, Math.min(256, width));
+            if (eraserStroke != null && session.brushWidth != nextWidth) sampledX = Double.NaN;
+            session.brushWidth = nextWidth;
             value = (session.brushWidth - 1) / 255.0;
             updateMessage();
         }
@@ -734,5 +702,4 @@ public final class VizEditScreen extends Screen {
             setWidthValue(1 + (int) Math.round(position * 255));
         }
     }
-    private record Row(AreaData area, int depth, boolean children) { }
 }

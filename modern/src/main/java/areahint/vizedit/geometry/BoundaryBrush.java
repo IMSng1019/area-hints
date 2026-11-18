@@ -118,12 +118,9 @@ public final class BoundaryBrush {
         private void apply(Vertex point) {
             Area paint = VizEditGeometry.stroke(previous == null ? List.of(point) : List.of(previous, point), width);
             rawPaint = VizEditGeometry.union(rawPaint, paint);
-            Rectangle2D box = VizEditGeometry.stroke(List.of(point), width).getBounds2D();
+            // 本段笔迹已包含起点和终点，直接沿用它的包围盒计算限制范围。
+            Rectangle2D box = paint.getBounds2D();
             Area scope = rectangle(box.getMinX() - 2, box.getMinY() - 2, box.getMaxX() + 2, box.getMaxY() + 2);
-            if (previous != null) {
-                Rectangle2D moving = VizEditGeometry.stroke(List.of(previous, point), width).getBounds2D();
-                scope = rectangle(moving.getMinX() - 2, moving.getMinY() - 2, moving.getMaxX() + 2, moving.getMaxY() + 2);
-            }
             Area hard = new Area(scope);
             if (parent == null) hard.reset();
             else hard.subtract(parent);

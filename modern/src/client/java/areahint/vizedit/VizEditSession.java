@@ -35,7 +35,7 @@ public final class VizEditSession {
     public final Map<String, Set<String>> capabilities = new LinkedHashMap<>();
     public final Set<String> creationCapabilities = new HashSet<>();
     public final JsonObject descriptions;
-    public final Set<String> collapsed = new HashSet<>();
+    final VizEditAreaTree tree;
     public final DraftHistory<Draft> history = new DraftHistory<>(64, Draft::copy);
     public final boolean canCreate;
     public final boolean readOnly;
@@ -78,6 +78,7 @@ public final class VizEditSession {
             AreaData area = GSON.fromJson(item, AreaData.class);
             if (area != null && area.getName() != null) areas.add(area);
         }
+        tree = new VizEditAreaTree(areas);
         if (data.has("capabilities")) for (var item : data.getAsJsonObject("capabilities").entrySet()) {
             Set<String> actions = new HashSet<>();
             if (item.getValue().isJsonArray()) for (JsonElement action : item.getValue().getAsJsonArray()) actions.add(action.getAsString());
@@ -103,7 +104,7 @@ public final class VizEditSession {
     }
 
     public AreaData find(String name) {
-        return name == null ? null : areas.stream().filter(area -> name.equals(area.getName())).findFirst().orElse(null);
+        return tree.find(name);
     }
 
     public void select(String name) {
@@ -267,7 +268,7 @@ public final class VizEditSession {
     }
 
     public boolean hasChildren() {
-        return target != null && areas.stream().anyMatch(area -> target.equals(area.getBaseName()));
+        return tree.hasChildren(target);
     }
 
     static String string(JsonObject object, String name, String fallback) {

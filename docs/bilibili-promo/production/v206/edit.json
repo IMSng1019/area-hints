@@ -1,0 +1,43 @@
+{
+  "fps": 60,
+  "frames": 12360,
+  "clips": [
+    {"shot":1,"path":"media/进入璃月港.mp4","start":0,"in":186,"duration":420},
+    {"shot":2,"path":"media/g02.mp4","start":420,"in":0,"duration":840},
+    {"shot":3,"path":"media/进入风起地.mp4","start":1260,"in":36,"duration":432},
+    {"shot":3,"path":"media/tree-hold.mp4","start":1692,"in":0,"duration":48},
+    {"shot":4,"path":"media/g04.mp4","start":1740,"in":0,"duration":300},
+    {"shot":4,"path":"media/风起地的域名描述展示.mp4","start":2040,"in":12,"duration":342},
+    {"shot":4,"path":"media/book-hold.mp4","start":2382,"in":0,"duration":18},
+    {"shot":5,"path":"media/g05.mp4","start":2400,"in":0,"duration":720},
+    {"shot":6,"path":"media/g06.mp4","start":3120,"in":0,"duration":600},
+    {"shot":7,"path":"media/g07.mp4","start":3720,"in":0,"duration":480},
+    {"shot":8,"path":"media/g08.mp4","start":4200,"in":0,"duration":660},
+    {"shot":9,"path":"media/g09.mp4","start":4860,"in":0,"duration":600},
+    {"shot":10,"path":"media/g10.mp4","start":5460,"in":0,"duration":540},
+    {"shot":11,"path":"media/g11.mp4","start":6000,"in":0,"duration":540},
+    {"shot":12,"path":"media/创建域名展示.mp4","start":6540,"in":4920,"duration":420},
+    {"shot":13,"path":"media/g13.mp4","start":6960,"in":0,"duration":600},
+    {"shot":14,"path":"media/g14.mp4","start":7560,"in":0,"duration":840},
+    {"shot":15,"path":"media/g15.mp4","start":8400,"in":0,"duration":480},
+    {"shot":16,"path":"media/g16.mp4","start":8880,"in":0,"duration":660},
+    {"shot":17,"path":"media/g17.mp4","start":9540,"in":0,"duration":420},
+    {"shot":17,"path":"media/进入璃月港.mp4","start":9960,"in":330,"duration":240},
+    {"shot":18,"path":"media/g18.mp4","start":10200,"in":0,"duration":720},
+    {"shot":19,"path":"media/g19.mp4","start":10920,"in":0,"duration":480},
+    {"shot":20,"path":"media/可视化俯瞰环视展示.mp4","start":11400,"in":360,"duration":300},
+    {"shot":20,"path":"media/进入风起地.mp4","start":11700,"in":288,"duration":180},
+    {"shot":20,"path":"media/g20.mp4","start":11880,"in":0,"duration":480}
+  ],
+  "chapters": [
+    {"start":0,"name":"走进璃月港"},
+    {"start":1260,"name":"风起地的一页故事"},
+    {"start":2400,"name":"城与街区"},
+    {"start":3720,"name":"给村庄划界"},
+    {"start":5460,"name":"玩家如何被判定在域内"},
+    {"start":6960,"name":"九千多个顶点如何筛选"},
+    {"start":8880,"name":"Xaero 世界地图"},
+    {"start":10200,"name":"多人协作"},
+    {"start":11400,"name":"片尾"}
+  ]
+}

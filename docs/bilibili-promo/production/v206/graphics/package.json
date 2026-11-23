@@ -1,0 +1,15 @@
+{
+  "name": "areas-hint-film",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "remotion studio index.jsx",
+    "render": "node render.mjs"
+  },
+  "dependencies": {
+    "remotion": "4.0.545",
+    "@remotion/cli": "4.0.545",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  }
+}

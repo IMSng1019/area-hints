@@ -1,9 +1,10 @@
 {
-  "name": "areas-hint-film",
+  "name": "area-hints-film",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "remotion studio index.jsx",
+    "prepare:media": "node sync-master.mjs",
+    "start": "node sync-master.mjs && remotion studio index.jsx",
     "render": "node render.mjs"
   },
   "dependencies": {

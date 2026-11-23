@@ -1,6 +1,6 @@
-# Areas Hint 推广片 · Remotion 工程
+# Area Hints 推广片 · Remotion 主工程
 
-此目录保留 03:26 正片中的 17 条独立合成。每条输出 1920 × 1080、60 fps、Rec.709、无声 H.264，可在 Premiere 中单独替换。声音与字幕在总剪工程编排。
+主合成 `Area-Hints` 包含 03:26 正片的画面、声音与字幕。实机、17 条独立动画、字幕和三个声音分轨都能在 Studio 时间线上预览。画幅为 1920 × 1080，60 fps，Rec.709。[主合成](Film.jsx) · [封面](Cover.jsx)
 
 ## 预览与重渲
 
@@ -8,10 +8,15 @@
 
 ```powershell
 npm.cmd start
+npm.cmd run render
 npm.cmd run render -- g10 g11
 ```
 
-不指定镜头编号时重渲全部合成。输出文件位于同级 `../media/`。渲染器自动查找本机 Chrome 或 Edge，其他安装路径可通过 `REMOTION_BROWSER_EXECUTABLE` 指定。
+默认导出 `../Area-Hints.mp4` 和 `../Area-Hints-cover.jpg`。指定镜头编号时可以单独导出无声 H.264 到 `../media/`。渲染器自动查找本机 Chrome 或 Edge，其他安装路径可通过 `REMOTION_BROWSER_EXECUTABLE` 指定。FFmpeg 在最后写入播放器章节并复制已编码的音画流。
+
+只调整了声音且字幕和画面都已定稿时，可运行 `node render.mjs Soundtrack` 重新导出同一套 Remotion 混音，再用 `node publish.mjs --refresh-sound` 替换现有主片的声音。
+
+实机剪点和章节位于 `../edit.json`，分镜组件从 `scenes.jsx` 进入。在 Studio 的主合成 Props 中可以分别调节 `voiceGain`、`scoreGain`、`gameGain` 以及 `showCaptions`。修改 `../audio/revision/narration.srt` 或替换三个同名 WAV 后重新启动预览或执行渲染，脚本会同步最新版素材。完整交付目录中已备齐本片使用的图片和音视频。
 
 ## 素材与时间映射
 

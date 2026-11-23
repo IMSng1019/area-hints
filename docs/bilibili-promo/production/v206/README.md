@@ -1,4 +1,16 @@
-# Areas Hint · 走进提瓦特
+# Area Hints · 走进提瓦特
+
+## Remotion 主工程
+
+[新版主片](Area-Hints.mp4) · [新版封面](Area-Hints-cover.jpg) · [投稿标题与简介](投稿文案.md) · [润色后的完整旁白稿](audio/revision/旁白稿.md) · [中文字幕](audio/revision/narration.srt)
+
+[Film.jsx](graphics/Film.jsx) 按 [edit.json](edit.json) 编排 20 镜。实机使用可修剪的源片，动画直接引用 React 组件。字幕从新版 SRT 读入，旁白、配乐和游戏声各占一条时间线轨道。用 Remotion Studio 选择 `Area-Hints` 可以修改后预览整片，选择 `Cover` 可以预览封面。[打开与导出说明](graphics/README.md)
+
+本地交付包含 `media/`、`graphics/public/` 与 [新版独立音轨](audio/revision/)。移机时一并复制这些文件。第 29 秒的风起地插画与片头的璃月港插画以实机为参考生成，[图片与生成脚本](graphics/art/)随工程保存。
+
+[第 29 秒转场样片](review/Area-Hints-29s.mp4) 含 26–40 秒的画面、字幕和终混。新版 54 句台词使用本地流萤音色模型合成；详见[声音制作记录](audio/revision/README.md)。投稿文件完整解码得到 12,360 帧，音画时长均为 206.000 秒，9 个章节，AAC 终混 −16.01 LUFS-I、−2.80 dBTP。[成片验收](review/revision/decode.json)
+
+## 首版 Premiere 工程存档
 
 投稿主片为 `Areas-Hint.mp4`。片长 03:26，20 镜，1920 × 1080，逐行 60 fps，Rec.709。片中含中文字幕，播放器支持按 9 个章节跳转。
 

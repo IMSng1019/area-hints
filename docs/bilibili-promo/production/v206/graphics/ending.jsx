@@ -31,12 +31,13 @@ export function End() {
   const frame = useCurrentFrame();
   const fade = ease(frame,15,85);
   return <Canvas theme={ink}>
-    <Pic file="tree.jpg"/>
+    <Pic file="tree.jpg" style={{transformOrigin:'51% 40%', transform:`scale(${1+.045*ease(frame,0,284)})`}}/>
     <AbsoluteFill style={{background:'linear-gradient(90deg,rgba(8,25,24,.92),rgba(8,25,24,.68) 27%,transparent 63%)',opacity:fade}}/>
     <div style={{position:'absolute',inset:0,opacity:fade,translate:`0 ${18*(1-fade)}px`}}>
-      <div style={{...pos(115,486,83,6),background:gold}}/>
-      <Text x={110} y={530} w={760} size={99} weight={750} color="#fff8e6">Areas Hint</Text>
-      <Text x={116} y={668} w={680} size={57} color="#fff8e6">域名模组</Text>
+      <div style={{...pos(115,486,118*ease(frame,22,109),3),background:gold}}/>
+      <Text x={110} y={520} w={780} size={125} weight={500} color="#fff8e6"
+        style={{fontFamily:'Georgia,serif',fontStyle:'italic',letterSpacing:-5}}>Area Hints</Text>
+      <Text x={116} y={688} w={680} size={48} color="#fff8e6" style={{letterSpacing:6}}>域名模组</Text>
       <Text x={118} y={795} w={680} size={34} color="#ffdd9d">IMSng　·　下载见简介</Text>
     </div>
   </Canvas>;

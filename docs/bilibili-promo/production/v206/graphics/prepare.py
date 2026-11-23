@@ -96,6 +96,11 @@ if __name__ == '__main__':
     PUBLIC.mkdir(exist_ok=True)
     export_map(args.world)
     shutil.copyfile(args.screenshot, PUBLIC/'xaero.png')
+    # 过场以两侧真正的剪点帧为底图，确保进出插画时色调和构图对得上。
+    for name, source, frame in [('tree-from','tree-hold',0), ('book-to','风起地的域名描述展示',12),
+                                ('port-from','进入璃月港',605)]:
+        subprocess.run([FF,'-loglevel','error','-y','-ss',str(frame/60),'-i',str(args.media/(source+'.mp4')),
+                        '-frames:v','1',str(PUBLIC/(name+'.png'))],check=True)
     for target, (name, t) in STILLS.items():
         subprocess.run([FF,'-loglevel','error','-y','-ss',str(t),'-i',str(args.media/(name+'.mp4')),
             '-frames:v','1','-q:v','2',str(PUBLIC/(target+'.jpg'))], check=True)

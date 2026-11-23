@@ -1,6 +1,8 @@
 /media/
 /review/
 /Areas-Hint.mp4
+/Area-Hints.mp4
+/audio/revision/Remotion-mix.m4a
 *.wav
 __pycache__/
 /graphics/node_modules/

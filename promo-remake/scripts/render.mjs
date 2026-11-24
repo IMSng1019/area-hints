@@ -14,15 +14,20 @@ const serveUrl=await bundle({entryPoint:path.resolve('src/index.tsx'),publicDir:
 const settings={serveUrl,browserExecutable:browserExecutable?path.resolve(browserExecutable):undefined};
 const composition=await selectComposition({...settings,id:'Area-Hints'});
 if(process.argv.includes('--stills')){
-  for(const frame of [88,146,230,367,485,605,759,884,1015,1170,1376,1500,1640,1760,1844,2000,2065,2250,2350,2490]){
+  for(const second of [3,7,11,16,21,27,35,42,48,55,61,66,72,79,88,96,103,109,115,123,129,138,145,151]){
+    const frame=Math.round(second*composition.fps);
     await renderStill({...settings,composition,frame,scale:.5,output:path.resolve('out','frame-'+frame+'.png')});
   }
 }else{
+  // 单独导出四格时从整片取相同的帧区间，保留同步配乐和录点提示音。
+  const toolsOnly=process.argv.includes('--tools');
+  const output=toolsOnly?'域名编辑四格':'Area-Hints-v2';
   let last=-1;
   await renderMedia({...settings,composition,codec:'h264',audioCodec:'aac',audioBitrate:'256k',crf:16,
     imageFormat:'jpeg',jpegQuality:96,colorSpace:'bt709',concurrency:4,
-    outputLocation:path.resolve('out/Area-Hints.tmp.mp4'),
+    ...(toolsOnly?{frameRange:[53*composition.fps,75*composition.fps-1]}:{}),
+    outputLocation:path.resolve('out',output+'.tmp.mp4'),
     onProgress:({progress})=>{const step=Math.floor(progress*20);if(step!==last){console.log(step*5+'%');last=step;}},
   });
-  renameSync('out/Area-Hints.tmp.mp4','out/Area-Hints.mp4');
+  renameSync(path.join('out',output+'.tmp.mp4'),path.join('out',output+'.mp4'));
 }

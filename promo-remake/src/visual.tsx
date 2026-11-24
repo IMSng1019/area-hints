@@ -16,9 +16,9 @@ export function Clip({name,offset=0,style={}}:{name:string;offset?:number;style?
 export function Picture({file,style={}}:{file:string;style?:React.CSSProperties}) {
   return <Img src={staticFile(file)} style={{...full,...style}}/>;
 }
-export function Rise({children,delay=0,style={}}:React.PropsWithChildren<{delay?:number;style?:React.CSSProperties}>) {
-  const f=useCurrentFrame(),p=tween(f,delay,delay+17);
-  return <div style={{opacity:p,transform:'translateY('+((1-p)*22)+'px)',...style}}>{children}</div>;
+export function Rise({children,delay=0,duration=22,style={}}:React.PropsWithChildren<{delay?:number;duration?:number;style?:React.CSSProperties}>) {
+  const f=useCurrentFrame(),p=tween(f,delay,delay+duration);
+  return <div style={{opacity:p,transform:'translateY('+((1-p)*16)+'px)',...style}}>{children}</div>;
 }
 export function Label({children,color=gold}:React.PropsWithChildren<{color?:string}>) {
   return <div style={{color,fontFamily:latin,fontSize:24,fontWeight:600,letterSpacing:4.5}}>{children}</div>;

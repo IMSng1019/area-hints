@@ -18,28 +18,31 @@ WINDOW = "crop=1920:1004:0:24,pad=1920:1080:0:38:0x0b151b"
 FILM = "setsar=1"
 ARRIVAL = "crop=1440:810:240:136,scale=1920:1080:flags=lanczos"
 # 运笔时镜头略向画笔移动再收回，保持色块、光标和中央工具栏的关系可见。
-BRUSH = "crop=1776:1000:'90+42*sin(3.14159*t/3.8)':26,scale=1920:1080"
+BRUSH = "crop=1776:1000:'64+38*sin(3.14159*t/5.3)':26,scale=1920:1080"
 
 # 每段分别记录源文件、起点秒数、输出帧数、播放倍率与重新构图方式。
 SHOTS = {
-    "harbor-orbit": [("pv1", 2.30, 192, 2.25, FILM)],
-    "footsteps": [("pv2", 0, 72, 0.62, FILM)],
-    "harbor-push": [("pv3", 1.87, 132, 1, FILM)],
-    "arrival": [("第三人称进入璃月港", 8.27, 189, 1, ARRIVAL)],
+    "harbor-orbit": [("pv1", 2.30, 525, 1, FILM)],
+    "footsteps": [("pv2", 0, 45, 1, FILM)],
+    "harbor-push": [("pv3", 1.12, 174, 1, FILM)],
+    "arrival": [("第三人称进入璃月港", 8.03, 246, 1, ARRIVAL)],
     "hierarchy": [("多级跳字展示", 0.45, 279, 1, FILM)],
-    "story": [("风起地的域名描述展示", 0.38, 165, 1, FILM)],
-    "aerial": [("可视化俯瞰环视展示", 0.64, 240, 1, FILM)],
-    "bounds": [("boundviz展示", 2.20, 264, 1, WINDOW)],
+    "story": [
+        ("可视化指令面板展示", 0.10, 48, 1, FILM),
+        ("风起地的域名描述展示", 0.13, 177, 1, FILM),
+    ],
+    "aerial": [("可视化俯瞰环视展示", 0.64, 276, 1, FILM)],
+    "bounds": [("boundviz展示", 2.17, 279, 1, WINDOW)],
     "panel": [
-        ("可视化指令面板展示", 7.50, 78, 1.12, FILM),
-        ("可视化指令面板展示", 17.65, 54, 1, FILM),
-        ("可视化指令面板展示", 24.15, 48, 1.22, FILM),
+        ("可视化指令面板展示", 7.47, 90, 1, FILM),
+        ("可视化指令面板展示", 17.45, 72, 1, FILM),
+        ("可视化指令面板展示", 24.10, 66, 1, FILM),
     ],
     "create": [
-        ("可视化面板创建", 7.24, 50, 1.17, WINDOW),
-        ("可视化面板创建", 17.33, 114, 1.88, BRUSH),
-        ("可视化面板创建", 42.90, 47, 1, WINDOW),
-        ("可视化面板创建", 54.55, 59, 1, WINDOW),
+        ("可视化面板创建", 7.05, 84, 1, WINDOW),
+        ("可视化面板创建", 17.10, 159, 1, BRUSH),
+        ("可视化面板创建", 42.10, 96, 1, WINDOW),
+        ("可视化面板创建", 54.55, 81, 1, WINDOW),
     ],
 }
 
@@ -89,11 +92,11 @@ def encode_overview(ffmpeg, source):
             inputs += ["-threads", "2", "-i", OUTPUT / f"{name}.mp4"]
         else:
             inputs += ["-loop", "1", "-framerate", "30", "-i", source / f"{name}.png"]
-        filters.append(f"[{i}:v]scale=464:260:force_original_aspect_ratio=increase,crop=464:260,setsar=1,fps=30,tpad=stop_duration=1:stop_mode=clone,pad=480:270:8:5:0x101f27[c{i}]")
+        filters.append(f"[{i}:v]scale=464:260:force_original_aspect_ratio=increase,crop=464:260,setsar=1,fps=30,pad=480:270:8:5:0x101f27[c{i}]")
     layout = "|".join(f"{(i%3)*480}_{(i//3)*270}" for i in range(9))
     filters.append("".join(f"[c{i}]" for i in range(9)) + f"xstack=inputs=9:layout={layout},format=yuv420p[out]")
     execute(ffmpeg, [*inputs, "-filter_complex_threads", "2", "-filter_complex", ";".join(filters),
-                     "-map", "[out]", "-frames:v", "180", "-an", "-c:v", "libx264", "-threads", "4",
+                     "-map", "[out]", "-frames:v", "225", "-an", "-c:v", "libx264", "-threads", "4",
                      "-preset", "veryfast", "-crf", "17", "-g", "30", "-movflags", "+faststart", OUTPUT / "overview.mp4"])
 
 

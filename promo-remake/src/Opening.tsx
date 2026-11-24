@@ -18,7 +18,7 @@ export function Arrival() {
 export function Brand() {
   const f=useCurrentFrame();
   return <Board><div style={{...box(135,220,1700,710)}}>
-    <Rise><Label>想要一个能做到上述功能的模组？</Label></Rise>
+    <Rise style={{fontSize:46,color:gold}}>想要一个像原神一样跳字的模组？</Rise>
     <Rise delay={38} style={{fontFamily:serif,fontSize:76,marginTop:55}}>隆重介绍</Rise>
     <Rise delay={64} duration={26} style={{fontFamily:serif,fontSize:220,lineHeight:1.08,letterSpacing:-10}}>Area <i style={{color:gold}}>Hints</i></Rise>
     <div style={{marginTop:40,height:2,background:gold,width:1510*tween(f,66,110)}}/>
@@ -28,7 +28,7 @@ export function Overview() {
   const f=useCurrentFrame(), p=tween(f,0,27);
   return <Board>
     <div style={box(95,220,580,620)}><Label>AREA HINTS</Label>
-      {['功能众多','操作便捷','大区域也能','快速定位'].map((line,i)=><Rise key={line} delay={[4,34,64,64][i]} style={{fontFamily:serif,fontSize:i>1?68:86,color:i>1?gold:paper,marginTop:i===3?0:25,lineHeight:1.2}}>{line}</Rise>)}
+      {['功能众多','操作便捷','性能表现高'].map((line,i)=><Rise key={line} delay={4+i*30} style={{fontFamily:serif,fontSize:86,color:i===2?gold:paper,marginTop:25,lineHeight:1.2}}>{line}</Rise>)}
     </div>
     <div style={{...box(665,155,1170,770),display:'flex',alignItems:'center',overflow:'hidden',clipPath:`inset(0 ${(1-p)*100}% 0 0)`}}><Clip name="overview" style={{height:'auto',objectFit:'contain'}}/></div>
   </Board>;

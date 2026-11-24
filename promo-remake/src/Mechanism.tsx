@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Easing, interpolate, useCurrentFrame} from 'remotion';
 
-export const mechanismFrames = 840;
+export const mechanismFrames = 570;
 
 const ink = '#F5F0DF';
 const cyan = '#8CE6DD';
@@ -208,7 +208,7 @@ function Survey({f}: {f: number}) {
 
 export function Mechanism() {
   // 各阶段分别配时，玩家轨迹、交点与章节文案仍共享同一判定时刻。
-  const f = interpolate(useCurrentFrame(), [0,270,465,660,mechanismFrames], [0,180,300,420,540]);
+  const f = interpolate(useCurrentFrame(), [0,153,279,435,mechanismFrames], [0,180,300,420,540]);
   return <AbsoluteFill style={{backgroundColor: '#0B1B24'}}>
     <svg width="100%" height="100%" viewBox="0 0 1920 1080" fontFamily={sans} role="img" aria-label="域名同步与客户端空间判定动画">
       <Definitions/>

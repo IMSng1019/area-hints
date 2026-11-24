@@ -8,14 +8,14 @@ import {Credits,Logo,Uses} from './Closing';
 import {ink} from './visual';
 
 const fps=30;
-const editingToolsFrames=22*fps;
+const editingToolsFrames=15*fps;
 const scenes=[
   ['璃月港',18*fps,<Arrival/>],
   ['模组揭晓',5*fps,<Brand/>],
   ['九格实拍',7*fps,<Overview/>],
   ['域名跳字',9*fps,<Titles/>],
   ['可视化创建',14*fps,<Feature kind="create"/>],
-  ['四种域名编辑',editingToolsFrames,<EditingTools/>],
+  ['四种边界编辑',editingToolsFrames,<EditingTools/>],
   ['实地核对边界',8*fps,<Feature kind="bounds"/>],
   ['服务器与客户端',mechanismFrames,<Mechanism/>],
   ['风起地的故事',7*fps,<Feature kind="story"/>],

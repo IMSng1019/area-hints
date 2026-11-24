@@ -1,0 +1,18 @@
+[
+  {
+    "file": "titles/li-yue.png",
+    "name": "璃月港"
+  },
+  {
+    "file": "titles/primary.png",
+    "name": "顶级域名"
+  },
+  {
+    "file": "titles/secondary.png",
+    "name": "顶级域名 · 二级域名"
+  },
+  {
+    "file": "titles/tertiary.png",
+    "name": "三级域名"
+  }
+]

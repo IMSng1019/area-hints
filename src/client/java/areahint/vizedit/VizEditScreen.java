@@ -6,6 +6,7 @@ import areahint.i18n.I18nManager;
 import areahint.vizedit.geometry.BoundaryBrush;
 import areahint.vizedit.geometry.EraserStroke;
 import areahint.util.GuiInputCompat;
+import areahint.util.GuiMatrixCompat;
 import areahint.vizedit.geometry.GeometryIssueLocator;
 import areahint.vizedit.geometry.VizEditGeometry;
 import net.minecraft.client.MinecraftClient;
@@ -21,6 +22,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -30,7 +32,9 @@ public final class VizEditScreen extends Screen {
     private final VizEditSession session;
     private final VizEditCanvas canvas;
     private final Screen terrainScreen;
-    private final List<ButtonWidget> editingButtons = new ArrayList<>();
+    private static final int TOOL_SIZE = 18;
+    private static final int CANVAS_TOP = 50;
+    private final EnumMap<VizEditSession.Tool, ButtonWidget> toolButtons = new EnumMap<>(VizEditSession.Tool.class);
     private Vertex strokeStart;
     private EraserStroke eraserStroke;
     private TextFieldWidget search;
@@ -45,9 +49,14 @@ public final class VizEditScreen extends Screen {
     private ButtonWidget switchCanvas;
     private ButtonWidget saveDraft;
     private int panelWidth;
-    private int canvasTop;
+    private int canvasLeft;
     private int canvasBottom;
+    private static final int TREE_TOP = 92;
+    private static final int TREE_ROW_HEIGHT = 13;
+    private static final int TREE_SCROLL_WIDTH = 6;
+    private static final float TREE_TEXT_SCALE = 0.8F;
     private int treeBottom;
+    private double treeGrabOffset = Double.NaN;
     private boolean drawing;
     private boolean panning;
     private boolean draggingBrushWidth;
@@ -74,25 +83,30 @@ public final class VizEditScreen extends Screen {
 
     @Override protected void init() {
         finishStroke();
-        editingButtons.clear();
+        toolButtons.clear();
         panelWidth = Math.min(184, Math.max(104, width / 4));
-        int columns = width - panelWidth < 420 ? 4 : VizEditSession.Tool.values().length;
-        canvasTop = 68 + ((VizEditSession.Tool.values().length + columns - 1) / columns) * 22;
-        canvasBottom = Math.max(canvasTop + 20, height - 28);
-        treeBottom = Math.max(92, height - (session.approvalId != null ? 112 : 88));
-        if (canvas instanceof VizEditCanvas.Grid grid) grid.viewport(panelWidth + 4, canvasTop, Math.max(20, width - panelWidth - 8), canvasBottom - canvasTop);
-        int left = panelWidth + 5;
+        canvasLeft = panelWidth + TOOL_SIZE + 6;
+        canvasBottom = Math.max(CANVAS_TOP + 20, height - 28);
+        treeBottom = Math.max(TREE_TOP, height - (session.approvalId != null ? 98 : 74));
+        if (canvas instanceof VizEditCanvas.Grid grid) grid.viewport(canvasLeft, CANVAS_TOP, width - canvasLeft, canvasBottom - CANVAS_TOP);
+        int left = canvasLeft + 4;
         int available = Math.max(70, width - left - 5);
         int actionW = Math.max(20, (available - 12) / 4);
+        // 窄屏下将关闭按钮的空余宽度留给较长的本地化保存标签。
+        int saveExtra = Math.min(Math.max(0, textRenderer.getWidth(t("vizedit.ui.save")) + 6 - actionW),
+            Math.max(0, actionW - textRenderer.getWidth(t("vizedit.ui.close")) - 6));
         properties = button("vizedit.ui.properties", left, 6, actionW, () -> client.setScreen(new VizEditPropertiesScreen(session)));
-        save = button("vizedit.ui.save", left + actionW + 4, 6, actionW, () -> VizEditClientManager.review(false, null));
-        switchCanvas = button(canvas.isTerrain() ? "vizedit.ui.grid" : "vizedit.ui.map", left + 2 * (actionW + 4), 6, actionW, VizEditClientManager::switchCanvas);
-        button("vizedit.ui.close", left + 3 * (actionW + 4), 6, actionW, VizEditClientManager::requestClose);
-        int toolW = Math.max(16, (available - (columns - 1) * 3) / columns);
+        save = button("vizedit.ui.save", left + actionW + 4, 6, actionW + saveExtra, () -> VizEditClientManager.review(false, null));
+        switchCanvas = button(canvas.isTerrain() ? "vizedit.ui.grid" : "vizedit.ui.map", left + 2 * (actionW + 4) + saveExtra, 6, actionW, VizEditClientManager::switchCanvas);
+        button("vizedit.ui.close", left + 3 * (actionW + 4) + saveExtra, 6, actionW - saveExtra, VizEditClientManager::requestClose);
+        // 工具采用原生按钮接收鼠标、键盘与旁白，外观在工具栏内按图标绘制。
         for (VizEditSession.Tool tool : VizEditSession.Tool.values()) {
-            int index = tool.ordinal();
-            ButtonWidget button = button(tool.key(), left + index % columns * (toolW + 3), 30 + index / columns * 22, toolW, () -> selectTool(tool));
-            if (tool != VizEditSession.Tool.PAN) editingButtons.add(button);
+            int y = 6 + tool.ordinal() * (TOOL_SIZE + 2);
+            ButtonWidget button = ButtonWidget.builder(Text.literal(t(tool.key())), ignored -> {
+                finishStroke();
+                selectTool(tool);
+            }).dimensions(panelWidth + 3, y, TOOL_SIZE, TOOL_SIZE).build();
+            toolButtons.put(tool, addSelectableChild(button));
         }
         search = new TextFieldWidget(textRenderer, 6, 26, panelWidth - 12, 18, Text.literal(t("vizedit.ui.search")));
         search.setMaxLength(128); search.setText(session.search);
@@ -111,8 +125,8 @@ public final class VizEditScreen extends Screen {
         simplify = button("vizedit.ui.simplify", 6, height - (session.approvalId != null ? 94 : 70), panelWidth - 12, this::simplifyBoundary);
         if (session.approvalId != null) saveDraft = button("vizedit.ui.draft", 6, height - 70, panelWidth - 12,
             () -> VizEditClientManager.review(true, null));
-        // 笔宽与当前工具各占一行，窄窗口也不会让滑块盖住域名和工具名称。
-        brushWidthSlider = addDrawableChild(new BrushWidthSlider(left, canvasTop - 38, Math.min(260, available)));
+        // 笔宽和当前域名共用第二行，窄窗口也为两者分别预留宽度。
+        brushWidthSlider = addDrawableChild(new BrushWidthSlider(left, 28, Math.min(180, available / 2)));
         refreshState();
     }
 
@@ -134,9 +148,9 @@ public final class VizEditScreen extends Screen {
         simplify.active = editable && session.canDraw() && canvas.isCurrentDimension() && !session.draft.shape.isEmpty();
         switchCanvas.active = !VizEditClientManager.isBusy() && (canvas.isTerrain() || VizEditClientManager.mapAvailable());
         brushWidthSlider.active = editable;
-        for (int i = 0; i < editingButtons.size(); i++) editingButtons.get(i).active = editable
-            && session.canDraw() && canvas.isCurrentDimension()
-            && session.allows(VizEditSession.Tool.values()[i] == VizEditSession.Tool.ERASER ? "shrinkarea" : "expandarea");
+        boolean canDraw = editable && session.canDraw() && canvas.isCurrentDimension();
+        toolButtons.forEach((tool, button) -> button.active = tool == VizEditSession.Tool.PAN || (canDraw
+            && session.allows(tool == VizEditSession.Tool.ERASER ? "shrinkarea" : "expandarea")));
     }
 
     @Override public boolean shouldPause() { return false; }
@@ -165,7 +179,7 @@ public final class VizEditScreen extends Screen {
             if (focus != null) {
                 // Xaero 的取景接口只平移，直接居中实际标记点；网格则缩放到完整问题轮廓。
                 Rectangle2D target = canvas.isTerrain() ? new Rectangle2D.Double(focus.x(), focus.z(), 0, 0) : focus.bounds();
-                canvas.frame(target, panelWidth, canvasTop, width - panelWidth, canvasBottom - canvasTop);
+                canvas.frame(target, canvasLeft, CANVAS_TOP, width - canvasLeft, canvasBottom - CANVAS_TOP);
                 session.focusRequested = false;
             } else if (session.focusRequested) {
                 Area shape = session.draft.shape;
@@ -174,38 +188,25 @@ public final class VizEditScreen extends Screen {
                     AreaData selected = session.find(session.selectedAreaName());
                     if (selected != null) shape = VizEditGeometry.fromVertices(selected.getVertices());
                 }
-                if (!shape.isEmpty()) canvas.frame(shape.getBounds2D(), panelWidth, canvasTop, width - panelWidth, canvasBottom - canvasTop);
+                if (!shape.isEmpty()) canvas.frame(shape.getBounds2D(), canvasLeft, CANVAS_TOP, width - canvasLeft, canvasBottom - CANVAS_TOP);
                 session.focusRequested = false;
             }
         }
         if (!canvas.isTerrain()) {
-            context.fill(panelWidth, canvasTop, width, canvasBottom, 0xFF151E29);
+            context.fill(canvasLeft, CANVAS_TOP, width, canvasBottom, 0xFF151E29);
             drawGrid(context);
         }
         drawAreas(context);
         context.fill(0, 0, panelWidth, height, 0xF0171B22);
-        context.fill(panelWidth, 0, width, canvasTop, 0xF0171B22);
-        context.fill(panelWidth, canvasBottom, width, height, 0xF0171B22);
+        context.fill(panelWidth, 0, canvasLeft, height, 0xFF202832);
+        context.fill(canvasLeft, 0, width, CANVAS_TOP, 0xF0171B22);
+        context.fill(canvasLeft, canvasBottom, width, height, 0xF0171B22);
         label(context, t("vizedit.ui.title"), 6, 8, panelWidth - 12, 0xFFFFFF);
-        label(context, session.dimensionalName + " [0.5]", 8, 77, panelWidth - 16, 0xCFD6DF);
-        String selectedName = session.selectedAreaName();
-        var rows = session.tree.rows(session.search);
-        context.enableScissor(4, 92, panelWidth - 4, treeBottom);
-        int visibleRows = Math.max(1, (treeBottom - 92) / 17);
-        session.treeOffset = Math.max(0, Math.min(session.treeOffset, Math.max(0, rows.size() - visibleRows)));
-        for (int i = session.treeOffset; i < Math.min(rows.size(), session.treeOffset + visibleRows); i++) {
-            var row = rows.get(i);
-            int y = 92 + (i - session.treeOffset) * 17;
-            boolean selected = row.area().getName().equals(selectedName);
-            if (selected) context.fill(4, y - 1, panelWidth - 4, y + 15, 0xFF25465F);
-            int indent = Math.min(panelWidth / 3, row.depth() * 9);
-            String prefix = row.children() ? session.tree.isCollapsed(row.area().getName()) ? "+ " : "− " : "  ";
-            label(context, prefix + row.area().getName() + " [" + row.area().getLevel() + "]", 7 + indent, y + 3, panelWidth - 15 - indent, selected ? 0x9BDCF3 : 0xE7ECF3);
-        }
-        context.disableScissor();
+        drawAreaTree(context, mouseX, mouseY);
         String mode = session.readOnly ? t("vizedit.ui.readonly") : session.draft == null ? t("vizedit.ui.empty")
             : session.draft.name + (session.dirty() ? " *" : "") + " · " + t(session.tool.key());
-        label(context, mode, panelWidth + 5, canvasTop - 13, width - panelWidth - 10, 0xFFDD77);
+        int modeLeft = brushWidthSlider.getX() + brushWidthSlider.getWidth() + 5;
+        label(context, mode, modeLeft, 33, width - modeLeft - 4, 0xFFDD77);
         String status = VizEditClientManager.isBusy() ? t("vizedit.ui.busy") : session.status;
         if (status.isEmpty()) status = session.tool == VizEditSession.Tool.PEN
             ? t("vizedit.pen.hint") + " " + t("vizedit.pen.edit_hint") : t("vizedit.ui.help");
@@ -217,35 +218,123 @@ public final class VizEditScreen extends Screen {
             label(context, location, 7, height - 13, width - 14, 0xFFB0B0);
             status += " " + location;
         } else label(context, status, 7, height - 20, width - 14, session.invalid ? 0xFF8888 : 0xCFD6DF);
-        if (mouseY >= canvasTop && mouseY < canvasBottom && mouseX > panelWidth) {
+        if (inCanvas(mouseX, mouseY)) {
             String coordinates = String.format(Locale.ROOT, "X %.2f  Z %.2f · %s", canvas.worldX(mouseX), canvas.worldZ(mouseY),
                 I18nManager.translate("vizedit.ui.brush_width", session.brushWidth));
-            label(context, coordinates, panelWidth + 8, canvasBottom - 12, width - panelWidth - 16, 0xFFFFFF);
+            label(context, coordinates, canvasLeft + 8, canvasBottom - 12, width - canvasLeft - 16, 0xFFFFFF);
         }
         super.render(context, mouseX, mouseY, delta);
+        drawTools(context, mouseX, mouseY);
         if (simplify.isHovered()) context.drawOrderedTooltip(textRenderer,
             textRenderer.wrapLines(Text.literal(t("vizedit.ui.simplify_hint")), Math.min(360, Math.max(80, width - 24))), mouseX, mouseY);
         if (mouseY >= height - 24) context.drawOrderedTooltip(textRenderer,
             textRenderer.wrapLines(Text.literal(status), Math.min(360, Math.max(80, width - 24))), mouseX, mouseY);
     }
 
+    private int visibleTreeRows() {
+        return Math.max(1, (treeBottom - TREE_TOP) / TREE_ROW_HEIGHT);
+    }
+
+    private int treeThumbHeight(int rowCount) {
+        int track = treeBottom - TREE_TOP;
+        return Math.min(track - 1, Math.max(8, (int) Math.round(track * (double) visibleTreeRows() / rowCount)));
+    }
+
+    private double treeThumbTop(int rowCount) {
+        int travel = treeBottom - TREE_TOP - treeThumbHeight(rowCount);
+        return TREE_TOP + travel * (double) session.treeOffset / (rowCount - visibleTreeRows());
+    }
+
+    private int treeIndent(VizEditAreaTree.Row row) {
+        return Math.min(panelWidth / 3, row.depth() * 7);
+    }
+
+    private void dragTreeTo(double mouseY) {
+        int rowCount = session.tree.rows(session.search).size();
+        int maxOffset = rowCount - visibleTreeRows();
+        if (maxOffset <= 0 || treeBottom <= TREE_TOP + 1) return;
+        int travel = treeBottom - TREE_TOP - treeThumbHeight(rowCount);
+        double fraction = Math.max(0, Math.min(1, (mouseY - treeGrabOffset - TREE_TOP) / travel));
+        session.treeOffset = (int) Math.round(fraction * maxOffset);
+    }
+
+    private void drawAreaTree(DrawContext context, int mouseX, int mouseY) {
+        drawTreeLabel(context, session.dimensionalName + " [0.5]", 8, 77, panelWidth - 16, 0xCFD6DF);
+        if (treeBottom <= TREE_TOP) return;
+        var rows = session.tree.rows(session.search);
+        int visibleRows = visibleTreeRows();
+        int maxOffset = Math.max(0, rows.size() - visibleRows);
+        session.treeOffset = Math.max(0, Math.min(session.treeOffset, maxOffset));
+        int right = panelWidth - 4;
+        if (maxOffset > 0 && treeBottom > TREE_TOP + 1) {
+            int trackLeft = right - TREE_SCROLL_WIDTH;
+            int top = (int) Math.round(treeThumbTop(rows.size()));
+            int bottom = top + treeThumbHeight(rows.size());
+            boolean hover = mouseX >= trackLeft && mouseX < right && mouseY >= top && mouseY < bottom;
+            context.fill(trackLeft, TREE_TOP, right, treeBottom, 0xFF293442);
+            context.fill(trackLeft, top, right, bottom, hover || Double.isFinite(treeGrabOffset) ? 0xFF9BDCF3 : 0xFF76899C);
+            right = trackLeft - 2;
+        }
+        String selectedName = session.selectedAreaName();
+        context.enableScissor(4, TREE_TOP, right, treeBottom);
+        for (int i = session.treeOffset; i < Math.min(rows.size(), session.treeOffset + visibleRows); i++) {
+            var row = rows.get(i);
+            int y = TREE_TOP + (i - session.treeOffset) * TREE_ROW_HEIGHT;
+            boolean selected = row.area().getName().equals(selectedName);
+            if (selected) context.fill(4, y, right, y + TREE_ROW_HEIGHT - 1, 0xFF25465F);
+            int arrowX = 7 + treeIndent(row);
+            int color = selected ? 0x9BDCF3 : 0xE7ECF3;
+            if (row.children()) drawTreeLabel(context, session.tree.isCollapsed(row.area().getName()) ? "+" : "−", arrowX, y + 3, 8, color);
+            drawTreeLabel(context, row.area().getName() + " [" + row.area().getLevel() + "]", arrowX + 8, y + 3, right - arrowX - 10, color);
+        }
+        context.disableScissor();
+    }
+
+    private void drawTreeLabel(DrawContext context, String text, int x, int y, int width, int color) {
+        // 用同一倍率换算文字裁切宽度，长域名与层级缩进都不会盖住滚动条。
+        GuiMatrixCompat.push(context);
+        GuiMatrixCompat.translate(context, x, y);
+        GuiMatrixCompat.scale(context, TREE_TEXT_SCALE, TREE_TEXT_SCALE);
+        label(context, text, 0, 0, (int) (width / TREE_TEXT_SCALE), color);
+        GuiMatrixCompat.pop(context);
+    }
+
+    private void drawTools(DrawContext context, int mouseX, int mouseY) {
+        ButtonWidget hovered = null;
+        for (var entry : toolButtons.entrySet()) {
+            ButtonWidget button = entry.getValue();
+            int x = button.getX(), y = button.getY();
+            boolean over = mouseX >= x && mouseX < x + TOOL_SIZE && mouseY >= y && mouseY < y + TOOL_SIZE;
+            if (over) hovered = button;
+            boolean selected = session.tool == entry.getKey();
+            int border = button.isFocused() || over ? 0xFFD6EAF6 : selected ? 0xFF70BCD9 : 0xFF455260;
+            context.fill(x, y, x + TOOL_SIZE, y + TOOL_SIZE, border);
+            context.fill(x + 1, y + 1, x + TOOL_SIZE - 1, y + TOOL_SIZE - 1, selected ? 0xFF25465F : 0xFF29333D);
+            int inset = (TOOL_SIZE - VizEditToolIcons.SIZE) / 2;
+            VizEditToolIcons.draw(context, entry.getKey(), x + inset, y + inset, button.active);
+        }
+        // Xaero 浮层也直接绘制提示，禁用的工具同样可以查看名称。
+        if (hovered != null) context.drawOrderedTooltip(textRenderer,
+            textRenderer.wrapLines(hovered.getMessage(), width - 24), mouseX, mouseY);
+    }
+
     private void drawGrid(DrawContext context) {
         double unit = Math.pow(2, Math.ceil(Math.log(32 / canvas.pixelsPerBlock()) / Math.log(2)));
         unit = Math.max(1, unit);
-        double minX = canvas.worldX(panelWidth), maxX = canvas.worldX(width);
-        double minZ = canvas.worldZ(canvasTop), maxZ = canvas.worldZ(canvasBottom);
+        double minX = canvas.worldX(canvasLeft), maxX = canvas.worldX(width);
+        double minZ = canvas.worldZ(CANVAS_TOP), maxZ = canvas.worldZ(canvasBottom);
         for (double x = Math.ceil(minX / unit) * unit; x <= maxX; x += unit) {
-            int sx = (int) canvas.screenX(x); context.fill(sx, canvasTop, sx + 1, canvasBottom, x == 0 ? 0xFF586A7E : 0xFF263544);
-            label(context, Long.toString(Math.round(x)), sx + 2, canvasTop + 2, 70, 0x8191A3);
+            int sx = (int) canvas.screenX(x); context.fill(sx, CANVAS_TOP, sx + 1, canvasBottom, x == 0 ? 0xFF586A7E : 0xFF263544);
+            label(context, Long.toString(Math.round(x)), sx + 2, CANVAS_TOP + 2, 70, 0x8191A3);
         }
         for (double z = Math.ceil(minZ / unit) * unit; z <= maxZ; z += unit) {
-            int sy = (int) canvas.screenY(z); context.fill(panelWidth, sy, width, sy + 1, z == 0 ? 0xFF586A7E : 0xFF263544);
-            label(context, Long.toString(Math.round(z)), panelWidth + 3, sy + 2, 70, 0x8191A3);
+            int sy = (int) canvas.screenY(z); context.fill(canvasLeft, sy, width, sy + 1, z == 0 ? 0xFF586A7E : 0xFF263544);
+            label(context, Long.toString(Math.round(z)), canvasLeft + 3, sy + 2, 70, 0x8191A3);
         }
     }
 
     private void drawAreas(DrawContext context) {
-        context.enableScissor(panelWidth + 1, canvasTop, width, canvasBottom);
+        context.enableScissor(canvasLeft, CANVAS_TOP, width, canvasBottom);
         AreaData selectedParent = "create".equals(session.operation) ? session.find(session.selectedAreaName()) : null;
         for (AreaData area : session.areas) {
             if (area == selectedParent || Objects.equals(area.getName(), session.target)) continue;
@@ -283,7 +372,7 @@ public final class VizEditScreen extends Screen {
     private Vertex worldPoint(double x, double y) { return new Vertex(canvas.worldX(x), canvas.worldZ(y)); }
 
     private void drawPen(DrawContext context) {
-        if (!editingButtons.get(VizEditSession.Tool.PEN.ordinal()).active) return;
+        if (!toolButtons.get(VizEditSession.Tool.PEN).active) return;
         PenController pen = session.pen;
         var path = pen.path();
         double mouseX = client.mouse.getX() * width / client.getWindow().getWidth();
@@ -322,7 +411,7 @@ public final class VizEditScreen extends Screen {
 
     private void penMarker(DrawContext context, Vertex point, int size, int color) {
         double sx = canvas.screenX(point.getX()), sy = canvas.screenY(point.getZ());
-        if (!(sx >= panelWidth - size && sx <= width + size && sy >= canvasTop - size && sy <= canvasBottom + size)) return;
+        if (!(sx >= canvasLeft - size && sx <= width + size && sy >= CANVAS_TOP - size && sy <= canvasBottom + size)) return;
         int x = (int) Math.round(sx), y = (int) Math.round(sy);
         context.fill(x - size, y - size, x + size + 1, y + size + 1, 0xFF203042);
         context.fill(x - size + 1, y - size + 1, x + size, y + size, color);
@@ -331,7 +420,7 @@ public final class VizEditScreen extends Screen {
     private void drawBrushOutline(DrawContext context) {
         VizEditSession.Tool tool = session.tool;
         if (tool != VizEditSession.Tool.BOUNDARY && tool != VizEditSession.Tool.ERASER) return;
-        if (panning || spaceDown || draggingBrushWidth || !editingButtons.get(tool.ordinal()).active) return;
+        if (panning || spaceDown || draggingBrushWidth || !toolButtons.get(tool).active) return;
 
         // 与落笔事件使用相同精度的指针坐标，缩小地图时也能选中同一方块。
         double mouseX = client.mouse.getX() * width / client.getWindow().getWidth();
@@ -362,8 +451,8 @@ public final class VizEditScreen extends Screen {
         GeometryIssueLocator.Issue issue = session.geometryFocus.current(session.draft.shape);
         if (issue == null) return;
         double screenX = canvas.screenX(issue.x()), screenY = canvas.screenY(issue.z());
-        if (!Double.isFinite(screenX) || !Double.isFinite(screenY) || screenX < panelWidth || screenX >= width
-                || screenY < canvasTop || screenY >= canvasBottom) return;
+        if (!Double.isFinite(screenX) || !Double.isFinite(screenY) || screenX < canvasLeft || screenX >= width
+                || screenY < CANVAS_TOP || screenY >= canvasBottom) return;
         int x = (int) Math.round(screenX), y = (int) Math.round(screenY);
         // 标记使用固定屏幕尺寸，即使问题轮廓小于一个像素也能看到具体位置。
         context.fill(x - 8, y - 2, x + 9, y + 3, 0xFF301018);
@@ -390,12 +479,12 @@ public final class VizEditScreen extends Screen {
             // 只扫描穿过当前屏幕行的边，复杂轮廓仍显示填充且无需每行重扫全部边。
             List<double[]> pending = new ArrayList<>();
             for (double[] edge : edges) if (edge[1] != edge[3]
-                    && Math.min(edge[1], edge[3]) < canvasBottom && Math.max(edge[1], edge[3]) > canvasTop + 0.5) pending.add(edge);
+                    && Math.min(edge[1], edge[3]) < canvasBottom && Math.max(edge[1], edge[3]) > CANVAS_TOP + 0.5) pending.add(edge);
             pending.sort(Comparator.comparingDouble(edge -> Math.min(edge[1], edge[3])));
             List<double[]> active = new ArrayList<>();
             List<Double> intersections = new ArrayList<>();
             int next = 0;
-            for (int y = canvasTop; y < canvasBottom; y += 2) {
+            for (int y = CANVAS_TOP; y < canvasBottom; y += 2) {
                 double scan = y + 0.5;
                 while (next < pending.size() && Math.min(pending.get(next)[1], pending.get(next)[3]) <= scan) active.add(pending.get(next++));
                 active.removeIf(edge -> Math.max(edge[1], edge[3]) <= scan);
@@ -403,8 +492,8 @@ public final class VizEditScreen extends Screen {
                 for (double[] edge : active) intersections.add(edge[0] + (scan - edge[1]) * (edge[2] - edge[0]) / (edge[3] - edge[1]));
                 intersections.sort(Double::compare);
                 for (int i = 0; i + 1 < intersections.size(); i += 2) {
-                    int x0 = (int) Math.max(panelWidth, Math.min(width, intersections.get(i)));
-                    int x1 = (int) Math.max(panelWidth, Math.min(width, intersections.get(i + 1)));
+                    int x0 = (int) Math.max(canvasLeft, Math.min(width, intersections.get(i)));
+                    int x1 = (int) Math.max(canvasLeft, Math.min(width, intersections.get(i + 1)));
                     if (x1 > x0) context.fill(x0, y, x1, Math.min(y + 2, canvasBottom), fill);
                 }
             }
@@ -416,7 +505,7 @@ public final class VizEditScreen extends Screen {
     private void drawLine(DrawContext context, double[] e, int color) {
         double dx = e[2] - e[0], dy = e[3] - e[1], start = 0, end = 1;
         double[] p = {-dx, dx, -dy, dy};
-        double[] q = {e[0] - panelWidth, width - e[0], e[1] - canvasTop, canvasBottom - e[1]};
+        double[] q = {e[0] - canvasLeft, width - e[0], e[1] - CANVAS_TOP, canvasBottom - e[1]};
         for (int i = 0; i < 4; i++) {
             if (p[i] == 0) { if (q[i] < 0) return; continue; }
             double ratio = q[i] / p[i];
@@ -450,16 +539,30 @@ public final class VizEditScreen extends Screen {
         }
         if (button != 0) return true;
         if (mouseX < panelWidth) {
-            if (mouseY >= 92 && mouseY < treeBottom) {
-                int index = session.treeOffset + (int) ((mouseY - 92) / 17);
+            if (mouseX >= 4 && mouseX < panelWidth - 4 && mouseY >= TREE_TOP && mouseY < treeBottom) {
                 var rows = session.tree.rows(session.search);
-                if (index < rows.size()) {
+                int maxOffset = Math.max(0, rows.size() - visibleTreeRows());
+                session.treeOffset = Math.min(session.treeOffset, maxOffset);
+                if (maxOffset > 0 && treeBottom > TREE_TOP + 1 && mouseX >= panelWidth - 4 - TREE_SCROLL_WIDTH) {
+                    int thumbHeight = treeThumbHeight(rows.size());
+                    double top = treeThumbTop(rows.size());
+                    // 记录在滑块内按下的位置，点击轨道则将滑块中心移到指针。
+                    treeGrabOffset = mouseY >= Math.round(top) && mouseY < Math.round(top) + thumbHeight
+                        ? mouseY - top : thumbHeight / 2.0;
+                    setFocused(null);
+                    search.setFocused(false);
+                    dragTreeTo(mouseY);
+                    return true;
+                }
+                int rowIndex = (int) ((mouseY - TREE_TOP) / TREE_ROW_HEIGHT);
+                int index = session.treeOffset + rowIndex;
+                if (rowIndex < visibleTreeRows() && index < rows.size()) {
                     var row = rows.get(index);
-                    if (row.children() && mouseX < 22 + Math.min(panelWidth / 3, row.depth() * 9)) {
+                    if (row.children() && mouseX < 15 + treeIndent(row)) {
                         session.tree.toggleCollapsed(row.area().getName());
                     } else if (!Objects.equals(session.target, row.area().getName())) VizEditClientManager.changeTarget(row.area().getName());
                     else if (session.draft != null && !session.draft.shape.isEmpty())
-                        canvas.frame(session.draft.shape.getBounds2D(), panelWidth, canvasTop, width - panelWidth, canvasBottom - canvasTop);
+                        canvas.frame(session.draft.shape.getBounds2D(), canvasLeft, CANVAS_TOP, width - canvasLeft, canvasBottom - CANVAS_TOP);
                 }
             }
             return true;
@@ -478,8 +581,8 @@ public final class VizEditScreen extends Screen {
         if (session.tool == VizEditSession.Tool.WAND) {
             try {
                 List<double[]> edges = new ArrayList<>(VizEditGeometry.segments(session.draft.shape));
-                Rectangle2D view = new Rectangle2D.Double(canvas.worldX(panelWidth), canvas.worldZ(canvasTop),
-                    canvas.worldX(width) - canvas.worldX(panelWidth), canvas.worldZ(canvasBottom) - canvas.worldZ(canvasTop));
+                Rectangle2D view = new Rectangle2D.Double(canvas.worldX(canvasLeft), canvas.worldZ(CANVAS_TOP),
+                    canvas.worldX(width) - canvas.worldX(canvasLeft), canvas.worldZ(canvasBottom) - canvas.worldZ(CANVAS_TOP));
                 for (AreaData area : session.areas) if (!Objects.equals(area.getName(), session.target)) {
                     List<Vertex> vertices = area.getVertices();
                     if (vertices == null || vertices.isEmpty()) continue;
@@ -533,6 +636,7 @@ public final class VizEditScreen extends Screen {
         samplePointer(x, y); return true;
     }
     public void samplePointer(double x, double y) {
+        if (Double.isFinite(treeGrabOffset)) { dragTreeTo(y); return; }
         // Xaero 浮层只转发点击和逐帧指针采样，因此滑块拖动也在此更新并独占本次手势。
         if (draggingBrushWidth) {
             if (brushWidthSlider.active) brushWidthSlider.dragTo(x);
@@ -583,6 +687,7 @@ public final class VizEditScreen extends Screen {
     //?}
         // 释放事件可能携带尚未收到拖动事件的最终落点，先采样再收尾才能识别最后一次主动越界。
         if (button == 0 && draggingBrushWidth && brushWidthSlider.active) brushWidthSlider.dragTo(x);
+        if (button == 0 && Double.isFinite(treeGrabOffset)) dragTreeTo(y);
         if (button == 0 && drawing && inCanvas(x, y)) updateStroke(x, y);
         if (button == 0 && session.pen.dragging()) {
             if (canvas.isCurrentDimension()) {
@@ -605,6 +710,7 @@ public final class VizEditScreen extends Screen {
         }
         // 快捷键或界面切换结束手势时也清除原生拖动状态，避免后续拖动继续修改已结束的滑块。
         setDragging(false);
+        treeGrabOffset = Double.NaN;
         drawing = false; panning = false; draggingBrushWidth = false; beforeStroke = null; beforeDraft = null; drawingDraft = null; boundaryStroke = null;
         strokeStart = null; eraserStroke = null;
     }
@@ -644,7 +750,11 @@ public final class VizEditScreen extends Screen {
 
     // Fabric 事件的滚轮参数在所有活跃版本均有横纵两轴，原版 Screen 签名由预处理适配。
     public boolean scroll(double x, double y, double amount) {
-        if (x < panelWidth) session.treeOffset = Math.max(0, session.treeOffset - (int) Math.signum(amount) * 3);
+        if (Double.isFinite(treeGrabOffset)) return true;
+        if (x >= 4 && x < panelWidth - 4 && y >= TREE_TOP && y < treeBottom) {
+            int maxOffset = Math.max(0, session.tree.rows(session.search).size() - visibleTreeRows());
+            session.treeOffset = Math.max(0, Math.min(maxOffset, session.treeOffset - (int) Math.signum(amount) * 3));
+        }
         else if (inCanvas(x, y) && !drawing && !session.pen.dragging() && !panning && !draggingBrushWidth) canvas.zoom(amount, x, y);
         return true;
     }
@@ -673,7 +783,7 @@ public final class VizEditScreen extends Screen {
             return true;
         }
         if (key == GLFW.GLFW_KEY_P && !GuiInputCompat.hasControl(key, scan, modifiers)
-                && editingButtons.get(VizEditSession.Tool.PEN.ordinal()).active) {
+                && toolButtons.get(VizEditSession.Tool.PEN).active) {
             finishStroke();
             selectTool(VizEditSession.Tool.PEN);
             return true;
@@ -727,7 +837,7 @@ public final class VizEditScreen extends Screen {
         refreshState();
     }
 
-    private boolean inCanvas(double x, double y) { return x > panelWidth && x < width && y >= canvasTop && y < canvasBottom; }
+    private boolean inCanvas(double x, double y) { return x >= canvasLeft && x < width && y >= CANVAS_TOP && y < canvasBottom; }
     private void label(DrawContext context, String text, int x, int y, int maxWidth, int color) {
         // 编辑器标签沿用 RGB 配色，补全不透明 alpha；多边形填充与边线的实际透明度不经过这里。
         if ((color & 0xFF000000) == 0) color |= 0xFF000000;

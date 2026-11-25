@@ -6,9 +6,9 @@ export function Arrival() {
   const f=useCurrentFrame();
   return <AbsoluteFill style={{background:'black',overflow:'hidden'}}>
     <Sequence durationInFrames={67} name="璃月港环拍"><Clip name="harbor-orbit"/></Sequence>
-    <Sequence from={67} durationInFrames={57} name="沿石阶下山"><Clip name="pv-follow" offset={12}/></Sequence>
-    <Sequence from={124} durationInFrames={37} name="石阶上的脚步"><Clip name="footsteps" offset={8}/></Sequence>
-    <Sequence from={161} durationInFrames={113} name="第三人称入港"><Clip name="arrival"/></Sequence>
+    <Sequence from={67} durationInFrames={39} name="沿石阶下山"><Clip name="pv-follow" offset={21}/></Sequence>
+    <Sequence from={106} durationInFrames={24} name="石阶上的脚步"><Clip name="footsteps" offset={16}/></Sequence>
+    <Sequence from={130} durationInFrames={144} name="第三人称入港"><Clip name="arrival"/></Sequence>
     <Sequence from={274} durationInFrames={56} name="人物走进远景"><Clip name="harbor-push" offset={94}/></Sequence>
     <AbsoluteFill style={{background:'linear-gradient(to bottom,rgba(0,0,0,.14),transparent 23%,transparent 70%,rgba(0,0,0,.18))'}}/>
     {/* 整幅远景从纯黑渐显，让天空和港口在同一次曝光中浮现。 */}

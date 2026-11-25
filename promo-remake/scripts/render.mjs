@@ -21,7 +21,7 @@ if(process.argv.includes('--stills')){
 }else{
   // 单独导出四格时从整片取相同的帧区间，保留同步配乐和录点提示音。
   const toolsOnly=process.argv.includes('--tools');
-  const output=toolsOnly?'编辑四格-v6':'Area-Hints-v6';
+  const output=toolsOnly?'编辑四格-v7':'Area-Hints-v7';
   let last=-1;
   await renderMedia({...settings,composition,codec:'h264',audioCodec:'aac',audioBitrate:'256k',crf:16,
     imageFormat:'jpeg',jpegQuality:96,colorSpace:'bt709',concurrency:4,

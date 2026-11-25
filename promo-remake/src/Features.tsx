@@ -65,7 +65,7 @@ export function Details() {
   ];
   return <Board>
     <div style={{...box(104,86,1712,130),display:'flex',alignItems:'baseline',gap:52}}>
-      <div style={{fontFamily:serif,fontSize:88,fontWeight:700}}>指令总览</div>
+      <div style={{fontFamily:serif,fontSize:88,fontWeight:700}}>指令概览</div>
       <div style={{fontFamily:'Consolas,monospace',fontSize:45,color:aqua}}>/areahint</div>
     </div>
     {groups.map(([label,first,second],index)=>{

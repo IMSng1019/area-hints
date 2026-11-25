@@ -10,7 +10,7 @@ import {ink} from './visual';
 const fps=30;
 const editingToolsFrames=15*fps;
 const scenes=[
-  ['璃月港',18*fps,<Arrival/>],
+  ['璃月港',11*fps,<Arrival/>],
   ['模组揭晓',5*fps,<Brand/>],
   ['九格实拍',7*fps,<Overview/>],
   ['域名跳字',9*fps,<Titles/>],
@@ -20,7 +20,7 @@ const scenes=[
   ['服务器与客户端',mechanismFrames,<Mechanism/>],
   ['风起地的故事',7*fps,<Feature kind="story"/>],
   ['地图联动',8*fps,<Maps/>],
-  ['指令',5*fps,<Details/>],
+  ['指令概览',5*fps,<Details/>],
   ['应用场景',11*fps,<Uses/>],
   ['制作名单',5*fps,<Credits/>],
   ['标志',5*fps,<Logo/>],

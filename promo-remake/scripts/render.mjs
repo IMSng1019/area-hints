@@ -14,18 +14,18 @@ const serveUrl=await bundle({entryPoint:path.resolve('src/index.tsx'),publicDir:
 const settings={serveUrl,browserExecutable:browserExecutable?path.resolve(browserExecutable):undefined};
 const composition=await selectComposition({...settings,id:'Area-Hints'});
 if(process.argv.includes('--stills')){
-  for(const second of [3,7,11,16,21,26,35,42,48,54,58,62,67,72,79,84,88,93,99,107,113,122,129,135]){
+  for(const second of [1,3,5,7,10,14,19,28,35,41,47,51,55,60,65,72,77,81,86,92,100,106,115,122,128]){
     const frame=Math.round(second*composition.fps);
     await renderStill({...settings,composition,frame,scale:.5,output:path.resolve('out','frame-'+frame+'.png')});
   }
 }else{
   // 单独导出四格时从整片取相同的帧区间，保留同步配乐和录点提示音。
   const toolsOnly=process.argv.includes('--tools');
-  const output=toolsOnly?'编辑四格-v4':'Area-Hints-v4';
+  const output=toolsOnly?'编辑四格-v5':'Area-Hints-v5';
   let last=-1;
   await renderMedia({...settings,composition,codec:'h264',audioCodec:'aac',audioBitrate:'256k',crf:16,
     imageFormat:'jpeg',jpegQuality:96,colorSpace:'bt709',concurrency:4,
-    ...(toolsOnly?{frameRange:[53*composition.fps,68*composition.fps-1]}:{}),
+    ...(toolsOnly?{frameRange:[46*composition.fps,61*composition.fps-1]}:{}),
     outputLocation:path.resolve('out',output+'.tmp.mp4'),
     onProgress:({progress})=>{const step=Math.floor(progress*20);if(step!==last){console.log(step*5+'%');last=step;}},
   });

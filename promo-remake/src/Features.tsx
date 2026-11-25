@@ -26,16 +26,15 @@ const features={
 };
 export function Feature({kind}:{kind:keyof typeof features}) {
   const f=useCurrentFrame(),data=features[kind];
-  // 高亮随原速录像中的操作切换，画笔的轻跟随已在实拍素材中完成。
-  const steps=['打开编辑器','涂出范围','编辑属性','核对预览'];
-  const active=f<84?0:f<243?1:f<339?2:3;
+  // 按录像里属性页和提交预览真实出现的帧切换提示。
+  const steps=['打开编辑器','涂出范围','填写名称','提交前核对'];
+  const active=f<54?0:f<194?1:f<377?2:3;
   return <Board>
     <div style={{...box(0,105,1280,851),overflow:'hidden',background:'#081319',clipPath:`inset(0 ${(1-tween(f,0,14))*100}% 0 0)`}}>
       {kind==='bounds'?<>
         <Sequence durationInFrames={130} name="打开开关"><Clip name="bounds" style={{objectFit:'contain'}}/></Sequence>
         <Sequence from={114} name="围绕实地边界"><Clip name="aerial" offset={24} style={{objectFit:'contain',opacity:tween(f,114,130)}}/></Sequence>
       </>:<Clip name={data.clip} style={{objectFit:'contain'}}/>}
-      {kind==='create'&&f>=107&&f<229&&<svg width="1280" height="851" style={{position:'absolute',inset:0,opacity:tween(f,107,125)*(1-tween(f,207,229))}}><path d="M 692 235 H 780 L 811 269" fill="none" stroke="#ffe3a5" strokeWidth="3"/><circle cx="811" cy="269" r="6" fill="#ffe3a5"/><rect x="507" y="200" width="186" height="60" rx="4" fill="#0a1c25" opacity=".94"/><text x="530" y="240" fill="#ffe3a5" fontSize="28">绘制范围</text></svg>}
     </div>
     <div style={{...box(1290,105,2,851),background:'linear-gradient(transparent,#819d99 20%,#819d99 80%,transparent)'}}/>
     <div style={box(1360,192,515,795)}><Label>{data.kicker}</Label>
@@ -56,7 +55,30 @@ export function Maps(){
   </Board>;
 }
 export function Details() {
-  return <Board><div style={box(106,185,1630,740)}><Label>补充信息</Label><div style={{fontFamily:serif,fontSize:80,marginTop:36}}>从指令，也能进入工作流。</div>
-  {[['/areahint boundviz','切换边界可视化'],['/areahint reload','重新载入域名数据']].map(([cmd,desc],i)=><Rise key={cmd} delay={11+i*24} style={{display:'flex',alignItems:'baseline',borderBottom:'1px solid #4c6666',marginTop:46,paddingBottom:20}}><div style={{width:790,fontFamily:'Consolas,monospace',fontSize:45,color:aqua}}>{cmd}</div><div style={{fontSize:36}}>{desc}</div></Rise>)}
-  <Rise delay={54} style={{fontSize:27,color:'#adc3bf',marginTop:34}}>Area Hints 模组代码采用 MIT 许可。</Rise></div></Board>;
+  const frame = useCurrentFrame();
+  // 分类沿用游戏内指令面板，每组保留两个可辨认的例子。
+  const groups = [
+    ['常用与查询', 'help', 'check'], ['显示与外观', 'boundviz', 'titlestyle'],
+    ['域名创建与编辑', 'easyadd', 'rename'], ['顶点与形状', 'expandarea', 'dividearea'],
+    ['传送', 'settp', 'tcp'], ['文本、描述与签名', 'addsubtitle', 'addsignature'],
+    ['维度域名', 'firstdimname', 'dimensionalityname'], ['系统与调试', 'reload', 'debug'],
+  ];
+  return <Board>
+    <div style={{...box(104,86,1712,130),display:'flex',alignItems:'baseline',gap:52}}>
+      <div style={{fontFamily:serif,fontSize:88,fontWeight:700}}>指令总览</div>
+      <div style={{fontFamily:'Consolas,monospace',fontSize:45,color:aqua}}>/areahint</div>
+    </div>
+    {groups.map(([label,first,second],index)=>{
+      const row = Math.floor(index/2);
+      const reveal = tween(frame,row*3,17+row*3);
+      return <div key={label} style={{...box(108+(index%2)*882,255+row*177,810,143),
+        opacity:reveal,translate:`${(1-reveal)*24}px 0`,borderTop:'2px solid #617c79',paddingTop:16}}>
+        <div style={{fontSize:42,fontWeight:700,color:paper}}>{label}</div>
+        <div style={{display:'flex',gap:34,marginTop:6,fontSize:34,fontFamily:'Consolas,monospace',color:aqua}}>
+          <span>{first}</span><span style={{color:'#87a6a8'}}>·</span><span>{second}</span>
+        </div>
+      </div>;
+    })}
+    <div style={{...box(108,972,1650,52),fontSize:30,color:'#becdca'}}>输入 <span style={{fontFamily:'Consolas,monospace',color:gold}}>/areahint help</span> 查看完整指令。</div>
+  </Board>;
 }

@@ -17,14 +17,13 @@ FPS = 30
 WINDOW = "crop=1920:1004:0:24,pad=1920:1080:0:38:0x0b151b"
 FILM = "setsar=1"
 ARRIVAL = "crop=1440:810:240:136,scale=1920:1080:flags=lanczos"
-# 运笔时镜头略向画笔移动再收回，保持色块、光标和中央工具栏的关系可见。
-BRUSH = "crop=1776:1000:'64+38*sin(3.14159*t/5.3)':26,scale=1920:1080"
 
 # 每段分别记录源文件、起点秒数、输出帧数、播放倍率与重新构图方式。
 SHOTS = {
     "harbor-orbit": [("pv1", 2.30, 525, 1, FILM)],
     "footsteps": [("pv2", 0, 45, 1, FILM)],
     "harbor-push": [("pv3", 1.12, 174, 1, FILM)],
+    "pv-follow": [("pv补", 2.54, 120, 1, FILM)],
     "arrival": [("第三人称进入璃月港", 8.03, 246, 1, ARRIVAL)],
     "hierarchy": [("多级跳字展示", 0.45, 279, 1, FILM)],
     "story": [
@@ -32,6 +31,7 @@ SHOTS = {
         ("风起地的域名描述展示", 0.13, 177, 1, FILM),
     ],
     "aerial": [("可视化俯瞰环视展示", 0.64, 276, 1, FILM)],
+    "redstone": [("红石机器", 0.10, 330, 0.65, FILM)],
     "bounds": [("boundviz展示", 2.17, 279, 1, WINDOW)],
     "panel": [
         ("可视化指令面板展示", 7.47, 90, 1, FILM),
@@ -39,20 +39,25 @@ SHOTS = {
         ("可视化指令面板展示", 24.10, 66, 1, FILM),
     ],
     "create": [
-        ("可视化面板创建", 7.05, 84, 1, WINDOW),
-        ("可视化面板创建", 17.10, 159, 1, BRUSH),
-        ("可视化面板创建", 42.10, 96, 1, WINDOW),
-        ("可视化面板创建", 54.55, 81, 1, WINDOW),
+        ("可视化面板创建", 6.20, 54, 1, WINDOW),
+        ("可视化面板创建", 17.10, 102, 1.20, WINDOW),
+        # 从画布打开属性直到提交前核对，按原片时间顺序连续，压紧输入框里等候的几秒。
+        ("可视化面板创建", 41.30, 65, 1.38, WINDOW),
+        ("可视化面板创建", 44.29, 36, 3.60, WINDOW),
+        ("可视化面板创建", 48.61, 120, 1.60, WINDOW),
+        ("可视化面板创建", 55.01, 43, 0.73, WINDOW),
     ],
 }
 
 
 def find_ffmpeg():
-    if "FFMPEG" in os.environ:
-        return os.environ["FFMPEG"]
+    configured = os.environ.get("FFMPEG")
+    if configured and shutil.which(configured):
+        return configured
     if shutil.which("ffmpeg"):
         return "ffmpeg"
-    return Path.home() / "AppData/Local/Programs/ChatCut/resources/app.asar.unpacked/node_modules/ffmpeg-ffprobe-static/ffmpeg.exe"
+    app_data = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData/Local"))
+    return app_data / "Programs/ChatCut/resources/app.asar.unpacked/node_modules/ffmpeg-ffprobe-static/ffmpeg.exe"
 
 
 def execute(ffmpeg, arguments):

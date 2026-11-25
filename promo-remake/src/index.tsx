@@ -4,6 +4,7 @@ import {Arrival,Brand,Overview} from './Opening';
 import {Details,Feature,Maps,Titles} from './Features';
 import {Mechanism,mechanismFrames} from './Mechanism';
 import {EditingTools} from './EditingTools';
+import {Performance,performanceFrames} from './Performance';
 import {Credits,Logo,Uses} from './Closing';
 import {ink} from './visual';
 
@@ -18,6 +19,7 @@ const scenes=[
   ['四种边界编辑',editingToolsFrames,<EditingTools/>],
   ['实地核对边界',8*fps,<Feature kind="bounds"/>],
   ['服务器与客户端',mechanismFrames,<Mechanism/>],
+  ['性能实测',performanceFrames,<Performance/>],
   ['风起地的故事',7*fps,<Feature kind="story"/>],
   ['地图联动',8*fps,<Maps/>],
   ['指令概览',5*fps,<Details/>],
@@ -34,6 +36,7 @@ function Root(){
     <Composition id="Area-Hints" {...dimensions} component={Film} durationInFrames={scenes.reduce((sum,s)=>sum+s[1],0)}/>
     <Composition id="Editing-Tools" {...dimensions} component={EditingTools} durationInFrames={editingToolsFrames}/>
     <Composition id="Mechanism" {...dimensions} component={Mechanism} durationInFrames={mechanismFrames}/>
+    <Composition id="Performance" {...dimensions} component={Performance} durationInFrames={performanceFrames}/>
   </>;
 }
 registerRoot(Root);

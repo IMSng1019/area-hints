@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Easing, interpolate, useCurrentFrame} from 'remotion';
 import {HarborPopup} from './HarborPopup';
-import {Contours, Picture, box, gold, ink, paper, serif, tween} from './visual';
+import {Contours, Picture, backgroundInk, box, gold, paper, serif, tween} from './visual';
 
 export const harborPreroll = 15;
 
@@ -45,12 +45,12 @@ export function Brand() {
   // 以两个机位中同一座山峰配准，随后将山城缓慢移到左边给片名让位。
   const town = `translate(${379*turn-5*drift}px,${-6*turn-2*drift}px) scale(${1+.24*turn})`;
   const wharf = `translate(${386*turn-3*drift}px,${4*turn+drift}px) scale(${1+.236*turn})`;
-  return <AbsoluteFill style={{overflow:'hidden',background:ink,
+  return <AbsoluteFill style={{overflow:'hidden',background:backgroundInk,
     maskImage:transition<1?`linear-gradient(102deg,transparent ${edge}%,black ${edge+65}%)`:undefined}}>
     <AbsoluteFill style={{background:[
-      'radial-gradient(ellipse at 29% 34%,#537079 0%,transparent 48%)',
-      'radial-gradient(ellipse at 48% 73%,#253f46 0%,transparent 46%)',
-      'linear-gradient(107deg,#263e49 1%,#152c36 48%,#0b1821 82%)',
+      'radial-gradient(ellipse at 29% 34%,#786b59 0%,transparent 48%)',
+      'radial-gradient(ellipse at 48% 73%,#514134 0%,transparent 46%)',
+      `linear-gradient(107deg,#493c31 1%,#342a23 48%,${backgroundInk} 82%)`,
     ].join(',')}}/>
     <AbsoluteFill style={{transformOrigin:'100% 50%',transform:`translate(${40*turn-2*drift}px,${4*turn}px) scale(${1+.04*turn})`}}>
       <Picture file="art/brand-far-ridge.webp"/>
@@ -67,7 +67,7 @@ export function Brand() {
     </AbsoluteFill>
     <AbsoluteFill style={{background:'linear-gradient(0deg,#08182170,transparent 29%)'}}/>
     <AbsoluteFill style={{maskImage:'linear-gradient(90deg,transparent 54%,black 83%)'}}>
-      <Contours opacity={.027+.08*glide(frame,126,165)}/>
+      <Contours tone="#bba18b" opacity={.027+.08*glide(frame,126,165)}/>
     </AbsoluteFill>
     <AbsoluteFill style={{transformOrigin:'50% 100%',
       transform:`translate(${-12*drift}px,${36*turn+2*drift}px) scale(${1+.29*turn})`}}>

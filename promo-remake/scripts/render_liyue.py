@@ -1,4 +1,4 @@
-"""用 v12 画面母版和《璃月》的后半段导出原色或轻暖调试剪。"""
+"""用指定画面母版和《璃月》的后半段导出卡点试剪。"""
 
 import argparse
 from pathlib import Path
@@ -55,24 +55,9 @@ def picture_filter():
             f"tpad=stop=2:stop_mode=clone,trim=end_frame={TARGET[-1]}")
 
 
-def warm_grade():
-    # 入港草木已有暖色，轻调到远景切点；港雾与功能面板的暗部多收一点青蓝。
-    harbor = TARGET[SOURCE.index(274)]
-    credits = TARGET[SOURCE.index(3930)]
-    return (
-        "scale=in_color_matrix=bt709:in_range=tv:out_range=pc,format=gbrp10le,"
-        "curves=r='0/0 .12/.14 .45/.48 .75/.77 1/1':"
-        f"b='0/0 .12/.108 .45/.425 .75/.73 1/1':enable='lt(n,{harbor})',"
-        "curves=r='0/0 .10/.136 .35/.41 .60/.65 .82/.846 1/1':"
-        "g='0/0 .35/.356 .65/.66 1/1':b='0/0 .10/.082 .35/.298 .60/.55 .82/.79 1/1':"
-        f"enable='between(n,{harbor},{credits - 1})',"
-        "scale=out_color_matrix=bt709:in_range=pc:out_range=tv,format=yuv420p"
-    )
-
-
-def render(source, picture, output, warm=False):
+def render(source, picture, output):
     if not picture.is_file():
-        raise SystemExit(f"缺少 v12 画面母版 {picture}，请先在 promo-remake 运行 npm run render。")
+        raise SystemExit(f"找不到画面母版 {picture}。可用 --picture 指定已有母版。")
     if not source.is_file():
         raise SystemExit(f"找不到原曲 {source}")
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -83,9 +68,6 @@ def render(source, picture, output, warm=False):
         duration = TARGET[-1] / FPS
         render_sfx(effects, map_time=lambda t: np.interp(t * FPS, SOURCE, TARGET) / FPS,
                    duration=duration)
-        filters = picture_filter()
-        if warm:
-            filters += "," + warm_grade()
         # 成片从输出目录继承读取权限，避免沿用私有临时目录的 Windows 权限。
         with NamedTemporaryFile(dir=output.parent, suffix=".mp4", delete=False) as file:
             result = Path(file.name)
@@ -94,7 +76,7 @@ def render(source, picture, output, warm=False):
                 "-i", picture, "-i", music, "-i", effects,
                 "-filter_complex", "[1:a][2:a]amix=inputs=2:weights='0.9 0.6':normalize=0,"
                                    "alimiter=limit=0.88:level=0:latency=1[mix]",
-                "-map", "0:v:0", "-map", "[mix]", "-vf", filters, "-t", f"{duration:.6f}",
+                "-map", "0:v:0", "-map", "[mix]", "-vf", picture_filter(), "-t", f"{duration:.6f}",
                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "16", "-pix_fmt", "yuv420p",
                 "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
                 "-c:a", "aac", "-ar", "48000", "-b:a", "320k", "-movflags", "+faststart", result,
@@ -108,9 +90,12 @@ def render(source, picture, output, warm=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("music", type=Path, help="陈致逸、HOYO-MiX《璃月》的 FLAC 文件")
-    parser.add_argument("--picture", type=Path, default=PROJECT / "out/Area-Hints-v12.mp4")
+    parser.add_argument("--picture", type=Path, help="指定画面母版路径")
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--warm", action="store_true", help="导出轻暖调 v14")
+    parser.add_argument("--warm", action="store_true", help="使用 v15 暖色背景的画面母版")
     args = parser.parse_args()
-    filename = "Area-Hints-v14-Liyue-Warm.mp4" if args.warm else "Area-Hints-v13-Liyue.mp4"
-    render(args.music, args.picture, args.output or PROJECT / "out" / filename, warm=args.warm)
+    if args.warm:
+        master, filename = "Area-Hints-v15-picture.mp4", "Area-Hints-v15-Liyue-Background.mp4"
+    else:
+        master, filename = "Area-Hints-v12.mp4", "Area-Hints-v13-Liyue.mp4"
+    render(args.music, args.picture or PROJECT / "out" / master, args.output or PROJECT / "out" / filename)

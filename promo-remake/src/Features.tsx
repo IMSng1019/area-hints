@@ -1,7 +1,7 @@
 import React from 'react';
 import {Sequence,useCurrentFrame} from 'remotion';
 import titles from './titles.json';
-import {Board,Clip,Label,Picture,Rise,aqua,box,gold,latin,paper,serif,tween} from './visual';
+import {Board,Clip,Label,Picture,Rise,aqua,backgroundInk,box,gold,latin,paper,serif,tween} from './visual';
 
 export function Titles() {
   const f=useCurrentFrame();
@@ -9,7 +9,7 @@ export function Titles() {
     <div style={box(104,89,1700,190)}><Label>跨过边界</Label><Rise style={{fontFamily:serif,fontSize:83,marginTop:12}}>让地名跳出来。</Rise></div>
     {titles.map((item,i)=>{
       const x=104+(i%2)*865,y=320+Math.floor(i/2)*307;
-      return <div key={item.file} style={{...box(x,y,820,271),background:'#122630',opacity:tween(f,0,12)}}>
+      return <div key={item.file} style={{...box(x,y,820,271),background:'#332822',opacity:tween(f,0,12)}}>
         <div style={{...box(0,0,820,2),background:'#687775'}}/>
         <div style={{...box(20,7,790,40),color:'#d3dfda',fontSize:25}}>{['入城实拍','一级','父域名与二级','三级'][i]}</div>
         <Picture file={item.file} style={box(0,48,820,220)}/>
@@ -31,7 +31,7 @@ export function Feature({kind}:{kind:keyof typeof features}) {
   const steps=['打开编辑器','涂出范围','填写名称','提交前核对'];
   const active=f<54?0:f<194?1:f<377?2:3;
   return <Board>
-    <div style={{...box(0,105,1280,851),overflow:'hidden',background:'#081319',clipPath:`inset(0 ${(1-tween(f,0,14))*100}% 0 0)`}}>
+    <div style={{...box(0,105,1280,851),overflow:'hidden',background:backgroundInk,clipPath:`inset(0 ${(1-tween(f,0,14))*100}% 0 0)`}}>
       {kind==='bounds'?<>
         <Sequence durationInFrames={130} name="打开开关"><Clip name="bounds" style={{objectFit:'contain'}}/></Sequence>
         <Sequence from={114} name="围绕实地边界"><Clip name="aerial" offset={24} style={{objectFit:'contain',opacity:tween(f,114,130)}}/></Sequence>

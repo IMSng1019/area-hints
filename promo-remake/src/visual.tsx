@@ -2,6 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Easing, Img, OffthreadVideo, interpolate, staticFile, useCurrentFrame} from 'remotion';
 
 export const ink = '#0b1821', paper = '#f4f0e7', gold = '#ebbc78', aqua = '#8adcd0';
+export const backgroundInk = '#261f1b';
 export const sans = '"Microsoft YaHei", "Noto Sans CJK SC", sans-serif';
 export const serif = 'Georgia,"SimSun","Noto Serif CJK SC",serif';
 export const latin = 'Bahnschrift,"Arial Narrow",Arial,sans-serif';
@@ -30,5 +31,5 @@ export function Contours({tone='#96bfbe',opacity=.18}:{tone?:string;opacity?:num
   </svg>;
 }
 export function Board({children}:React.PropsWithChildren) {
-  return <AbsoluteFill style={{backgroundColor:ink,color:paper,fontFamily:sans,overflow:'hidden'}}><Contours/>{children}</AbsoluteFill>;
+  return <AbsoluteFill style={{backgroundColor:backgroundInk,color:paper,fontFamily:sans,overflow:'hidden'}}><Contours tone="#bba18b"/>{children}</AbsoluteFill>;
 }

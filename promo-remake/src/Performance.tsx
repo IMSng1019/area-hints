@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill,useCurrentFrame} from 'remotion';
 import atlas from './performance-map.json';
-import {aqua,box,ink,latin,paper,sans,serif,tween} from './visual';
+import {aqua,backgroundInk,box,latin,paper,sans,serif,tween} from './visual';
 
 export const performanceFrames = 12 * 30;
 const muted = '#b4c5c5';
@@ -49,7 +49,7 @@ function MapDimensions({frame}: {frame: number}) {
 export function Performance() {
   const frame = useCurrentFrame();
   const result = tween(frame,70,98);
-  return <AbsoluteFill style={{background:ink,color:paper,fontFamily:sans}}>
+  return <AbsoluteFill style={{background:backgroundInk,color:paper,fontFamily:sans}}>
     <div style={{...box(96,74,1728,62),borderBottom:'1px solid #486067',color:aqua,fontSize:29,fontWeight:700}}>性能实测</div>
     <div style={{...box(92,173,1760,120),fontFamily:serif,fontWeight:700,fontSize:80,opacity:tween(frame,0,15)}}>识别脚下的域名，要多久？</div>
 

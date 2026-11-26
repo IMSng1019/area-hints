@@ -1,4 +1,4 @@
-"""从璃月港环拍提取品牌段使用的山城、码头和水面，三层共用同一构图。"""
+"""从璃月港环拍提取同坐标的港湾实景底版、山城、码头和水面。"""
 
 import argparse
 import io
@@ -85,10 +85,10 @@ def trace_mask(outline):
     return mask
 
 
-def save_layer(layer, name):
+def save_layer(layer, name, left_bleed=0):
     layer = layer.resize((1392, round(layer.height * 0.725)), Image.Resampling.LANCZOS)
-    canvas = Image.new("RGBA", SIZE)
-    canvas.alpha_composite(layer, dest=(-226, 157))
+    canvas = Image.new("RGBA", (SIZE[0] + left_bleed, SIZE[1]))
+    canvas.alpha_composite(layer, dest=(-226 + left_bleed, 157))
     canvas.save(PROJECT / "public/art" / f"brand-{name}.webp", lossless=True, method=5)
 
 
@@ -117,6 +117,50 @@ def paint_water(blue, wet):
     return water
 
 
+def soft_step(start, end, values):
+    t = np.clip((values - start) / (end - start), 0, 1)
+    return t * t * (3 - 2 * t)
+
+
+def harbor_plate(rgb, wet):
+    # 在同一张实景中保留码头下的真实倒影，山后雾气渐渐融入全片的深蓝底。
+    y, x = np.ogrid[:1080, :1920]
+    light = np.einsum("ijk,k->ij", rgb, [0.2126, 0.7152, 0.0722])
+    grade = light[:, :, None] * [0.58, 0.69, 0.76] + [9, 18, 24]
+    grade += (rgb - light[:, :, None]) * [0.50, 0.47, 0.43]
+    grade = np.clip(grade, 0, 255)
+    # 海湾内的蓝色随原片水深和桥影变化，将最暗的海水提到可辨认的墨青色。
+    water_light = np.clip((rgb[:, :, 2] - 20) / 62, 0, 1)
+    water = np.array([11, 28, 41]) + water_light[:, :, None] * [24, 53, 57]
+    water_weight = (wet * soft_step(610, 790, y))[:, :, None]
+    grade = grade * (1 - water_weight) + water * water_weight
+
+    # 用末行附近实际水色接出下沿，亭柱、桥身和石岸在扩展区之外。
+    samples = np.where(wet[-64:] > 0.9, water_light[-64:], np.nan)
+    valid = np.isfinite(samples).any(axis=0)
+    positions = np.flatnonzero(valid)
+    shore_light = np.nanmedian(samples[:, valid], axis=0)
+    shore_light = np.interp(np.arange(1920), positions, shore_light)
+    shore_light = np.asarray(Image.fromarray((shore_light[None, :] * 255).astype("uint8"))
+                             .filter(ImageFilter.GaussianBlur(9)), dtype=float)[0] / 255
+    extra_height = 192
+    extension = np.array([11, 28, 41]) + shore_light[:, None] * [24, 53, 57]
+    extended = np.concatenate((grade, np.broadcast_to(extension, (extra_height, 1920, 3))))
+    blend = soft_step(960, 1079, y)[:, :, None]
+    extended[:1080] = grade * (1 - blend) + extension * blend
+
+    y = np.arange(len(extended))[:, None]
+    sky = soft_step(40, 475, y)
+    right = 1 - soft_step(1450 + 75 * np.sin(y / 270), 1920, x)
+    lower = 1 - soft_step(968 + 68 * np.sin(x / 245), len(extended)-2, y)
+    # 镜头拉开时可见原帧左岸，在输出图最左九十像素渐隐。
+    left = soft_step(0, 90 / 0.725, x)
+    alpha = sky * left * right * lower * (0.77 + 0.21 * soft_step(640, 900, y))
+    plate = Image.fromarray(extended.clip(0, 255).astype("uint8")).convert("RGBA")
+    plate.putalpha(Image.fromarray((alpha * 255).astype("uint8")))
+    return plate
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", type=Path, nargs="?", default=Path("J:/素材/pv1.mp4"))
@@ -134,6 +178,7 @@ def main():
     # 从描边区域中扣去实录的深蓝海水，保留桩下的空隙。
     water = np.minimum(blue - green - 4, green - red - 4)
     dry = 1 - np.clip(water / 11, 0, 1)
+    save_layer(harbor_plate(rgb, 1 - dry), "harbor-plate", left_bleed=226)
     save_layer(paint_water(blue, 1 - dry), "water")
     for name, outline in [("harbor", HARBOR), ("wharf", WHARF)]:
         mask = np.asarray(trace_mask(outline), dtype=float)

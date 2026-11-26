@@ -1,7 +1,6 @@
 import React from 'react';
 import {AbsoluteFill,Audio,Composition,Series,registerRoot,staticFile} from 'remotion';
-import {Arrival,Overview} from './Opening';
-import {Brand} from './Brand';
+import {OpeningReel} from './Opening';
 import {Details,Feature,Maps,Titles} from './Features';
 import {Mechanism,mechanismFrames} from './Mechanism';
 import {EditingTools} from './EditingTools';
@@ -12,9 +11,7 @@ import {ink} from './visual';
 const fps=30;
 const editingToolsFrames=15*fps;
 const scenes=[
-  ['璃月港',11*fps,<Arrival/>],
-  ['模组揭晓',5*fps,<Brand/>],
-  ['九格实拍',7*fps,<Overview/>],
+  ['实机入港、片名与九格实拍',23*fps,<OpeningReel/>],
   ['域名跳字',9*fps,<Titles/>],
   ['可视化创建',14*fps,<Feature kind="create"/>],
   ['四种边界编辑',editingToolsFrames,<EditingTools/>],

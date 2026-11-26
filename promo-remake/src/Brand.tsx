@@ -1,74 +1,79 @@
 import React from 'react';
-import {AbsoluteFill, Sequence, useCurrentFrame} from 'remotion';
-import {Board, Clip, Picture, box, serif, tween} from './visual';
+import {AbsoluteFill, Easing, interpolate, useCurrentFrame} from 'remotion';
+import {HarborPopup} from './HarborPopup';
+import {Contours, Picture, box, gold, ink, paper, serif, tween} from './visual';
 
-export const photoShade = 'linear-gradient(to bottom,rgba(0,0,0,.14),transparent 23%,transparent 70%,rgba(0,0,0,.18))';
-export const harborExposure = (openingFrame: number) => tween(openingFrame,320,339);
+export const harborPreroll = 15;
 
-export function HarborPaper() {
-  return <AbsoluteFill style={{background: [
-    'radial-gradient(ellipse at 26% 35%,#fff7deb8,transparent 33%)',
-    'radial-gradient(ellipse at 13% 73%,#93c3ae9e,transparent 53%)',
-    'radial-gradient(ellipse at 98% 93%,#cddcc785,transparent 47%)',
-    'linear-gradient(112deg,#dae8d5 2%,#f5ead4 48%,#f8f3e5 82%,#f1efdc)',
-  ].join(',')}}/>;
+function glide(frame: number, from: number, to: number) {
+  return interpolate(frame,[from,to],[0,1],{
+    easing:Easing.bezier(.42,0,.25,1), extrapolateLeft:'clamp', extrapolateRight:'clamp',
+  });
 }
 
-const titleGreen = '#1b3933';
-
 function HarborTitle({frame}: {frame: number}) {
-  const emblem = tween(frame,10,34);
-  const reveal = tween(frame,25,51);
-  const question = tween(frame,9,29);
-  // 遮罩从字标左缘扫过，在拨弦落点附近读出完整片名。
+  const emblem = tween(frame,13,36);
+  const reveal = tween(frame,28,55);
+  const question = tween(frame,18,38);
   const edge = reveal * 116 - 16;
-  return <div style={{...box(970,351,875,380),display:'flex',alignItems:'center',flexDirection:'column',justifyContent:'center',color:titleGreen}}>
+  return <div style={{...box(972,350,875,380),display:'flex',alignItems:'center',flexDirection:'column',
+    justifyContent:'center',color:paper,opacity:1-glide(frame,132,155)}}>
     <svg width="204" height="41" viewBox="0 0 204 41" aria-hidden="true" style={{opacity:emblem}}>
-      <defs><linearGradient id="harbor-rule" gradientUnits="userSpaceOnUse" x1="0" x2="74" y1="21" y2="21"><stop stopColor="#a3894f" stopOpacity="0"/><stop offset="1" stopColor="#a3894f"/></linearGradient></defs>
+      <defs><linearGradient id="harbor-rule" gradientUnits="userSpaceOnUse" x1="0" x2="74" y1="21" y2="21"><stop stopColor={gold} stopOpacity="0"/><stop offset="1" stopColor={gold}/></linearGradient></defs>
       <path d="M0 21h74" stroke="url(#harbor-rule)" strokeWidth="1.5"/>
       <path d="M0 21h74" transform="translate(204 0) scale(-1 1)" stroke="url(#harbor-rule)" strokeWidth="1.5"/>
-      <path d="M101 3l17 10-8 23-19-6-6-15Z" fill="none" stroke="#8f7646" strokeWidth="2.3"
+      <path d="M101 3l17 10-8 23-19-6-6-15Z" fill="none" stroke={gold} strokeWidth="2.3"
         pathLength="1" strokeDasharray="1 1" strokeDashoffset={1-emblem} strokeLinejoin="round"/>
     </svg>
     <div style={{fontFamily:serif,fontSize:154,letterSpacing:-8,lineHeight:1.16,whiteSpace:'nowrap',padding:'0 18px 3px',
       maskImage:`linear-gradient(90deg,black ${edge}%,transparent ${edge+16}%)`,
-      transform:`translateY(${(1-reveal)*13}px)`}}>
-      Area <i style={{color:'#376455'}}>Hints</i>
+      translate:`0 ${(1-reveal)*10}px`}}>
+      Area <i style={{color:gold}}>Hints</i>
     </div>
-    <div style={{fontFamily:'"STZhongsong","SimSun",serif',fontSize:42,letterSpacing:.8,color:'#314c43',marginTop:9,
-      opacity:question,translate:`0 ${(1-question)*9}px`}}>想要一个像原神一样跳字的模组？</div>
+    <div style={{fontFamily:'"STZhongsong","SimSun",serif',fontSize:42,letterSpacing:.8,color:'#e1e5df',marginTop:9,
+      opacity:question,translate:`0 ${(1-question)*7}px`}}>想要一个像原神一样跳字的模组？</div>
   </div>;
 }
 
 export function Brand() {
-  const frame = useCurrentFrame();
-  const pull = 1 - tween(frame,5,41);
-  const drift = tween(frame,34,140);
-  const land = tween(frame,4,18);
-  // 所有实景层共用取景坐标；码头和草坡在拉开镜头时相对后山多走一点。
-  const layerOrigin = '540px 580px';
-  return <AbsoluteFill style={{overflow:'hidden'}}>
-    <HarborPaper/>
-    <AbsoluteFill style={{transformOrigin:layerOrigin,opacity:land,
-      transform:`translate(${pull*89-drift*3}px,${pull*18-drift*1.5}px) scale(${1+.27*pull})`}}>
-      <AbsoluteFill><Picture file="art/brand-water.webp"/></AbsoluteFill>
-      <AbsoluteFill><Picture file="art/brand-harbor.webp"/></AbsoluteFill>
+  // 把片名前 15 帧纳入同一次运镜，局部第 75 帧仍对应全片 13.50 秒。
+  const frame = useCurrentFrame() - harborPreroll;
+  const turn = 1-glide(frame,-2,53);
+  const drift = glide(frame,47,151);
+  const transition = glide(frame,-harborPreroll,18);
+  const edge = 111-183*transition;
+  // 以两个机位中同一座山峰配准，随后将山城缓慢移到左边给片名让位。
+  const town = `translate(${379*turn-5*drift}px,${-6*turn-2*drift}px) scale(${1+.24*turn})`;
+  const wharf = `translate(${386*turn-3*drift}px,${4*turn+drift}px) scale(${1+.236*turn})`;
+  return <AbsoluteFill style={{overflow:'hidden',background:ink,
+    maskImage:transition<1?`linear-gradient(102deg,transparent ${edge}%,black ${edge+65}%)`:undefined}}>
+    <AbsoluteFill style={{background:[
+      'radial-gradient(ellipse at 29% 34%,#537079 0%,transparent 48%)',
+      'radial-gradient(ellipse at 48% 73%,#253f46 0%,transparent 46%)',
+      'linear-gradient(107deg,#263e49 1%,#152c36 48%,#0b1821 82%)',
+    ].join(',')}}/>
+    <AbsoluteFill style={{transformOrigin:'100% 50%',transform:`translate(${40*turn-2*drift}px,${4*turn}px) scale(${1+.04*turn})`}}>
+      <Picture file="art/brand-far-ridge.webp"/>
     </AbsoluteFill>
-    <AbsoluteFill style={{transformOrigin:layerOrigin,opacity:land,
-      transform:`translate(${pull*108+drift*2}px,${pull*23+drift}px) scale(${1+.29*pull})`}}>
-      <Picture file="art/brand-wharf.webp"/>
+    <AbsoluteFill style={{transformOrigin:'100% 50%',transform:`translate(${100*turn-3*drift}px,${12*turn}px) scale(${1+.08*turn})`}}>
+      <Picture file="art/brand-mid-ridge.webp"/>
+    </AbsoluteFill>
+    <AbsoluteFill style={{transform:town,transformOrigin:'0 0'}}>
+      <AbsoluteFill><Picture file="art/brand-harbor-plate.webp" style={{position:'absolute',left:-226,width:2146}}/></AbsoluteFill>
+      <AbsoluteFill><Picture file="art/brand-harbor.webp" style={{filter:'saturate(.88) brightness(.99)'}}/></AbsoluteFill>
+    </AbsoluteFill>
+    <AbsoluteFill style={{transform:wharf,transformOrigin:'0 0'}}>
+      <Picture file="art/brand-wharf.webp" style={{filter:'saturate(.94)'}}/>
+    </AbsoluteFill>
+    <AbsoluteFill style={{background:'linear-gradient(0deg,#08182170,transparent 29%)'}}/>
+    <AbsoluteFill style={{maskImage:'linear-gradient(90deg,transparent 54%,black 83%)'}}>
+      <Contours opacity={.027+.08*glide(frame,126,165)}/>
+    </AbsoluteFill>
+    <AbsoluteFill style={{transformOrigin:'50% 100%',
+      transform:`translate(${-12*drift}px,${36*turn+2*drift}px) scale(${1+.29*turn})`}}>
+      <Picture file="art/brand-bank.webp"/>
     </AbsoluteFill>
     <HarborTitle frame={frame}/>
-    <AbsoluteFill style={{transformOrigin:'50% 100%',opacity:tween(frame,9,29)*.87,
-      transform:`translateY(${pull*77+drift*2}px) scale(${1.012+pull*.07})`}}>
-      <Picture file="art/brand-grass.svg"/>
-    </AbsoluteFill>
-    {/* 实景沿用上一镜的下一帧，与前段共用同一条淡出曲线。 */}
-    <Sequence durationInFrames={9} name="接璃月港远景">
-      <AbsoluteFill style={{opacity:1-harborExposure(frame+330)}}>
-        <Clip name="harbor-push" offset={150}/><AbsoluteFill style={{background:photoShade}}/>
-      </AbsoluteFill>
-    </Sequence>
-    {frame>=137 && <AbsoluteFill style={{opacity:tween(frame,137,149)}}><Board/></AbsoluteFill>}
+    <div style={box(300,242,260,96)}><HarborPopup frame={frame}/></div>
   </AbsoluteFill>;
 }

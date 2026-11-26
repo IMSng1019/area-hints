@@ -105,11 +105,33 @@ def encode_overview(ffmpeg, source):
                      "-preset", "veryfast", "-crf", "17", "-g", "30", "-movflags", "+faststart", OUTPUT / "overview.mp4"])
 
 
+def extract_titles(ffmpeg, source):
+    # 每张图都是原录屏中的 820 × 220 像素，成片按相同尺寸摆放，完整保留字形、阴影和背景。
+    shots = [
+        ("li-yue", "第三人称进入璃月港", 11, 194),
+        ("primary", "多级跳字展示", 2, 236),
+        ("secondary", "多级跳字展示", 5, 236),
+        ("tertiary", "多级跳字展示", 8, 236),
+    ]
+    destination = PROJECT / "public/titles"
+    destination.mkdir(parents=True, exist_ok=True)
+    for name, stem, seconds, top in shots:
+        execute(ffmpeg, [
+            "-ss", str(seconds), "-i", source / f"{stem}.mp4", "-map", "0:v:0",
+            "-vf", f"crop=820:220:550:{top}", "-frames:v", "1", "-update", "1",
+            destination / f"{name}.png",
+        ])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", type=Path, nargs="?", default=Path("J:/素材"))
+    parser.add_argument("--titles-only", action="store_true", help="仅从实机录屏截取四张跳字图")
     arguments = parser.parse_args()
     ffmpeg = find_ffmpeg()
+    extract_titles(ffmpeg, arguments.source)
+    if arguments.titles_only:
+        return
     OUTPUT.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(dir=OUTPUT.parent.parent) as directory, ThreadPoolExecutor(2) as pool:
         tasks = [pool.submit(encode_clip, ffmpeg, arguments.source, Path(directory), name) for name in SHOTS]

@@ -1,6 +1,13 @@
 {
   "width": 1280,
   "height": 874,
+  "margin": 12,
+  "bounds": {
+    "minX": -10868.3,
+    "maxX": 7242.2,
+    "minZ": -6427.0,
+    "maxZ": 5820.0
+  },
   "areas": [
     {
       "name": "蒙德",

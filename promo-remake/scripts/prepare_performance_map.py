@@ -47,7 +47,9 @@ def main():
         path = "M" + "L".join(f"{x:.1f},{y:.1f}" for x, y in ring) + "Z"
         areas.append({key: record[key] for key in ("name", "level", "color")} | {"d": path})
     output = Path(__file__).resolve().parents[1] / "src/performance-map.json"
-    output.write_text(json.dumps({"width": width, "height": height, "areas": areas},
+    bounds = {"minX": x_min, "maxX": x_max, "minZ": z_min, "maxZ": z_max}
+    output.write_text(json.dumps({"width": width, "height": height, "margin": margin,
+                                  "bounds": bounds, "areas": areas},
                                  ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 

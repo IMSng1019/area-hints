@@ -9,10 +9,11 @@ export function Titles() {
     <div style={box(104,89,1700,190)}><Label>跨过边界</Label><Rise style={{fontFamily:serif,fontSize:83,marginTop:12}}>让地名跳出来。</Rise></div>
     {titles.map((item,i)=>{
       const x=104+(i%2)*865,y=320+Math.floor(i/2)*307;
-      return <div key={item.file} style={{...box(x,y,820,271),borderTop:'2px solid #687775',borderBottom:'1px solid #35474c',background:'linear-gradient(120deg,#122833,#0d2028)',opacity:tween(f,0,12),display:'flex',alignItems:'center',justifyContent:'center'}}>
-        <div style={{position:'absolute',top:17,left:24,color:'#b4c9c6',fontSize:25}}>{['入城实拍','一级','父域名与二级','三级'][i]}</div>
-        <Picture file={item.file} style={{objectFit:'contain',width:'auto',maxWidth:'89%',height:i===0?77:135,marginTop:30,imageRendering:'pixelated',transform:`translateY(${(1-tween(f,4,34))*12}px)`}}/>
-        <div style={{position:'absolute',bottom:-1,left:0,height:3,width:820*tween(f,24+i*47,60+i*47),background:i<2?gold:aqua,opacity:.78}}/>
+      return <div key={item.file} style={{...box(x,y,820,271),background:'#122630',opacity:tween(f,0,12)}}>
+        <div style={{...box(0,0,820,2),background:'#687775'}}/>
+        <div style={{...box(20,7,790,40),color:'#d3dfda',fontSize:25}}>{['入城实拍','一级','父域名与二级','三级'][i]}</div>
+        <Picture file={item.file} style={box(0,48,820,220)}/>
+        <div style={{...box(0,268,820*tween(f,24+i*47,60+i*47),3),background:i<2?gold:aqua}}/>
       </div>;
     })}
     <div style={{...box(106,956,1650,55),fontSize:33,color:'#d0ded9'}}>同一片世界里，城、街区与地标可以各有自己的名字和副标题。</div>

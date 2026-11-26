@@ -19,11 +19,11 @@ if(process.argv.includes('--stills')){
     await renderStill({...settings,composition,frame,scale:.5,output:path.resolve('out','frame-'+frame+'.png')});
   }
 }else{
-  // 单独导出四格时从整片取相同的帧区间，保留同步配乐和录点提示音。
+  // 片段和整片取自同一时间线，配乐与提示音保持同步。
   const excerpt=process.argv.includes('--performance')
-    ? {name:'performance-v8',start:88,end:100}
-    : process.argv.includes('--tools') ? {name:'编辑四格-v8',start:46,end:61} : null;
-  const output=excerpt?.name??'Area-Hints-v8';
+    ? {name:'performance-v9',start:88,end:100}
+    : process.argv.includes('--tools') ? {name:'编辑四格-v9',start:46,end:61} : null;
+  const output=excerpt?.name??'Area-Hints-v9';
   let last=-1;
   await renderMedia({...settings,composition,codec:'h264',audioCodec:'aac',audioBitrate:'256k',crf:16,
     imageFormat:'jpeg',jpegQuality:96,colorSpace:'bt709',concurrency:4,

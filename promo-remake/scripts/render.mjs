@@ -13,7 +13,6 @@ const browserExecutable=[process.env.REMOTION_BROWSER_EXECUTABLE,
 const serveUrl=await bundle({entryPoint:path.resolve('src/index.tsx'),publicDir:path.resolve('public')});
 const settings={serveUrl,browserExecutable:browserExecutable?path.resolve(browserExecutable):undefined};
 const composition=await selectComposition({...settings,id:'Area-Hints'});
-const version='v10';
 if(process.argv.includes('--stills')){
   for(const second of [1,3,5,7,10,14,19,28,35,41,47,51,55,60,65,72,77,81,86,89,93,98,104,112,118,127,134,140]){
     const frame=Math.round(second*composition.fps);
@@ -21,13 +20,10 @@ if(process.argv.includes('--stills')){
   }
 }else{
   // 片段和整片取自同一时间线，配乐与提示音保持同步。
-  const excerpts=[
-    {flag:'--details',name:'windrise',start:94,end:115},
-    {flag:'--performance',name:'performance',start:88,end:100},
-    {flag:'--tools',name:'编辑四格',start:46,end:61},
-  ];
-  const excerpt=excerpts.find(({flag})=>process.argv.includes(flag));
-  const output=(excerpt?.name??'Area-Hints')+'-'+version;
+  const excerpt=process.argv.includes('--performance')
+    ? {name:'performance-v9',start:88,end:100}
+    : process.argv.includes('--tools') ? {name:'编辑四格-v9',start:46,end:61} : null;
+  const output=excerpt?.name??'Area-Hints-v9';
   let last=-1;
   await renderMedia({...settings,composition,codec:'h264',audioCodec:'aac',audioBitrate:'256k',crf:16,
     imageFormat:'jpeg',jpegQuality:96,colorSpace:'bt709',concurrency:4,

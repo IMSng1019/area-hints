@@ -1,13 +1,6 @@
 import React from 'react';
 import {AbsoluteFill,Sequence,useCurrentFrame} from 'remotion';
-import {Board,Clip,Label,Rise,box,gold,ink,paper,sans,serif,tween} from './visual';
-
-function HarborBackdrop({offset}:{offset:number}) {
-  return <AbsoluteFill>
-    <Clip name="harbor-orbit" offset={offset}/>
-    <AbsoluteFill style={{background:'linear-gradient(90deg,rgba(9,23,31,.96) 0%,rgba(10,24,31,.86) 28%,rgba(10,24,31,.56) 51%,rgba(10,24,31,.14) 76%,rgba(10,24,31,.10) 100%)'}}/>
-  </AbsoluteFill>;
-}
+import {Board,Clip,Contours,Label,Rise,box,gold,ink,paper,serif,tween} from './visual';
 
 export function Arrival() {
   const f=useCurrentFrame();
@@ -20,20 +13,14 @@ export function Arrival() {
     <AbsoluteFill style={{background:'linear-gradient(to bottom,rgba(0,0,0,.14),transparent 23%,transparent 70%,rgba(0,0,0,.18))'}}/>
     {/* 整幅远景从纯黑渐显，让天空和港口在同一次曝光中浮现。 */}
     {f<43 && <AbsoluteFill style={{backgroundColor:'black',opacity:1-tween(f,1,43)}}/>}
-    {/* 片名出现前先叠入港口航拍，用同一条摄影机轨迹接过片名的五秒。 */}
-    <Sequence from={312}><AbsoluteFill style={{opacity:tween(f,312,329)}}><HarborBackdrop offset={100}/></AbsoluteFill></Sequence>
+    {f>=312 && <AbsoluteFill style={{backgroundColor:ink,opacity:tween(f,312,329)}}><Contours/></AbsoluteFill>}
   </AbsoluteFill>;
 }
 export function Brand() {
-  const f=useCurrentFrame();
-  return <AbsoluteFill style={{background:ink,color:paper,fontFamily:sans}}>
-    <HarborBackdrop offset={118}/>
-    <div style={box(130,351,1620,410)}>
+  return <Board><div style={box(135,338,1700,410)}>
     <Rise duration={23} style={{fontSize:52,color:paper}}>想要一个像原神一样跳字的模组？</Rise>
     <Rise delay={37} duration={27} style={{fontFamily:serif,fontSize:190,lineHeight:1.1,marginTop:30,letterSpacing:-6}}>Area <i style={{color:gold}}>Hints</i></Rise>
-    </div>
-    <AbsoluteFill style={{background:ink,opacity:tween(f,137,149)}}/>
-  </AbsoluteFill>;
+  </div></Board>;
 }
 export function Overview() {
   const f=useCurrentFrame(), p=tween(f,0,27);

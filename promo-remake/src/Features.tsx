@@ -1,40 +1,32 @@
 import React from 'react';
-import {AbsoluteFill,Sequence,useCurrentFrame} from 'remotion';
+import {Sequence,useCurrentFrame} from 'remotion';
 import titles from './titles.json';
-import {Board,Clip,Label,Picture,Rise,aqua,box,gold,ink,latin,paper,sans,serif,tween} from './visual';
+import {Board,Clip,Label,Picture,Rise,aqua,box,gold,latin,paper,serif,tween} from './visual';
 
 export function Titles() {
   const f=useCurrentFrame();
-  const parentColor = '#efb74e';
-  const childColor = '#a6e998';
-  const names = ['入城实拍', '一级域名', <><span style={{color:parentColor}}>父域名</span> · <span style={{color:childColor}}>二级域名</span></>, '三级域名'];
   return <Board>
     <div style={box(104,89,1700,190)}><Label>跨过边界</Label><Rise style={{fontFamily:serif,fontSize:83,marginTop:12}}>让地名跳出来。</Rise></div>
     {titles.map((item,i)=>{
       const x=104+(i%2)*865,y=320+Math.floor(i/2)*307;
       return <div key={item.file} style={{...box(x,y,820,271),background:'#122630',opacity:tween(f,0,12)}}>
         <div style={{...box(0,0,820,2),background:'#687775'}}/>
-        <div style={{...box(20,7,790,40),color:i===1?parentColor:'#d3dfda',fontSize:25}}>{names[i]}</div>
+        <div style={{...box(20,7,790,40),color:'#d3dfda',fontSize:25}}>{['入城实拍','一级','父域名与二级','三级'][i]}</div>
         <Picture file={item.file} style={box(0,48,820,220)}/>
-        {/* 在主副标题间的空隙标出相同的父名，沿用原图里的金色。 */}
-        {(i===1||i===2)&&<div style={{
-          ...box(i===1?247:76,166,304,3),background:parentColor,boxShadow:'0 1px 2px #1e211e',
-          transformOrigin:'left',scale:`${tween(f,i===1?30:62,i===1?54:86)} 1`,
-        }}/>}
+        <div style={{...box(0,268,820*tween(f,24+i*47,60+i*47),3),background:i<2?gold:aqua}}/>
       </div>;
     })}
-    <div style={{...box(106,956,1700,55),fontSize:33,color:'#d0ded9'}}>走进二级区域，<span style={{color:parentColor}}>父域名</span>与<span style={{color:childColor}}>当前地名</span>并排出现，下方显示这个地点的副标题。</div>
+    <div style={{...box(106,956,1650,55),fontSize:33,color:'#d0ded9'}}>同一片世界里，城、街区与地标可以各有自己的名字和副标题。</div>
   </Board>;
 }
 
 const features={
   create:{clip:'create',kicker:'域名编辑',head:['给区域','划一条边界。'],body:['打开可视化编辑器，','用画笔涂出范围，','再填写域名属性。']},
   bounds:{clip:'bounds',kicker:'边界可视化',head:['回到世界，','看清范围。'],body:['打开边界可视化，','在实景中核对顶点','和围出的范围。']},
+  story:{clip:'story',kicker:'域名描述',head:['地名背后，','还有故事。'],body:['在风起地打开描述，','读一页地图作者','写下的故事。']},
 };
 export function Feature({kind}:{kind:keyof typeof features}) {
   const f=useCurrentFrame(),data=features[kind];
-  // 输入框从第 220 帧出现，镜头回撤时仍可看到指针移向下一步。
-  const nameFocus = tween(f,220,245)*(1-tween(f,292,313));
   // 按录像里属性页和提交预览真实出现的帧切换提示。
   const steps=['打开编辑器','涂出范围','填写名称','提交前核对'];
   const active=f<54?0:f<194?1:f<377?2:3;
@@ -43,9 +35,7 @@ export function Feature({kind}:{kind:keyof typeof features}) {
       {kind==='bounds'?<>
         <Sequence durationInFrames={130} name="打开开关"><Clip name="bounds" style={{objectFit:'contain'}}/></Sequence>
         <Sequence from={114} name="围绕实地边界"><Clip name="aerial" offset={24} style={{objectFit:'contain',opacity:tween(f,114,130)}}/></Sequence>
-      </>:<div style={{...box(0,66,1280,720),overflow:'hidden'}}>
-        <Clip name={data.clip} style={{transformOrigin:'30% 16%',scale:1+0.34*nameFocus}}/>
-      </div>}
+      </>:<Clip name={data.clip} style={{objectFit:'contain'}}/>}
     </div>
     <div style={{...box(1290,105,2,851),background:'linear-gradient(transparent,#819d99 20%,#819d99 80%,transparent)'}}/>
     <div style={box(1360,192,515,795)}><Label>{data.kicker}</Label>
@@ -56,34 +46,14 @@ export function Feature({kind}:{kind:keyof typeof features}) {
   </Board>;
 }
 
-// 以雪山和海岸线上的对应点配准两张原图，共用一段从风起地移向龙脊雪山的运镜。
-const mapViews = [
-  {name:'BlueMap',image:'bluemap',height:1103,ratio:1,offsetX:0,offsetY:0},
-  {name:'Xaero',image:'xaero',height:1484,ratio:1.263,offsetX:-67,offsetY:-64},
-];
 export function Maps(){
-  const frame=useCurrentFrame();
-  const pan=tween(frame,32,178);
-  const centerX=1390-135*pan, centerY=444+210*pan;
-  const windowWidth=852, windowHeight=580;
-  return <AbsoluteFill style={{backgroundColor:'#e7e2d6',color:ink,fontFamily:sans}}>
-    <div style={box(96,75,1650,155)}>
-      <Label color="#4b675f">地图联动</Label>
-      <div style={{fontFamily:serif,fontSize:76,marginTop:10,fontWeight:700}}>同一组域名，两张地图。</div>
-    </div>
-    <div style={{...box(1320,153,504,64),textAlign:'right',fontSize:31,color:'#405751'}}>风起地　→　龙脊雪山</div>
-    {mapViews.map((map,i)=>{
-      const scale=windowWidth/((930-65*pan)*map.ratio);
-      const imageX=windowWidth/2-(centerX*map.ratio+map.offsetX)*scale;
-      const imageY=windowHeight/2-(centerY*map.ratio+map.offsetY)*scale;
-      return <div key={map.name} style={box(96+876*i,275,windowWidth,723)}>
-        <div style={{position:'relative',height:windowHeight,overflow:'hidden',backgroundColor:'#24424a'}}>
-          <Picture file={'art/'+map.image+'.jpg'} style={box(imageX,imageY,2304*scale,map.height*scale)}/>
-        </div>
-        <div style={{marginTop:19,paddingTop:9,borderTop:'1px solid #909f93',fontSize:44,fontFamily:latin,fontWeight:600}}>{map.name}</div>
-      </div>;
-    })}
-  </AbsoluteFill>;
+  const f=useCurrentFrame();
+  return <Board><div style={box(98,77,1700,160)}><Label>地图联动</Label><Rise style={{fontFamily:serif,fontSize:76,marginTop:15}}>同一组域名，两张地图。</Rise></div>
+    {['bluemap','xaero'].map((id,i)=><div key={id} style={{...box(98+873*i,295,849,640)}}>
+      <div style={{width:'100%',height:538,overflow:'hidden',borderTop:'2px solid '+(i?aqua:gold)}}><Picture file={'art/'+id+'.jpg'} style={{objectPosition:i?'62% 50%':'64% 48%',scale:String(1.025+tween(f,0,239,0,.055))}}/></div>
+      <div style={{fontFamily:latin,fontSize:42,marginTop:23}}>{i?'Xaero':'BlueMap'}</div>
+    </div>)}
+  </Board>;
 }
 export function Details() {
   const frame = useCurrentFrame();

@@ -16,6 +16,21 @@ const spanX = atlas.bounds.maxX - atlas.bounds.minX;
 const spanZ = atlas.bounds.maxZ - atlas.bounds.minZ;
 const formatSpan = new Intl.NumberFormat('zh-CN', {maximumFractionDigits: 2});
 const mapScale = 850 / atlas.width;
+const windrise = atlas.areas.find(area => area.name === '风起地');
+
+function WindriseLabel({frame}: {frame: number}) {
+  if (!windrise?.labelAnchor) return null;
+  const [x,z] = windrise.labelAnchor.map(value => value * mapScale);
+  const reach = tween(frame,208,237);
+  const labelX = x + 81;
+  const labelY = z - 85;
+  return <g>
+    <path d={`M${x},${z}l48,-85H${labelX-8}`} fill="none" stroke={accent}
+      strokeWidth={1.5} pathLength={1} strokeDasharray="1 1" strokeDashoffset={1-reach} opacity={reach}/>
+    <text x={labelX} y={labelY} dominantBaseline="middle" fill={paper} fontFamily={serif}
+      fontWeight={700} fontSize={34} opacity={tween(frame,223,249)}>{windrise.name}</text>
+  </g>;
+}
 
 function MapDimensions({frame}: {frame: number}) {
   // 尺寸线对齐原始边界极值，投影时预留的空白不计入跨度。
@@ -49,6 +64,7 @@ function MapDimensions({frame}: {frame: number}) {
 export function Performance() {
   const frame = useCurrentFrame();
   const result = tween(frame,70,98);
+  const focus = tween(frame,192,220);
   return <AbsoluteFill style={{background:ink,color:paper,fontFamily:sans}}>
     <div style={{...box(96,74,1728,62),borderBottom:'1px solid #486067',color:aqua,fontSize:29,fontWeight:700}}>性能实测</div>
     <div style={{...box(92,173,1760,120),fontFamily:serif,fontWeight:700,fontSize:80,opacity:tween(frame,0,15)}}>识别脚下的域名，要多久？</div>
@@ -68,7 +84,7 @@ export function Performance() {
     </div>
 
     <svg style={box(857,237,985,635)} viewBox="0 0 985 635" aria-label="方块提瓦特主世界的三级域名边界及横纵跨度">
-      <g transform={`scale(${mapScale})`}>
+      <g transform={`scale(${mapScale})`} opacity={1-focus*.3}>
       {atlas.areas.map((area,index)=>{
         const start = 4+(area.level-1)*17+index%7;
         const progress = tween(frame,start,start+65);
@@ -80,6 +96,9 @@ export function Performance() {
           strokeDashoffset={1-progress}/>;
       })}
       </g>
+      {windrise && <path transform={`scale(${mapScale})`} d={windrise.d} fill="none"
+        stroke={accent} strokeWidth={3.1} strokeLinejoin="round" vectorEffect="non-scaling-stroke" opacity={focus}/>}
+      <WindriseLabel frame={frame}/>
       <MapDimensions frame={frame}/>
     </svg>
     <div style={{...box(857,872,850,48),textAlign:'center',color:muted,fontSize:28}}>方块提瓦特 · 主世界域名边界</div>

@@ -5,6 +5,7 @@ import {Details,Feature,Maps,Titles} from './Features';
 import {Mechanism,mechanismFrames} from './Mechanism';
 import {EditingTools} from './EditingTools';
 import {Performance,performanceFrames} from './Performance';
+import {Story} from './Story';
 import {Credits,Logo,Uses} from './Closing';
 import {ink} from './visual';
 
@@ -20,7 +21,7 @@ const scenes=[
   ['实地核对边界',8*fps,<Feature kind="bounds"/>],
   ['服务器与客户端',mechanismFrames,<Mechanism/>],
   ['性能实测',performanceFrames,<Performance/>],
-  ['风起地的故事',7*fps,<Feature kind="story"/>],
+  ['风起地的故事',7*fps,<Story/>],
   ['地图联动',8*fps,<Maps/>],
   ['指令概览',5*fps,<Details/>],
   ['应用场景',11*fps,<Uses/>],

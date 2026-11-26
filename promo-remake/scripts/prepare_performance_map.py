@@ -45,7 +45,11 @@ def main():
         if len(set(ring)) < 3:
             ring = points
         path = "M" + "L".join(f"{x:.1f},{y:.1f}" for x, y in ring) + "Z"
-        areas.append({key: record[key] for key in ("name", "level", "color")} | {"d": path})
+        area = {key: record[key] for key in ("name", "level", "color")} | {"d": path}
+        if record["name"] == "风起地":
+            # 实景地名的引线接在第一枚原始边界顶点。
+            area["labelAnchor"] = [round(coord, 1) for coord in points[0]]
+        areas.append(area)
     output = Path(__file__).resolve().parents[1] / "src/performance-map.json"
     bounds = {"minX": x_min, "maxX": x_max, "minZ": z_min, "maxZ": z_max}
     output.write_text(json.dumps({"width": width, "height": height, "margin": margin,

@@ -1,5 +1,6 @@
 """为 141 秒剪辑编排器乐、动作音和声像，运行本文件可生成 public/score.m4a。"""
 
+import argparse
 import importlib.util
 import subprocess
 from pathlib import Path
@@ -81,15 +82,48 @@ def phrase(at, notes, gain):
         string(at + delay, note, weight * gain, -.08, 1.48)
 
 
+def original_time(seconds):
+    return seconds
+
+
+def harbor_actions(at=original_time):
+    for frame, strength, pan in [(110, .23, -.19), (119, .18, .15)]:
+        step(at(frame / 30), strength, pan)
+    swell(at(123 / 30), .28, .043)
+    # 字首浮现时单敲一次，高音延音过渡到最后一个远景。
+    chime(at(144 / 30), 74, .17, .12)
+
+
+def hierarchy_actions(at=original_time):
+    chime(at(23.47), 71, .13, -.25)
+    chime(at(23.77), 76, .12, .24)
+
+
+def editor_actions(at=original_time):
+    # 四工具并列时，选取首点、第三点、末点作低音木拨，闭合只响一次。
+    for frame, note, pan in [(35, 59, -.30), (143, 62, .04), (251, 64, .26)]:
+        string(at(46 + frame / 30), note, .22, pan, .75)
+    chime(at(46 + 289 / 30), 67, .13, .04)
+
+
+def sync_actions(at=original_time):
+    swell(at(68.1), .94, .067)
+    # 首次收包、A 跨界、服务端保存、B 收到更新，各自落在画面对应的动作上。
+    chime(at(69 + 78 / 30), 67, .125, .14)
+    chime(at(69 + 172 / 30), 74, .14, -.16)
+    string(at(69 + 382 / 30), 64, .22, -.42, .75)
+    chime(at(69 + 473 / 30), 79, .165, .39)
+
+
+def logo_action(at=original_time):
+    chime(at(136.61), 79, .203, .11)
+
+
 def arrange():
     # 开篇先留出宽阔空间，随着近景脚步接近，再让拨弦旋律进入前景。
     bow(.08, [40, 55, 59], 4.65, .065)
     phrase(.56, [(0, 71, .44), (1.66, 74, .35), (2.50, 76, .40)], .82)
-    for frame, strength, pan in [(110, .23, -.19), (119, .18, .15)]:
-        step(frame / 30, strength, pan)
-    swell(123 / 30, .28, .043)
-    # 字首浮现时单敲一次，高音延音过渡到最后一个远景。
-    chime(144 / 30, 74, .17, .12)
+    harbor_actions()
 
     # 起点、终点、和弦与密度随对应片段变化，长句跨过小节线。
     bars = [
@@ -124,23 +158,13 @@ def arrange():
     phrase(12.42, [(0, 71, .44), (.85, 74, .34), (1.75, 76, .49)], .91)
     phrase(16.36, [(0, 76, .39), (1.35, 74, .30), (2.46, 71, .36),
                    (3.98, 69, .30), (5.64, 74, .44)], .91)
-    chime(23.47, 71, .13, -.25)
-    chime(23.77, 76, .12, .24)
+    hierarchy_actions()
     phrase(34.30, [(0, 71, .32), (1.42, 74, .30), (3.07, 76, .37),
                    (5.60, 72, .31), (7.73, 69, .32)], .87)
 
-    # 四工具并列时，选取首点、第三点、末点作低音木拨，闭合只响一次。
-    for frame, note, pan in [(35, 59, -.30), (143, 62, .04), (251, 64, .26)]:
-        string(46 + frame / 30, note, .22, pan, .75)
-    chime(46 + 289 / 30, 67, .13, .04)
+    editor_actions()
     phrase(61.54, [(0, 67, .34), (1.47, 71, .33), (2.87, 74, .38)], .81)
-    swell(68.1, .94, .067)
-
-    # 首次收包、A 跨界、服务端保存、B 收到更新，各自落在画面对应的动作上。
-    chime(69 + 78 / 30, 67, .125, .14)
-    chime(69 + 172 / 30, 74, .14, -.16)
-    string(69 + 382 / 30, 64, .22, -.42, .75)
-    chime(69 + 473 / 30, 79, .165, .39)
+    sync_actions()
 
     phrase(88.75, [(0, 71, .34), (1.50, 74, .26), (3.75, 76, .36),
                    (6.25, 72, .27), (8.75, 69, .31)], .84)
@@ -154,18 +178,49 @@ def arrange():
     for t, note, level, pan in [(136.03, 43, .51, -.05), (136.15, 62, .38, -.25),
                                 (136.28, 71, .34, .30)]:
         string(t, note, level, pan, 2.03)
-    chime(136.61, 79, .203, .11)
+    logo_action()
+
+
+def finish_mix(bus):
+    # 短立体声反射与柔和磁带压缩将近景音效和配器放进同一声场。
+    wet = sosfilt(butter(2, 3200, fs=RATE, output="sos"), bus, axis=0)
+    for delay, gain in [(.031, .14), (.063, .09), (.139, .061), (.232, .047), (.341, .026)]:
+        offset = int(delay*RATE)
+        bus[offset:] += gain * wet[:-offset, ::-1]
+    bus[:] = np.tanh(1.25*bus)
+    fade = min(len(bus), RATE)
+    bus[-fade:] *= np.linspace(1, 0, fade)[:, None]
+
+
+def render_sfx(output_path, map_time=original_time, duration=DURATION):
+    """按旧画面秒数映射动作起点，保留每个音效的原速和衰减，并写入指定 WAV。"""
+    bus = np.zeros((round(duration * RATE), 2), dtype=np.float32)
+    if not len(bus):
+        raise ValueError("动作音分轨的时长必须大于零")
+    # 保存乐器模块的音轨和随机数状态，便于同一进程反复导出不同剪辑版本。
+    old_bus = instruments.mix
+    noise_state = rng.bit_generator.state
+    string_state = instruments.rng.bit_generator.state
+    try:
+        instruments.mix = bus
+        rng.bit_generator.state = np.random.default_rng(472).bit_generator.state
+        instruments.rng.bit_generator.state = np.random.default_rng(1019).bit_generator.state
+        for actions in (harbor_actions, hierarchy_actions, editor_actions, sync_actions, logo_action):
+            actions(map_time)
+    finally:
+        instruments.mix = old_bus
+        rng.bit_generator.state = noise_state
+        instruments.rng.bit_generator.state = string_state
+    finish_mix(bus)
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    wavfile.write(path, RATE, np.rint(bus * 32767).astype(np.int16))
+    return path
 
 
 def render():
     arrange()
-    # 短立体声反射与柔和磁带压缩将近景音效和配器放进同一声场。
-    wet = sosfilt(butter(2, 3200, fs=RATE, output="sos"), mix, axis=0)
-    for delay, gain in [(.031, .14), (.063, .09), (.139, .061), (.232, .047), (.341, .026)]:
-        offset = int(delay*RATE)
-        mix[offset:] += gain * wet[:-offset, ::-1]
-    mix[:] = np.tanh(1.25*mix)
-    mix[-RATE:] *= np.linspace(1, 0, RATE)[:, None]
+    finish_mix(mix)
     path = PROJECT / "public/score.m4a"
     path.parent.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory() as directory:
@@ -178,4 +233,9 @@ def render():
 
 
 if __name__ == "__main__":
-    render()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--sfx-only", action="store_true", help="导出原始 141 秒时间线的动作音分轨")
+    if parser.parse_args().sfx_only:
+        print(render_sfx(PROJECT / ".cache/action-sounds.wav"))
+    else:
+        render()

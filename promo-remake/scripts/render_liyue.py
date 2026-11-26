@@ -92,9 +92,13 @@ if __name__ == "__main__":
     parser.add_argument("music", type=Path, help="陈致逸、HOYO-MiX《璃月》的 FLAC 文件")
     parser.add_argument("--picture", type=Path, help="指定画面母版路径")
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--warm", action="store_true", help="使用 v15 暖色背景的画面母版")
+    variants = parser.add_mutually_exclusive_group()
+    variants.add_argument("--warm", action="store_true", help="使用 v15 暖色背景的画面母版")
+    variants.add_argument("--teal-orange", action="store_true", help="使用 v16 青橙背景的画面母版")
     args = parser.parse_args()
-    if args.warm:
+    if args.teal_orange:
+        master, filename = "Area-Hints-v16-picture.mp4", "Area-Hints-v16-Liyue-Teal-Orange.mp4"
+    elif args.warm:
         master, filename = "Area-Hints-v15-picture.mp4", "Area-Hints-v15-Liyue-Background.mp4"
     else:
         master, filename = "Area-Hints-v12.mp4", "Area-Hints-v13-Liyue.mp4"

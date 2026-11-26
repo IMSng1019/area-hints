@@ -1,6 +1,6 @@
 import React from 'react';
 import {AbsoluteFill, useCurrentFrame} from 'remotion';
-import {aqua, backgroundInk, gold, paper, sans, tween} from './visual';
+import {aqua, backgroundInk, backgroundPanel, gold, paper, sans, tween} from './visual';
 
 type Point = [number, number];
 type Kind = 'create' | 'expand' | 'shrink' | 'divide';
@@ -72,7 +72,9 @@ const drawn = (f: number, from: number, to: number) => tween(f, from, to);
 
 function Terrain() {
   return <defs>
-    <linearGradient id="tools-back"><stop stopColor={backgroundInk}/><stop offset=".72" stopColor="#382b24"/><stop offset="1" stopColor="#413128"/></linearGradient>
+    <linearGradient id="tools-back" x1="0%" y1="46%" x2="100%" y2="57%">
+      <stop stopColor="#134d50"/><stop offset=".48" stopColor={backgroundInk}/><stop offset="1" stopColor="#8b4b2c"/>
+    </linearGradient>
     <pattern id="tools-grid" width="32" height="32" patternUnits="userSpaceOnUse">
       <path d="M32 0H0V32" stroke="#98C7BD" opacity=".13" strokeWidth="1" fill="none"/>
       <circle r="1.2" fill="#7DA5A3" opacity=".5"/>
@@ -184,7 +186,7 @@ function Panel({tool,index,frame}: {tool:Tool;index:number;frame:number}) {
   const textIn = drawn(frame,0,16);
   const textBeat = result ? coloring : frame>=hits[4] ? hits[4] : frame>=hits[1] ? hits[1] : 0;
   return <g transform={`translate(${left},${top})`}>
-    <rect width="865" height="382" fill="#332822" stroke="#3B555E" strokeWidth="1.3"/>
+    <rect width="865" height="382" fill={backgroundPanel} stroke="#3B555E" strokeWidth="1.3"/>
     <path d="M0 42 V0 H53" fill="none" stroke="#8AA9A7" strokeWidth="2.2"/>
     <g opacity={textIn}>
       <text x="32" y="69" fill={paper} fontSize="48" fontWeight="600" fontFamily={serif}>{tool.title}</text>

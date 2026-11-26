@@ -21,11 +21,11 @@ if(process.argv.includes('--stills')){
 }else{
   // 片段和整片取自同一时间线，配乐与提示音保持同步。
   const excerpt=process.argv.includes('--brand')
-    ? {name:'harbor-reveal-v12',start:8.5,end:18.5}
+    ? {name:'harbor-reveal-v16',start:8.5,end:18.5}
     : process.argv.includes('--performance')
-    ? {name:'performance-v9',start:88,end:100}
-    : process.argv.includes('--tools') ? {name:'编辑四格-v9',start:46,end:61} : null;
-  const output=excerpt?.name??'Area-Hints-v15-picture';
+    ? {name:'performance-v16',start:88,end:100}
+    : process.argv.includes('--tools') ? {name:'编辑四格-v16',start:46,end:61} : null;
+  const output=excerpt?.name??'Area-Hints-v16-picture';
   let last=-1;
   await renderMedia({...settings,composition,codec:'h264',audioCodec:'aac',audioBitrate:'256k',crf:16,
     imageFormat:'jpeg',jpegQuality:96,colorSpace:'bt709',concurrency:4,

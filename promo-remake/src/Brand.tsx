@@ -48,9 +48,9 @@ export function Brand() {
   return <AbsoluteFill style={{overflow:'hidden',background:backgroundInk,
     maskImage:transition<1?`linear-gradient(102deg,transparent ${edge}%,black ${edge+65}%)`:undefined}}>
     <AbsoluteFill style={{background:[
-      'radial-gradient(ellipse at 29% 34%,#786b59 0%,transparent 48%)',
-      'radial-gradient(ellipse at 48% 73%,#514134 0%,transparent 46%)',
-      `linear-gradient(107deg,#493c31 1%,#342a23 48%,${backgroundInk} 82%)`,
+      'radial-gradient(ellipse at 27% 32%,#487b7b 0%,transparent 51%)',
+      'radial-gradient(ellipse at 91% 20%,#a75a32 0%,transparent 54%)',
+      `linear-gradient(105deg,#164a50 0%,${backgroundInk} 49%,#43332b 100%)`,
     ].join(',')}}/>
     <AbsoluteFill style={{transformOrigin:'100% 50%',transform:`translate(${40*turn-2*drift}px,${4*turn}px) scale(${1+.04*turn})`}}>
       <Picture file="art/brand-far-ridge.webp"/>
@@ -67,7 +67,7 @@ export function Brand() {
     </AbsoluteFill>
     <AbsoluteFill style={{background:'linear-gradient(0deg,#08182170,transparent 29%)'}}/>
     <AbsoluteFill style={{maskImage:'linear-gradient(90deg,transparent 54%,black 83%)'}}>
-      <Contours tone="#bba18b" opacity={.027+.08*glide(frame,126,165)}/>
+      <Contours tone="#dfab80" opacity={.027+.08*glide(frame,126,165)}/>
     </AbsoluteFill>
     <AbsoluteFill style={{transformOrigin:'50% 100%',
       transform:`translate(${-12*drift}px,${36*turn+2*drift}px) scale(${1+.29*turn})`}}>

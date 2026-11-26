@@ -2,7 +2,10 @@ import React from 'react';
 import {AbsoluteFill, Easing, Img, OffthreadVideo, interpolate, staticFile, useCurrentFrame} from 'remotion';
 
 export const ink = '#0b1821', paper = '#f4f0e7', gold = '#ebbc78', aqua = '#8adcd0';
-export const backgroundInk = '#261f1b';
+export const backgroundInk = '#0b3035', backgroundPanel = '#15383a';
+export const backgroundGradient =
+  'radial-gradient(ellipse at 97% 12%, #97542f 0%, transparent 48%), ' +
+  'linear-gradient(112deg, #164c50 0%, #0c3035 54%, #32332c 100%)';
 export const sans = '"Microsoft YaHei", "Noto Sans CJK SC", sans-serif';
 export const serif = 'Georgia,"SimSun","Noto Serif CJK SC",serif';
 export const latin = 'Bahnschrift,"Arial Narrow",Arial,sans-serif';
@@ -31,5 +34,5 @@ export function Contours({tone='#96bfbe',opacity=.18}:{tone?:string;opacity?:num
   </svg>;
 }
 export function Board({children}:React.PropsWithChildren) {
-  return <AbsoluteFill style={{backgroundColor:backgroundInk,color:paper,fontFamily:sans,overflow:'hidden'}}><Contours tone="#bba18b"/>{children}</AbsoluteFill>;
+  return <AbsoluteFill style={{background:backgroundGradient,color:paper,fontFamily:sans,overflow:'hidden'}}><Contours tone="#a6c2b7"/>{children}</AbsoluteFill>;
 }

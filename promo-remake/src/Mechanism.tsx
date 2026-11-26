@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import {AbsoluteFill, useCurrentFrame} from 'remotion';
-import {aqua, backgroundInk, gold, paper, sans, serif, tween} from './visual';
+import {aqua, backgroundInk, backgroundPanel, gold, paper, sans, serif, tween} from './visual';
 
 export const mechanismFrames = 19 * 30;
 const muted = '#b5c7c2';
@@ -95,7 +95,9 @@ export function Mechanism() {
   return <AbsoluteFill style={{backgroundColor:backgroundInk}}>
     <svg viewBox="0 0 1920 1080" width="100%" height="100%" fontFamily={sans} aria-label="进服同步、本地识别、提交编辑与在线玩家更新">
       <defs>
-        <radialGradient id="sync-bg" cx=".65" cy=".5" r=".78"><stop stopColor="#413128"/><stop offset="1" stopColor={backgroundInk}/></radialGradient>
+        <linearGradient id="sync-bg" x1="0%" y1="46%" x2="100%" y2="57%">
+          <stop stopColor="#134d50"/><stop offset=".48" stopColor={backgroundInk}/><stop offset="1" stopColor="#8b4b2c"/>
+        </linearGradient>
         <pattern id="sync-grid" width="25" height="25" patternUnits="userSpaceOnUse"><path d="M25 0 H0 V25" fill="none" stroke="#9db4b1" strokeWidth=".7" opacity=".24"/></pattern>
       </defs>
       <rect width="1920" height="1080" fill="url(#sync-bg)"/>
@@ -106,7 +108,7 @@ export function Mechanism() {
         <text x="97" y="286" fill="#d1dcd6" fontSize="34">{copy}</text>
       </g>
       <g transform="translate(96 450)">
-        <path d="M12 10 H547 V305 H12 Z M22 20 H557 V315 H22 Z" fill="#332822" stroke="#537175" strokeWidth="1.6"/>
+        <path d="M12 10 H547 V305 H12 Z M22 20 H557 V315 H22 Z" fill={backgroundPanel} stroke="#537175" strokeWidth="1.6"/>
         <g transform="scale(1.34)"><Atlas extension={tween(f,368,389)}/></g>
         <text y="-33" fontSize="40" fontWeight="700" fill={paper}>服务端</text>
         <text x="530" y="-34" textAnchor="end" fill={muted} fontSize="27">主世界 · 港区示意</text>

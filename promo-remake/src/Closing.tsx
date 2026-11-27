@@ -20,10 +20,10 @@ export function Uses() {
 export function Credits() {
   const f=useCurrentFrame();
   return <AbsoluteFill style={{background:'#fff',fontFamily:sans,color:ink,alignItems:'center',justifyContent:'center'}}>
-    <div style={{width:1060,opacity:tween(f,0,23)*(1-tween(f,128,149))}}>
+    <div style={{width:1060,textAlign:'center',opacity:tween(f,0,23)*(1-tween(f,128,149))}}>
       <div style={{fontFamily:serif,fontSize:94,fontWeight:700,marginBottom:28}}>制作名单</div>
       {[['模组作者','IMSng'],['分镜与实机录制','创作团队'],['实机场景','方块提瓦特']].map(([role,name])=>
-        <div key={role} style={{display:'grid',gridTemplateColumns:'1fr 1fr',alignItems:'baseline',padding:'16px 0',borderTop:'2px solid #ccd3d3'}}>
+        <div key={role} style={{display:'flex',justifyContent:'center',alignItems:'baseline',gap:28,padding:'12px 0'}}>
           <span style={{fontSize:50,fontWeight:700,color:'#42545b'}}>{role}</span>
           <span style={{fontSize:68,fontWeight:700,lineHeight:1.3}}>{name}</span>
         </div>)}

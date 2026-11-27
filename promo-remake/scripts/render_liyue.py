@@ -55,7 +55,7 @@ def picture_filter():
             f"tpad=stop=2:stop_mode=clone,trim=end_frame={TARGET[-1]}")
 
 
-def render(source, picture, output):
+def render(source, picture, output, bgm_only=False):
     if not picture.is_file():
         raise SystemExit(f"找不到画面母版 {picture}。可用 --picture 指定已有母版。")
     if not source.is_file():
@@ -63,19 +63,25 @@ def render(source, picture, output):
     output.parent.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(dir=output.parent) as temp:
         folder = Path(temp)
-        music, effects = folder / "music.wav", folder / "effects.wav"
+        music = folder / "music.wav"
         render_music(source, music)
         duration = TARGET[-1] / FPS
-        render_sfx(effects, map_time=lambda t: np.interp(t * FPS, SOURCE, TARGET) / FPS,
-                   duration=duration)
+        inputs = ["-i", picture, "-i", music]
+        if bgm_only:
+            audio_filter = "[1:a]volume=0.9,alimiter=limit=0.88:level=0:latency=1[mix]"
+        else:
+            effects = folder / "effects.wav"
+            render_sfx(effects, map_time=lambda t: np.interp(t * FPS, SOURCE, TARGET) / FPS,
+                       duration=duration)
+            inputs += ["-i", effects]
+            audio_filter = ("[1:a][2:a]amix=inputs=2:weights='0.9 0.6':normalize=0,"
+                            "alimiter=limit=0.88:level=0:latency=1[mix]")
         # 成片从输出目录继承读取权限，避免沿用私有临时目录的 Windows 权限。
         with NamedTemporaryFile(dir=output.parent, suffix=".mp4", delete=False) as file:
             result = Path(file.name)
         try:
             execute(find_ffmpeg(), [
-                "-i", picture, "-i", music, "-i", effects,
-                "-filter_complex", "[1:a][2:a]amix=inputs=2:weights='0.9 0.6':normalize=0,"
-                                   "alimiter=limit=0.88:level=0:latency=1[mix]",
+                *inputs, "-filter_complex", audio_filter,
                 "-map", "0:v:0", "-map", "[mix]", "-vf", picture_filter(), "-t", f"{duration:.6f}",
                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "16", "-pix_fmt", "yuv420p",
                 "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
@@ -92,6 +98,7 @@ if __name__ == "__main__":
     parser.add_argument("music", type=Path, help="陈致逸、HOYO-MiX《璃月》的 FLAC 文件")
     parser.add_argument("--picture", type=Path, help="指定画面母版路径")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--bgm-only", action="store_true", help="仅保留《璃月》配乐并移除动作音效")
     variants = parser.add_mutually_exclusive_group()
     variants.add_argument("--warm", action="store_true", help="使用 v15 暖色背景的画面母版")
     variants.add_argument("--teal-orange", action="store_true", help="使用 v16 青橙背景的画面母版")
@@ -102,4 +109,5 @@ if __name__ == "__main__":
         master, filename = "Area-Hints-v15-picture.mp4", "Area-Hints-v15-Liyue-Background.mp4"
     else:
         master, filename = "Area-Hints-v12.mp4", "Area-Hints-v13-Liyue.mp4"
-    render(args.music, args.picture or PROJECT / "out" / master, args.output or PROJECT / "out" / filename)
+    render(args.music, args.picture or PROJECT / "out" / master, args.output or PROJECT / "out" / filename,
+           bgm_only=args.bgm_only)

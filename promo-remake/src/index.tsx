@@ -6,6 +6,7 @@ import {Mechanism,mechanismFrames} from './Mechanism';
 import {EditingTools} from './EditingTools';
 import {Performance,performanceFrames} from './Performance';
 import {Credits,Logo,Uses} from './Closing';
+import {Cover} from './Cover';
 import {ink} from './visual';
 
 const fps=30;
@@ -31,6 +32,7 @@ function Film(){
 const dimensions={width:1920,height:1080,fps};
 function Root(){
   return <>
+    <Composition id="Area-Hints-Cover" {...dimensions} component={Cover} durationInFrames={1}/>
     <Composition id="Area-Hints" {...dimensions} component={Film} durationInFrames={scenes.reduce((sum,s)=>sum+s[1],0)}/>
     <Composition id="Editing-Tools" {...dimensions} component={EditingTools} durationInFrames={editingToolsFrames}/>
     <Composition id="Mechanism" {...dimensions} component={Mechanism} durationInFrames={mechanismFrames}/>

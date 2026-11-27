@@ -14,7 +14,7 @@
   <img alt="Minecraft build targets" src="https://img.shields.io/badge/Minecraft-1.20.1%20%7C%201.20.2%20%7C%201.20.4%20%7C%201.20.6%20%7C%201.21.1%20%7C%201.21.2%20%7C%201.21.3%20%7C%201.21.4%20%7C%201.21.5%20%7C%201.21.8%20%7C%201.21.9%20%7C%201.21.10%20%7C%201.21.11%20%7C%2026.1.2%20%7C%2026.2%20%7C%2026.3-3C8527?style=flat-square">
   <img alt="Fabric" src="https://img.shields.io/badge/Loader-Fabric-DBD0B4?style=flat-square">
   <img alt="Java" src="https://img.shields.io/badge/Java-17%20%2F%2021-ED8B00?style=flat-square&logo=openjdk&logoColor=white">
-  <img alt="Source version" src="https://img.shields.io/badge/Mod-4.8.5-8A2BE2?style=flat-square">
+  <img alt="Source version" src="https://img.shields.io/badge/Mod-4.8.9-8A2BE2?style=flat-square">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-blue?style=flat-square">
 </p>
 
@@ -46,7 +46,7 @@
 
 ## Overview
 
-Areas Hint is a **Minecraft Fabric** mod for naming places in your world. The current source version is **4.8.5**. A region can be a polygon with an altitude range, and regions can form a hierarchy such as **Kingdom → Capital → Throne Room**.
+Areas Hint is a **Minecraft Fabric** mod for naming places in your world. The current source version is **4.8.9**. A region can be a polygon with an altitude range, and regions can form a hierarchy such as **Kingdom → Capital → Throne Room**.
 
 Use it for RPG servers, adventure maps, building showcases, or landmarks in a survival world. Players can create and edit areas through commands, clickable chat prompts, and an in-game command panel.
 
@@ -887,9 +887,9 @@ In Windows PowerShell, replace `./gradlew` with `.\gradlew.bat`:
 Stonecutter places legacy outputs under `versions/<Minecraft-version>/build/libs/` and modern outputs under `modern/versions/<Minecraft-version>/build/libs/`. Filenames follow `mod-name-loader-Minecraft-version-mod-version`:
 
 ```text
-versions/1.20.4/build/libs/areas-hint-fabric-1.20.4-4.8.5.jar
-versions/1.21.4/build/libs/areas-hint-fabric-1.21.4-4.8.5.jar
-modern/versions/26.3/build/libs/areas-hint-fabric-26.3-4.8.5.jar
+versions/1.20.4/build/libs/area-hints-fabric-1.20.4-4.8.9.jar
+versions/1.21.4/build/libs/area-hints-fabric-1.21.4-4.8.9.jar
+modern/versions/26.3/build/libs/area-hints-fabric-26.3-4.8.9.jar
 ```
 
 Install the regular JAR, not the `-sources.jar` or `-dev.jar`. The `mod_loader` property only affects artifact naming; changing it does not convert the Fabric mod into a Forge or NeoForge mod.

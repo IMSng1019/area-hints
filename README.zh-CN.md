@@ -14,7 +14,7 @@
   <img alt="Minecraft 构建目标" src="https://img.shields.io/badge/Minecraft-1.20.1%20%7C%201.20.2%20%7C%201.20.4%20%7C%201.20.6%20%7C%201.21.1%20%7C%201.21.2%20%7C%201.21.3%20%7C%201.21.4%20%7C%201.21.5%20%7C%201.21.8%20%7C%201.21.9%20%7C%201.21.10%20%7C%201.21.11%20%7C%2026.1.2%20%7C%2026.2%20%7C%2026.3-3C8527?style=flat-square">
   <img alt="Fabric" src="https://img.shields.io/badge/Loader-Fabric-DBD0B4?style=flat-square">
   <img alt="Java" src="https://img.shields.io/badge/Java-17%20%2F%2021-ED8B00?style=flat-square&logo=openjdk&logoColor=white">
-  <img alt="源码版本" src="https://img.shields.io/badge/Mod-4.8.5-8A2BE2?style=flat-square">
+  <img alt="源码版本" src="https://img.shields.io/badge/Mod-4.8.9-8A2BE2?style=flat-square">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-blue?style=flat-square">
 </p>
 
@@ -59,7 +59,7 @@
 
 ## 概述
 
-Areas Hint 是一个适用于 **Minecraft Fabric** 的区域提示模组，当前源码版本为 **4.8.5**。各 Minecraft 构建目标和依赖见下方版本表。
+Areas Hint 是一个适用于 **Minecraft Fabric** 的区域提示模组，当前源码版本为 **4.8.9**。各 Minecraft 构建目标和依赖见下方版本表。
 它允许玩家使用多边形定义区域（项目内通常称为“域名”），并在进入区域时显示自定义名称。
 
 模组支持：
@@ -152,7 +152,7 @@ Areas Hint 是一个适用于 **Minecraft Fabric** 的区域提示模组，当�
 
 ### 基础环境
 
-当前源码版本为 `4.8.5`。下表来自 `settings.gradle` 中实际启用的构建目标和 `gradle.properties` 中的依赖参数；它表示当前源码的构建配置，不代表所有版本都已发布或完成游戏内验证。下载时请以 Modrinth 对应文件标注的 Minecraft 版本为准。
+当前源码版本为 `4.8.9`。下表来自 `settings.gradle` 中实际启用的构建目标和 `gradle.properties` 中的依赖参数；它表示当前源码的构建配置，不代表所有版本都已发布或完成游戏内验证。下载时请以 Modrinth 对应文件标注的 Minecraft 版本为准。
 
 | Minecraft 构建目标 | Java 最低版本 | Fabric Loader 最低版本 | 构建使用的 Fabric API |
 |---|---|---|---|
@@ -1286,9 +1286,9 @@ Windows PowerShell 中将 `./gradlew` 换成 `.\gradlew.bat`，例如：
 旧版 Stonecutter 产物位于 `versions/<Minecraft版本>/build/libs/`，现代分支产物位于 `modern/versions/<Minecraft版本>/build/libs/`，文件名遵循「模组名-平台-MC版本-模组版本」格式：
 
 ```text
-versions/1.20.4/build/libs/areas-hint-fabric-1.20.4-4.8.5.jar
-versions/1.21.4/build/libs/areas-hint-fabric-1.21.4-4.8.5.jar
-modern/versions/26.3/build/libs/areas-hint-fabric-26.3-4.8.5.jar
+versions/1.20.4/build/libs/area-hints-fabric-1.20.4-4.8.9.jar
+versions/1.21.4/build/libs/area-hints-fabric-1.21.4-4.8.9.jar
+modern/versions/26.3/build/libs/area-hints-fabric-26.3-4.8.9.jar
 ```
 
 安装普通 `.jar`，不要安装 `-sources.jar` 或 `-dev.jar`。`mod_loader` 只参与产物命名，修改它不会把 Fabric 模组转换为 Forge / NeoForge 模组。

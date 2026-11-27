@@ -26,6 +26,13 @@ public final class OverlayRenderer1215 implements OverlayBackend {
     }
 
     public static void beginOverlay(com.mojang.blaze3d.pipeline.RenderTarget suppliedTarget) {
+        // 26.3 的画中画由 Xaero 自己的输出纹理字段转接，覆盖层必须跟随，否则会画到主屏并在小地图外露出。
+        GpuTextureView overrideColor = xaero.lib.client.graphics.util.ImmediateRenderUtil.outputColorTextureOverride;
+        if (overrideColor != null) {
+            TARGETS.get().push(new RenderTarget(overrideColor,
+                xaero.lib.client.graphics.util.ImmediateRenderUtil.outputDepthTextureOverride));
+            return;
+        }
         // Xaero 的 ImprovedFramebuffer 会临时替换客户端 framebuffer，必须在回调中即时取值，不能缓存主屏目标。
         com.mojang.blaze3d.pipeline.RenderTarget target = suppliedTarget != null ? suppliedTarget : Minecraft.getInstance().gameRenderer.mainRenderTarget();
         TARGETS.get().push(new RenderTarget(target.getColorTextureView(), target.getDepthTextureView()));

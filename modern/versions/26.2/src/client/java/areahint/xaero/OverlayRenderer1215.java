@@ -2,6 +2,7 @@ package areahint.xaero;
 
 import areahint.render.BufferCompat;
 import areahint.render.GeometryRenderer1215;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.MeshData;
@@ -26,6 +27,12 @@ public final class OverlayRenderer1215 implements OverlayBackend {
     }
 
     public static void beginOverlay(com.mojang.blaze3d.pipeline.RenderTarget suppliedTarget) {
+        // 画中画 GUI 元素（Xaero 小地图）用输出纹理覆盖指向离屏目标，覆盖层必须跟随，否则会画到主屏并在小地图外露出。
+        GpuTextureView overrideColor = RenderSystem.outputColorTextureOverride;
+        if (overrideColor != null) {
+            TARGETS.get().push(new RenderTarget(overrideColor, RenderSystem.outputDepthTextureOverride));
+            return;
+        }
         // Xaero 的 ImprovedFramebuffer 会临时替换客户端 framebuffer，必须在回调中即时取值，不能缓存主屏目标。
         com.mojang.blaze3d.pipeline.RenderTarget target = suppliedTarget != null ? suppliedTarget : Minecraft.getInstance().gameRenderer.mainRenderTarget();
         TARGETS.get().push(new RenderTarget(target.getColorTextureView(), target.getDepthTextureView()));
